@@ -165,24 +165,50 @@ Minutes for partner meetings are stored in [`deliverables/team/minutes`](../team
   
 #### Q9: How will you organize your team?
 
-List/describe the artifacts you will produce to organize your team. (We strongly recommend that you use standard collaboration tools like Linear.app, Jira, Slack, Discord, GitHub.)       
+**Tracking work.** We use a GitHub Projects board linked to our team repository. Each of the six MVP user stories in Q4 is an epic, and it is broken into issues with one owner, a short description, a size label, and acceptance criteria copied from the story. Our Mentor TA and our AMD contacts are given access to the board. Fahad Moinuddin (team coordinator) maintains the board. The columns are **Backlog → Ready → In Progress → In Review → Done**.
 
- * Artifacts can be To-Do lists, Task boards, schedule(s), meeting minutes, etc.
- * We want to understand:
-   * How do you keep track of what needs to get done? (You must grant your TA and partner access to systems you use to manage work)
-   * **How do you prioritize tasks?**
-   * How do tasks get assigned to team members?
-   * How do you determine the status of work from inception to completion?
+**Repository setup.** We forked AMD's open-source Schola repository, and every member works from a clone of that fork. Work happens on feature branches and reaches the fork's main branch through pull requests. Once AMD confirms their contribution process, reviewed changes are proposed upstream to AMD's repository. Talha Asif keeps the fork in sync with upstream so our work does not drift from AMD's changes.
+
+**Sizing and velocity.** On AMD's advice, we do not estimate in hours, because teams tend to overestimate how much focused work fits in a block, especially when using AI tools. We size tasks as small, medium, or large, and track how many of each we finish per week. That tells us our real velocity, and we use it to plan the next sprint and to tell AMD honestly what will fit in the term.
+
+**Prioritization.** We rank tasks by two criteria:
+1. Does it unblock the end-to-end MVP workflow (Unity agent → training connection → ONNX export → Unity inference)?
+2. How risky is it? The three areas AMD flagged as trouble spots (getting ONNX inference working, the gRPC communication layer, and designing a non-opinionated engine abstraction) go first, along with test infrastructure, because a late failure there would cost the most.
+
+Stretch goals from Q4 (multi-agent support, concurrent environments, broader RL framework coverage, custom editor windows) stay in the Backlog until the core workflow works, matching AMD's preference for a small, well-designed core. Priorities are set at our weekly internal meeting and adjusted after each AMD check-in based on their feedback.
+
+**Task assignment.** At the weekly internal meeting, members pick up tasks from *Ready* based on the roles in Q7 and their current workload, and every member takes at least one coding task. Each task has exactly one owner. Large tasks are split into vertical slices that can be finished in about a week, and pair work on high-risk pieces is arranged in our ad hoc coding sessions. If two people want the same task, or a task has no clear owner, Fahad makes the final call.
+
+**Tracking status from start to finish.**
+- *In Progress*: the owner has started work on a feature branch.
+- *In Review*: a pull request is open and linked to the issue.
+- *Done*: the PR is merged after review by at least one teammate, the acceptance criteria are met, and automated checks pass (set up by Talha Asif, testing and CI lead).
+- A user story is complete when all of its issues are Done and its acceptance criteria from Q4 have been demonstrated in the example scene.
+- Blocked tasks get a "blocked" label and a note in the team Teams chat explaining the blocker.
+
+**Other artifacts.**
+- Meeting minutes for every partner meeting in `deliverables/team/minutes/`, written up by a rotating note-taker.
+- The team CSV and `Stakeholders.txt` in `deliverables/team/`.
+- The README, updated as setup and tooling change.
+- A decision log recording each open question for AMD, who owns it, and AMD's answer with a date. Mahi Ali Mukati (partner liaison) maintains it.
+
 
 #### Q10: What are the rules regarding how your team works?
 
 **Communications:**
- * What is the expected frequency? What methods/channels will be used? 
- * If you have a partner project, what is your process for communicating with your partner? Who is responsible?
- 
+* **Internal:** Our team group chat on Microsoft Teams is our main channel. Members check it at least once a day and reply to direct requests within 24 hours. Urgent items get an @mention. Members post progress and blockers there between meetings rather than waiting for the next one.
+* **With AMD:** Mahi Ali Mukati, our partner liaison, is our formal point of contact for AMD for the whole semester. He handles email, scheduling the weekly check-in, sending the agenda beforehand and minutes afterward, and raising requests for decisions such as MVP and user story approval, upstream contribution process, and IP terms. AMD created a shared Microsoft Teams group chat with our team, and any member can post technical questions, bugs, and blockers there directly without routing them through the liaison.
+* **Meetings:** A weekly AMD check-in and a weekly internal meeting, both on Microsoft Teams in the Tuesday or Thursday morning slot (see Q8).
+
 **Collaboration:**
- * How are people held accountable for attending meetings, completing action items? What is your process?
- * How will you address the issue if one person doesn't contribute or is not responsive?
+* **Accountability:** Every meeting has a rotating note-taker, and action items are recorded with an owner and a date. Members who cannot attend tell the team beforehand and read the minutes. Fahad reviews open action items at the start of each internal meeting and follows up on anything overdue.
+* **Code standards:** Each member works on a feature branch in our fork, and the main branch is protected. Every change goes through a pull request that a human teammate reviews before merging, following AMD's Schola practice. This applies to AI-assisted code as well: whoever opens the PR is responsible for understanding it and must be able to explain it in review. We set up automated tests early so that AI-assisted changes are checked automatically. Commits and PRs link to their issue.
+* **If someone isn't contributing or responding:**
+  1. Fahad or a teammate checks in privately within two days to find out what is blocking them.
+  2. If it continues, we discuss it as a team and agree on a smaller, clearly defined task with a deadline.
+  3. If there is still no change, we tell our Mentor TA so the issue is documented and handled early.
+
+  We use GitHub commit, review, and issue history to see how work is distributed.
 
 ## Organisation Details
 

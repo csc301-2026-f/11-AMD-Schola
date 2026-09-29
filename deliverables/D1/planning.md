@@ -1,4 +1,4 @@
-# YOUR PRODUCT/TEAM NAME
+# AMD Schola — Unity Integration / Oscorp
 > _Note:_ This document will evolve throughout your project. You commit regularly to this file while working on the project (especially edits/additions/deletions to the _Highlights_ section). 
  > **This document will serve as a master plan between your team, your partner and your TA.**
 
@@ -6,35 +6,23 @@
  
 #### Q1: What is the product?
 
- > Short (1 - 2 min' read)
- * Start with a single sentence, high-level description of the product.
- * Be clear - Describe the problem you are solving in simple terms.
- * Specify if you have a partner, who they are (role/title), and the organization information.
- * Be concrete. For example:
-    * What are you planning to build? Is it a website, mobile app, browser extension, command-line app, etc.?      
-    * When describing the problem/need, give concrete examples of common use cases.
-    * Assume the reader knows nothing about the partner or the problem domain and provide the necessary context. 
- * Focus on *what* your product does, and avoid discussing *how* you're going to implement it.      
-   For example: This is not the time or the place to talk about which programming language and/or framework you are planning to use.
- * **Feel free (and very much encouraged) to include useful diagrams, mock-ups and/or links**.
+AMD Schola - Unity Integration is a Unity package that brings AMD’s Schola reinforcement learning tools to Unity. It lets developers define training environments, train agents using Schola’s existing Python tools, and run trained models inside their games.
 
+Reinforcement learning allows an agent, such as a game character, to learn through trial and error by receiving rewards for useful actions. For example, a developer could train a character to reach a destination while avoiding obstacles. Our package will let developers define what the character observes, which actions it can take, and what earns rewards.
+
+Our partner is AMD, a company that develops processors, graphics hardware, and related software. Alexander Cann, Member of Technical Staff on AMD’s Schola team, is our partner representative and primary point of contact. Schola currently supports Unreal Engine, and our project will bring that workflow to Unity.
 
 #### Q2: Who are your target users?
 
-  > Short (1 - 2 min' read max)
- * Be specific (e.g. a 'a third-year university student taking CSC301 and studying Computer Science' and not 'a student')
- * **Feel free to use personas. You can create your personas as part of this Markdown file, or add a link to an external site (for example, [Xtensio](https://xtensio.com/user-persona/)).**
+Our primary users are Unity game developers who want to train NPCs or simulation agents without building their own connection to reinforcement learning tools. This includes developers at small game studios who can build scenes and character behaviours but need support integrating agent training into their games.
+
+We also target reinforcement learning researchers and engineers who already use Schola and want to work with Unity environments while keeping their existing training tools.
 
 #### Q3: Why would your users choose your product? What are they using today to solve their problem/need?
 
-> Short (1 - 2 min' read max)
- * We want you to "connect the dots" for us - Why does your product (as described in your answer to Q1) fits the needs of your users (as described in your answer to Q2)?
- * Explain the benefits of your product explicitly & clearly. For example:
-    * Save users time (how and how much?)
-    * Allow users to discover new information (which information? And, why couldn't they discover it before?)
-    * Provide users with more accurate and/or informative data (what kind of data? Why is it useful to them?)
-    * Does this application exist in another form? If so, how does your differ and provide value to the users?
-    * How does this align with your partner's organization's values/mission/mandate?
+Unity developers can currently use Unity ML-Agents or build custom training integrations. Users would choose our product when they want to use Schola’s existing tools within Unity, especially if they already work with Schola in Unreal Engine.
+
+The main advantage over Unity ML-Agents would be compatibility with Schola’s training workflow. Teams could keep familiar tools while working across both engines, and Unity developers would not need to build the Schola connection themselves. Our package aims to reduce repeated integration work while fitting into Unity’s existing editor workflow. This supports AMD’s plans to make Schola available across multiple game engines.
 
 #### Q4: What are the user stories that make up the Minumum Viable Product (MVP)?
 

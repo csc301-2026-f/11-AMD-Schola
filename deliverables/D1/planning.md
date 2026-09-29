@@ -38,35 +38,53 @@
 
 #### Q4: What are the user stories that make up the Minumum Viable Product (MVP)?
 
- * At least 5 user stories concerning the main features of the application - note that this can broken down further
- * You must follow proper user story format (as taught in lecture) ```As a <user of the app>, I want to <do something in the app> in order to <accomplish some goal>```
- * User stories must contain acceptance criteria. Examples of user stories with different formats can be found here: https://www.justinmind.com/blog/user-story-examples/. **It is important that you provide a link to an artifact containing your user stories**.
- * If you have a partner, these must be reviewed and accepted by them. You need to include the evidence of partner approval (e.g., screenshot from email) or at least communication to the partner (e.g., email you sent)
+ Artifact link: [Not added yet]
+
+Partner communication: Stories will be shared with AMD partner via email on [TBD]. Evidence: email screenshot attached in appendix / meeting minutes.
+
+Define agent inputs
+As a Unity game developer, I want to configure observations from scene objects in order to let a training policy perceive game state.
+Acceptance: Example agent exposes at least one numeric observation source through a documented Unity interface; shape is stable and changes with scene state.
+
+Apply actions
+As a Unity game developer, I want to connect policy outputs to agent actions in order to control a game object.
+Acceptance: Example scene defines an action space, receives actions, and visibly changes behavior; invalid actions produce useful diagnostics.
+
+Control training episodes
+As an RL engineer, I want to define rewards, termination, and resets for a Unity scene in order to receive complete training episodes.
+Acceptance: Example can start, step, end, and reset an episode; Python client observes reward and terminal status and continues with a fresh episode.
+
+Train through Schola
+As an RL engineer, I want to connect Unity to Schola’s Python interface in order to use supported RL workflows without rewriting the client.
+Acceptance: Reproducible local example exchanges observations/actions over existing Protobuf/gRPC contract; end-to-end Python training smoke run succeeds.
+
+Run trained policy in Unity
+As a Unity game developer, I want to load a compatible exported ONNX policy in order to let an agent act without a Python training process.
+Acceptance: Example loads a documented compatible model, maps observations/actions, and runs inference with Python stopped.
+
+Understand and reuse integration
+As a Unity game developer, I want a sample scene and setup guide in order to install the package and adapt it to another scene.
+Acceptance: New team member can follow README to install dependencies, run training, export/obtain a model, and run inference; guide explains contracts and limitations.
+
+MVP scope: One complete modest example covering these paths. Multi-agent, multiple concurrent environments, broad RL framework coverage, and custom editor windows are stretch goals.
 
 #### Q5: Have you decided on how you will build it? Share what you know now or tell us the options you are considering.
 
-> Short (1-2 min' read max)
- * What is the technology stack? Specify languages, frameworks, libraries, PaaS products or tools to be used or being considered. 
- * How will you deploy the application?
- * Describe the architecture - what are the high level components or patterns you will use? Diagrams are useful here. 
- * Will you be using third party applications or APIs? If so, what are they?
+Technology Stack: C# (Unity plugin), Python 3.10–3.12 (training client). gRPC/Protobuf for communication. Gymnasium, Ray RLlib, Stable-Baselines3. ONNX via Unity Sentis.
 
-----
-## Intellectual Property Confidentiality Agreement 
-> Note this section is **not marked** but must be completed briefly if you have a partner. If you have any questions, please ask on Piazza.
->  
-**By default, you own any work that you do as part of your coursework.** However, some partners may want you to keep the project confidential after the course is complete. As part of your first deliverable, you should discuss and agree upon an option with your partner. Examples include:
-1. You can share the software and the code freely with anyone with or without a license, regardless of domain, for any use.
-2. You can upload the code to GitHub or other similar publicly available domains.
-3. You will only share the code under an open-source license with the partner but agree to not distribute it in any way to any other entity or individual. 
-4. You will share the code under an open-source license and distribute it as you wish but only the partner can access the system deployed during the course.
-5. You will only reference the work you did in your resume, interviews, etc. You agree to not share the code or software in any capacity with anyone unless your partner has agreed to it.
+Deployment: Distributed as a Unity Package Manager (UPM) package (Git URL/tarball). Includes sample project, tests, and README. No web deployment.
 
-**Your partner cannot ask you to sign any legal agreements or documents pertaining to non-disclosure, confidentiality, IP ownership, etc.**
+Architecture:
 
-Briefly describe which option you have agreed to.
+Unity: Environment Manager, Observation/Action/Policy interfaces.
 
-----
+Training Adapter: Implements gRPC/Protobuf service to connect Unity to Python RL client.
+
+Inference Adapter: Loads compatible ONNX policy locally, applies actions without Python.
+
+Flow: Unity scene → Environment interfaces → gRPC adapter ↔ Python RL client → ONNX → Unity inference adapter → actions.
+
+Third-Party Applications & APIs: gRPC (Google.Protobuf, Grpc.Tools, YetAnotherHttpHandler), Unity Sentis/Barracuda, Python RL libraries.
 
 ## Teamwork Details
 

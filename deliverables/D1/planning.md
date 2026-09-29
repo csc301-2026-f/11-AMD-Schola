@@ -138,7 +138,7 @@ Minutes for partner meetings are stored in [`deliverables/team/minutes`](../team
 **Partner meetings before D1**
 
 1. **Kickoff — Tuesday, 22nd September, morning 9:30, online.** Attendees: Alex Cann and Tian Yue (AMD) and all seven team members. We covered communication channels (Teams preferred, email for async), a proposed weekly check-in cadence, provisional Unity allocation, how to approach a design mockup for a library, Schola's training and inference architecture, a suggested Unity approach (ONNX inference and a gRPC service using existing protos), key risks, and AMD's development practices. Action items: send weekly meeting options, select a formal point of contact, and report our preference on Unity/Godot/application. [Minutes](../team/minutes/26-10-22-minutes.txt).
-2. **Weekly check-in — Thursday, 1st October, morning 9:30, online on Microsoft Teams.** Attendees: [TODO]. [TODO: topics discussed and decisions]. [TODO: link to minutes].
+2. **Weekly check-in — Thursday, 1st October, morning 9:30, online on Microsoft Teams.** Attendees: All team members. Show our progress and get feedback. [TODO: link to minutes].
   
 #### Q9: How will you organize your team?
 

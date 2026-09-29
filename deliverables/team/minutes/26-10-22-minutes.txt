@@ -1,0 +1,154 @@
+AMD Schola — Meeting Minutes
+Date: October 22, 2026
+
+ATTENDEES
+
+AMD
+- Alex Cann
+- Tian Yue
+
+Student team
+- Mohammad Mahi Ali Mukati
+- Talha Asif
+- Anwar Khan
+- Yahyaa Yasin
+- Raahim Chaghtai
+- Muhammad Wasi Ur-Rahman
+- Fahad Moinuddin
+
+1. CONTACTS AND COMMUNICATION
+
+Alex Cann will serve as the AMD point of contact while AMD finalizes internal assignments. He expects to remain involved across the projects. Tian Yue may become the primary contact for a specific project once responsibilities are settled.
+
+The student team should select one formal point of contact for email communication with AMD throughout the semester. Alex noted that this role involves coordinating incoming requirements and managing email correspondence. Technical reviews may involve additional AMD team members, given that the deliverable is a code library requiring detailed feedback.
+
+Microsoft Teams is the preferred channel for quick questions and resolving blockers. Alex said students should be able to contact AMD team members without a corporate account, as students on a previous York project had done. Email remains available for asynchronous communication. Slack is a fallback if Teams does not work, but is not the preferred option.
+
+Alex will share his email and create a Teams group chat with attendees.
+
+2. MEETING CADENCE AND PROGRAM EXPECTATIONS
+
+Alex proposed weekly check-ins initially, with flexibility around midterms, availability, and progress. Longer gaps can leave simple blockers unresolved and slow progress alongside other school commitments. Meetings may become less frequent as the team becomes more independent.
+
+No formal preparation is required for check-ins; a brief progress update, discussion of blockers, and next steps are sufficient.
+
+Alex expects the program to introduce an Agile framework or similar structure, including an internal student point of contact. These program requirements were anticipated rather than confirmed during the meeting.
+
+3. PROJECT SCOPE AND TEAM ALLOCATION
+
+This team is provisionally assigned to the Unity integration. A student team member expressed a preference for remaining with Unity because of existing experience.
+
+AMD's preferred allocation, still under discussion with the TA/professor, is one team working on Unity and another on Godot, with similar scope across the two engines. A potential third project could involve an application or prototype built with Schola.
+
+If two teams are assigned to Unity, AMD may divide and expand the scope between them or have each team develop a version aimed at different users or design requirements. No final allocation was confirmed.
+
+The student team should discuss whether it would be open to Godot or an application project and report its preference; no urgent deadline was specified.
+
+4. DESIGN MOCKUP — DELIVERABLE 1
+
+A student team member asked how to approach a design mockup for a library rather than a website or conventional end-user application.
+
+Alex recommended focusing on the interfaces exposed to game developers and designers. A mockup could show:
+- Which objects, tools, and interfaces the library exposes.
+- How those components interact.
+- How developers configure and use the integration.
+- Why the proposed structure is usable and appropriate for Unity.
+
+Unreal's combination of C++ and Blueprints was discussed as an example: a limited set of designer-facing tools can expose useful controls without requiring designers to build the underlying system. Schola already provides a Blueprint interface in Unreal.
+
+The design should justify architectural choices, including how observers connect to the wider system rather than being unnecessarily tied to a scene. One illustrative use case was an RL agent navigating menus by receiving menu state as its observation space.
+
+For the editor experience, Alex recommended extending Unity's existing interface and familiar workflows. A completely new interface should only be introduced if it offers a clear, meaningful usability benefit.
+
+5. SCHOLA ARCHITECTURE: TRAINING AND INFERENCE
+
+Training flow
+
+Schola extracts information from an Unreal game and exposes it to Python as a reinforcement learning environment. This representation need not reproduce every detail of the game; it must provide the information required for RL tooling such as RLlib, Stable-Baselines3 (SB3), and Gymnasium.
+
+At the engine level, the core components include an environment manager and objects defining observations and actions. Schola collects the relevant data and communicates it to Python, where it can be manipulated for training.
+
+The environment interface includes observations and training-related information such as rewards, episode completion status, and metadata.
+
+Inference flow
+
+A policy takes observations as input and produces actions as output. The same observation and action components can be reused for inference without training-specific fields such as rewards and episode completion status.
+
+An agent is a convenience interface that bundles observation collection and action execution. It is not mandatory: observers, actuators, and policies can also be used separately.
+
+Alex recommended running inference inside the game engine rather than relying on a separate Python process during gameplay. This avoids additional communication latency, failure points, and the complexity of waiting for an external process on the game thread.
+
+6. UNITY IMPLEMENTATION APPROACH
+
+The team could begin with either inference or training communication. Both paths should use compatible engine-level abstractions.
+
+Inference
+- Export a model from Schola's Python tooling in ONNX format.
+- Determine how to run that model inside Unity.
+- Build the supporting observation, action, and policy components.
+
+Alex suggested inference may be the easier starting point.
+
+Training communication
+- Implement the Unity-side gRPC service using Schola's existing Protocol Buffers definitions.
+- Connect it to the existing Python side, which should remain unchanged for standard use cases.
+- Propose Python changes through a pull request if a genuine need arises.
+
+Schola currently uses gRPC and Protocol Buffers for client-server communication between Unreal and Python. The service and message definitions support generated client/server code, allowing the Unity side to be developed against the existing specification.
+
+Potential difficulties include debugging communication across processes and managing third-party dependencies within a game engine.
+
+A possible additional contribution is Unity support for automatically building and launching an executable from an unbuilt project. Similar functionality already exists for Unreal and is useful for iterative testing and running multiple environment instances. This was discussed as an optional feature, not a committed deliverable.
+
+7. MILESTONES AND DESIGN RISKS
+
+No fixed implementation schedule was agreed. Alex said timing will depend on the team's velocity and how work is divided.
+
+Three anticipated challenges are:
+- Running ONNX inference successfully in Unity.
+- Implementing the gRPC communication layer.
+- Designing flexible, developer-friendly engine abstractions.
+
+The first milestone should be an abstraction the team is confident will work well for game developers. Alex emphasized that interface design is easy to underestimate and may involve engine-specific constraints.
+
+The design should avoid imposing unnecessary assumptions. For example, inference should not be forced to run every tick when a strategy game may only need it at the end of a turn.
+
+Expectations at the one-third and two-thirds project checkpoints will depend on whether the team develops training and inference sequentially, splits them between subteams, or progresses both in parallel.
+
+8. DEVELOPMENT PRACTICES
+
+Alex described AMD's Schola development as primarily AI-assisted, with mandatory human code review, including team members reviewing each other's pull requests.
+
+He advised realistic planning: available work time does not translate directly into productive development time because of setup, context switching, and other interruptions. Relative task sizing, such as small/medium/large, can be more useful than precise hourly estimates for learning the team's velocity.
+
+The team should establish testing infrastructure early. Game engines are difficult to test because they produce interactive applications with interfaces that may not be readily accessible programmatically. Tests are particularly valuable for maintaining quality in AI-assisted development.
+
+9. ACTION ITEMS
+
+Student team
+- Send Alex several options for recurring weekly meetings within 1–2 days of the meeting.
+- Select a formal student point of contact for AMD email communication.
+- Discuss whether the team would consider Godot or an application project, and communicate its preference. Unity remains the provisional assignment.
+
+Alex Cann
+- Share his email and create a Teams group chat with attendees.
+- Share publicly available Schola resources.
+- Check internally whether the presentation slides can be shared.
+- Coordinate with the program/TA/professor to finalize project allocation and report back.
+- Communicate any changes to AMD point-of-contact assignments.
+
+Recommended development priorities
+- Define and justify the Unity-facing abstraction and developer workflow.
+- Decide how to divide training communication and inference work.
+- Set up testing infrastructure early.
+
+10. ITEMS STILL TO BE CONFIRMED
+
+- Final allocation of student teams across Unity, Godot, and any application project.
+- AMD's long-term point-of-contact assignments.
+- The student team's formal point of contact.
+- The recurring meeting time.
+- Whether the presentation slides can be shared.
+- Detailed milestones and schedule, informed by the team's initial progress.
+
+Attribution note: Unidentified speakers in the source notes are referred to as student team members; their individual identities have not been inferred.

@@ -72,10 +72,15 @@ Briefly describe which option you have agreed to.
 
 #### Q6: Have you met with your team?
 
-Do a team-building activity in-person or online. This can be playing an online game, meeting for bubble tea, lunch, or any other activity you all enjoy.
-* Get to know each other on a more personal level.
-* Provide a few sentences on what you did and share a picture or other evidence of your team building activity.
-* Share at least three fun facts from members of you team (total not 3 for each member).
+Q6: Yes. Team-building activity: played Volleyball and met online. Evidence: attached screenshot of the online team call. Fun facts:
+
+Fahad does Brazilian Jiu Jitsu.
+
+Anwar skipped grade 11.
+
+Mahi has a business registered under his name.
+Updated Q6 now includes activity, evidence, and three fun facts.
+![Team Bonding Photo](Team_Bonding_Image.jpeg)
 
 
 #### Q7: What are the roles & responsibilities on the team?

@@ -80,16 +80,6 @@ Do a team-building activity in-person or online. This can be playing an online g
 
 #### Q7: What are the roles & responsibilities on the team?
 
-Describe the different roles on the team and the responsibilities associated with each role (e.g., frontend, database). 
- * Roles should reflect the structure of your team and be appropriate for your project. One person may have multiple roles.  
- * Add role(s) to your Team-[Team_Number]-[Team_Name].csv file on the main folder.
- * At least one person must be identified as the dedicated partner liaison. They need to have great organization and communication skills.
- * Everyone must contribute to code. Students who don't contribute to code enough will receive a lower mark at the end of the term.
-
-List each team member and:
- * A description of their role(s) and responsibilities including the components they'll work on and non-software related work
- * Why did you choose them to take that role? Specify if they are interested in learning that part, experienced in it, or any other reasons. Do no make things up. This part is not graded but may be reviewed later.
-
 Our roles follow the main parts of the project: the Unity-facing API, the training connection to Schola's Python side (gRPC), local inference (ONNX), and the testing and example work that ties them together. Every member owns at least one code component. Non-code roles (liaison, coordinator) are added on top of coding work, not in place of it.
 
 | Role | Responsibilities |
@@ -133,14 +123,6 @@ Our roles follow the main parts of the project: the Unity-facing API, the traini
 
 #### Q8: How will you work as a team?
 
-Describe meetings (and other events) you are planning to have. 
- * When and where? Recurring or ad hoc? In-person or online?
- * What's the purpose of each meeting?
- * Other events could be coding sessions, code reviews, quick weekly sync meeting online, etc.
- * You should have 2 meetings with your project partner (if you have one) before D1 is due. Describe them here:
-   * You must keep track of meeting minutes and add them to your repo under "deliverables/minutes" folder
-   * You must have a regular meeting schedule established for the rest of the term.  
-
 **Recurring meetings and events**
 
 | Event | When / where | Purpose |
@@ -155,8 +137,8 @@ Minutes for partner meetings are stored in [`deliverables/team/minutes`](../team
 
 **Partner meetings before D1**
 
-1. **Kickoff — [TODO: confirm date], online.** Attendees: Alex Cann and Tian Yue (AMD) and all seven team members. We covered communication channels (Teams preferred, email for async), a proposed weekly check-in cadence, provisional Unity allocation, how to approach a design mockup for a library, Schola's training and inference architecture, a suggested Unity approach (ONNX inference and a gRPC service using existing protos), key risks, and AMD's development practices. Action items: send weekly meeting options, select a formal point of contact, and report our preference on Unity/Godot/application. [Minutes](../team/minutes/26-10-22-minutes.txt).
-2. **Weekly check-in — Thursday [TODO: date], morning, online on Microsoft Teams.** Attendees: [TODO]. [TODO: topics discussed and decisions]. [TODO: link to minutes].
+1. **Kickoff — Tuesday, 22nd September, morning 9:30, online.** Attendees: Alex Cann and Tian Yue (AMD) and all seven team members. We covered communication channels (Teams preferred, email for async), a proposed weekly check-in cadence, provisional Unity allocation, how to approach a design mockup for a library, Schola's training and inference architecture, a suggested Unity approach (ONNX inference and a gRPC service using existing protos), key risks, and AMD's development practices. Action items: send weekly meeting options, select a formal point of contact, and report our preference on Unity/Godot/application. [Minutes](../team/minutes/26-10-22-minutes.txt).
+2. **Weekly check-in — Thursday, 1st October, morning 9:30, online on Microsoft Teams.** Attendees: [TODO]. [TODO: topics discussed and decisions]. [TODO: link to minutes].
   
 #### Q9: How will you organize your team?
 

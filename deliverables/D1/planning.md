@@ -157,7 +157,7 @@ Minutes for partner meetings are stored in [`deliverables/team/minutes`](../team
   
 #### Q9: How will you organize your team?
 
-**Tracking work.** We use a GitHub Projects board linked to our team repository. Each of the six MVP user stories in Q4 is an epic, and it is broken into issues with one owner, a short description, a size label, and acceptance criteria copied from the story. Our Mentor TA and our AMD contacts are given access to the board. Fahad Moinuddin (team coordinator) maintains the board. The columns are **Backlog → Ready → In Progress → In Review → Done**.
+**Tracking work.** We use a shared Trello board for all implementation tasks. Each of the seven MVP user stories in Q4 (US1-US7) has its own colored label, and its work is broken into cards. Every card has one owner, a short description, a size label (small, medium, large), and acceptance criteria copied from its user story. Our Mentor TA and our AMD contacts are invited to the board. Fahad Moinuddin (team coordinator) maintains the board. The lists are **Backlog → Ready → In Progress → In Review → Done**.
 
 **Repository setup.** We forked AMD's open-source Schola repository, and every member works from a clone of that fork. Work happens on feature branches and reaches the fork's main branch through pull requests. Once AMD confirms their contribution process, reviewed changes are proposed upstream to AMD's repository. Talha Asif keeps the fork in sync with upstream so our work does not drift from AMD's changes.
 
@@ -173,10 +173,10 @@ Stretch goals from Q4 (multi-agent support, concurrent environments, broader RL 
 
 **Tracking status from start to finish.**
 - *In Progress*: the owner has started work on a feature branch.
-- *In Review*: a pull request is open and linked to the issue.
+- *In Review*: a pull request is open, and its link is attached to the Trello card.
 - *Done*: the PR is merged after review by at least one teammate, the acceptance criteria are met, and automated checks pass (set up by Talha Asif, testing and CI lead).
-- A user story is complete when all of its issues are Done and its acceptance criteria from Q4 have been demonstrated in the example scene.
-- Blocked tasks get a "blocked" label and a note in the team Teams chat explaining the blocker.
+- A user story is complete when all of its cards are Done and its acceptance criteria from Q4 have been demonstrated in the example scene.
+- Blocked cards get a "blocked" label and a note in the team Teams chat explaining the blocker.
 
 **Other artifacts.**
 - Meeting minutes for every partner meeting in `deliverables/team/minutes/`, written up by an AI note-taker.

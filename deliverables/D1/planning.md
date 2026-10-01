@@ -179,7 +179,7 @@ Stretch goals from Q4 (multi-agent support, concurrent environments, broader RL 
 - Blocked tasks get a "blocked" label and a note in the team Teams chat explaining the blocker.
 
 **Other artifacts.**
-- Meeting minutes for every partner meeting in `deliverables/team/minutes/`, written up by a rotating note-taker.
+- Meeting minutes for every partner meeting in `deliverables/team/minutes/`, written up by an AI note-taker.
 - The team CSV and `Stakeholders.txt` in `deliverables/team/`.
 - The README, updated as setup and tooling change.
 - A decision log recording each open question for AMD, who owns it, and AMD's answer with a date. Mahi Ali Mukati (partner liaison) maintains it.
@@ -193,8 +193,8 @@ Stretch goals from Q4 (multi-agent support, concurrent environments, broader RL 
 * **Meetings:** A weekly AMD check-in and a weekly internal meeting, both on Microsoft Teams in the Tuesday or Thursday morning slot (see Q8).
 
 **Collaboration:**
-* **Accountability:** Every meeting has a rotating note-taker, and action items are recorded with an owner and a date. Members who cannot attend tell the team beforehand and read the minutes. Fahad reviews open action items at the start of each internal meeting and follows up on anything overdue.
-* **Code standards:** Each member works on a feature branch in our fork, and the main branch is protected. Every change goes through a pull request that a human teammate reviews before merging, following AMD's Schola practice. This applies to AI-assisted code as well: whoever opens the PR is responsible for understanding it and must be able to explain it in review. We set up automated tests early so that AI-assisted changes are checked automatically. Commits and PRs link to their issue.
+* **Accountability:** Every meeting has an AI note-taker, and action items are recorded with an owner and a date. Members who cannot attend tell the team beforehand and read the minutes. 
+* **Code standards:** Each member works on a feature branch in our fork, and the main branch is protected. Every change goes through a pull request that a teammate reviews before merging, following AMD's Schola practice. This applies to AI-assisted code as well: whoever opens the PR is responsible for understanding it and must be able to explain it in review. We set up automated tests early so that AI-assisted changes are checked automatically. Commits and PRs link to their issue.
 * **If someone isn't contributing or responding:**
   1. Fahad or a teammate checks in privately within two days to find out what is blocking them.
   2. If it continues, we discuss it as a team and agree on a smaller, clearly defined task with a deadline.

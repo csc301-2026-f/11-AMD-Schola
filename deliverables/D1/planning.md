@@ -38,35 +38,39 @@
 
 #### Q4: What are the user stories that make up the Minumum Viable Product (MVP)?
 
- Artifact link: [Not added yet]
+User stories agreed upon in initial meeting with partner.
 
-Partner communication: Stories will be shared with AMD partner via email on [TBD]. Evidence: email screenshot attached in appendix / meeting minutes.
+These stories describe the minimum end-to-end product: a Unity developer can define an RL environment, train through Schola’s Python ecosystem, export an ONNX policy, and run it in Unity without Python. Trello tracks implementation tasks.
 
-Define agent inputs
-As a Unity game developer, I want to configure observations from scene objects in order to let a training policy perceive game state.
-Acceptance: Example agent exposes at least one numeric observation source through a documented Unity interface; shape is stable and changes with scene state.
+US1: Define a reinforcement-learning environment
+As a Unity developer, I want to define an RL environment through a small engine-independent interface so that I can make an environment trainable without writing networking code.
+Acceptance: Configure reset, observation, reward, terminal behavior. At least one agent. No direct sockets/RPC. Reproducible seed. Clear errors for invalid config.
 
-Apply actions
-As a Unity game developer, I want to connect policy outputs to agent actions in order to control a game object.
-Acceptance: Example scene defines an action space, receives actions, and visibly changes behavior; invalid actions produce useful diagnostics.
+US2: Declare observation and action spaces
+As a Unity developer, I want to define observation and action spaces using reusable types so that Schola can validate and communicate agent inputs/outputs.
+Acceptance: Support Box, Discrete, MultiDiscrete, MultiBinary. Expose shape, bounds, dtype. Unbounded Box. Reject mismatches. Translate to Python. Round-trip tests.
 
-Control training episodes
-As an RL engineer, I want to define rewards, termination, and resets for a Unity scene in order to receive complete training episodes.
-Acceptance: Example can start, step, end, and reset an episode; Python client observes reward and terminal status and continues with a fresh episode.
+US3: Connect to existing Python training tools
+As an ML practitioner, I want a Unity environment to connect to Schola’s existing Python tools so that I can train without a separate Unity-specific workflow.
+Acceptance: Complete connection/definition exchange. Use existing protocol/gRPC. Implement StartGymConnector, RequestTrainingDefinition, UpdateState. Python discovers spaces. Transport isolated. Actionable errors.
 
-Train through Schola
-As an RL engineer, I want to connect Unity to Schola’s Python interface in order to use supported RL workflows without rewriting the client.
-Acceptance: Reproducible local example exchanges observations/actions over existing Protobuf/gRPC contract; end-to-end Python training smoke run succeeds.
+US4: Execute episode lifecycle
+As an ML practitioner, I want Schola to coordinate observations, actions, rewards, terminal states, and resets so that training proceeds across complete episodes.
+Acceptance: Step supplies observation, accepts action. Returns observation, reward, done. Reset restores valid state. Auto-reset modes. Multiple environments. Integration test multiple episodes.
 
-Run trained policy in Unity
-As a Unity game developer, I want to load a compatible exported ONNX policy in order to let an agent act without a Python training process.
-Acceptance: Example loads a documented compatible model, maps observations/actions, and runs inference with Python stopped.
+US5: Configure Schola through Unity-native tools
+As a Unity developer, I want to configure agents and environments through Unity components and the Inspector so that I can use familiar workflows.
+Acceptance: Add components via normal node workflow. Inspector settings. Demo configured without editing source. Reward shaping. Max step truncation. Clear config errors.
 
-Understand and reuse integration
-As a Unity game developer, I want a sample scene and setup guide in order to install the package and adapt it to another scene.
-Acceptance: New team member can follow README to install dependencies, run training, export/obtain a model, and run inference; guide explains contracts and limitations.
+US6: Export a trained policy to ONNX
+As a Unity developer, I want to export a trained policy to ONNX so that I can transfer the learned policy from Python into Unity.
+Acceptance: SB3 policy exported via Schola. Valid ONNX. Documented input/output names, shapes, dtypes. Matches environment spaces.
 
-MVP scope: One complete modest example covering these paths. Multi-agent, multiple concurrent environments, broad RL framework coverage, and custom editor windows are stretch goals.
+US7: Run and ship an ONNX policy
+As a Unity developer, I want a trained policy to drive my agent with Python closed and exclude training-only dependencies so that I can ship an autonomous agent.
+Acceptance: Unity loads ONNX, validates spaces. Observe-infer-act loop. Learned behavior without Python. Clear model errors. Separate training/transport from inference. Export runs without Python/gRPC. Exclude training add-on. Docs identify modules.
+
+Partner review: Team will send this artifact and architecture to AMD via Teams. Evidence and requested revisions linked after review.
 
 #### Q5: Have you decided on how you will build it? Share what you know now or tell us the options you are considering.
 

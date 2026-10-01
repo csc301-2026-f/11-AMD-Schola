@@ -172,9 +172,9 @@ Stretch goals from Q4 (multi-agent support, concurrent environments, broader RL 
 **Task assignment.** At the weekly internal meeting, members pick up tasks from *Ready* based on the roles in Q7 and their current workload, and every member takes at least one coding task. Each task has exactly one owner. Large tasks are split into vertical slices that can be finished in about a week, and pair work on high-risk pieces is arranged in our ad hoc coding sessions. If two people want the same task, or a task has no clear owner, Fahad makes the final call.
 
 **Tracking status from start to finish.**
-- *In Progress*: the owner has started work on a feature branch.
-- *In Review*: a pull request is open, and its link is attached to the Trello card.
-- *Done*: the PR is merged after review by at least one teammate, the acceptance criteria are met, and automated checks pass (set up by Talha Asif, testing and CI lead).
+- *In Progress*: The owner has started work on a feature branch.
+- *In Review*: A pull request is open, and its link is attached to the Trello card.
+- *Done*: The PR is merged after review by at least one teammate, the acceptance criteria are met, and automated checks pass (set up by Talha Asif, testing and CI lead).
 - A user story is complete when all of its cards are Done and its acceptance criteria from Q4 have been demonstrated in the example scene.
 - Blocked cards get a "blocked" label and a note in the team Teams chat explaining the blocker.
 

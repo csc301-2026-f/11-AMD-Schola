@@ -157,9 +157,9 @@ Minutes for partner meetings are stored in [`deliverables/team/minutes`](../team
   
 #### Q9: How will you organize your team?
 
-**Tracking work.** We use a shared Trello board for all implementation tasks. Each of the seven MVP user stories in Q4 (US1-US7) has its own colored label, and its work is broken into cards. Every card has one owner, a short description, a size label (small, medium, large), and acceptance criteria copied from its user story. Our Mentor TA and our AMD contacts are invited to the board. Fahad Moinuddin (team coordinator) maintains the board. The lists are **Backlog → Ready → In Progress → In Review → Done**.
+**Tracking work.** We use a shared Trello board for all implementation tasks. Each of the seven MVP user stories in Q4 (US1-US7) has its own colored label, and its work is broken into cards. Every card has one owner, a short description, a size label (small, medium, large), and acceptance criteria copied from its user story. Fahad Moinuddin (team coordinator) maintains the board. The lists are **Backlog → Ready → In Progress → In Review → Done**.
 
-**Repository setup.** We forked AMD's open-source Schola repository, and every member works from a clone of that fork. Work happens on feature branches and reaches the fork's main branch through pull requests. Once AMD confirms their contribution process, reviewed changes are proposed upstream to AMD's repository. Talha Asif keeps the fork in sync with upstream so our work does not drift from AMD's changes.
+**Repository setup.** We forked AMD's open-source Schola repository into the course organization, and every member works from a local clone of that fork. Work happens on feature branches and reaches the fork's main branch through pull requests.
 
 **Sizing and velocity.** On AMD's advice, we do not estimate in hours, because teams tend to overestimate how much focused work fits in a block, especially when using AI tools. We size tasks as small, medium, or large, and track how many of each we finish per week. That tells us our real velocity, and we use it to plan the next sprint and to tell AMD honestly what will fit in the term.
 

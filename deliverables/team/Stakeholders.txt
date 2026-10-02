@@ -24,7 +24,7 @@ STAKEHOLDERS
  Secondary Partner Contact
     Name: TianYue Liu
     Role/Title: Senior Software Engineer
-    Email: tianyliu@amd.com
+    Email: tianyue.liu@amd.com
  
  
 3. TEACHING ASSISTANT (TA)

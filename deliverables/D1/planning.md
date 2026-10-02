@@ -165,14 +165,18 @@ We have agreed on option 1 & option 2. Our code is open source under the MIT Lic
 
 #### Q6: Have you met with your team?
 
-Q6: Yes. Team-building activity: played Volleyball and met online. Evidence: attached screenshot of the online team call. Fun facts:
+Yes. We played skribbl.io together while being on a google meets call.
 
-Fahad does Brazilian Jiu Jitsu.
-
-Anwar skipped grade 11.
-
-Mahi has a business registered under his name.
+**Evidence:**
+ 
 ![Team Bonding Photo](Team_Bonding_Image.jpeg)
+
+**Fun facts:**
+
+**1.** Fahad does Brazilian Jiu Jitsu.
+**2.** Anwar skipped grade 11.
+**3.** Mahi has a business registered under his name.
+
 
 
 #### Q7 What are the roles and responsibilities on the team?

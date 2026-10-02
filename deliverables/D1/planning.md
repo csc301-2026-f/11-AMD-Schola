@@ -174,7 +174,9 @@ Yes. We played skribbl.io together while being on a google meets call.
 **Fun facts:**
 
 **1.** Fahad does Brazilian Jiu Jitsu.
+
 **2.** Anwar skipped grade 11.
+
 **3.** Mahi has a business registered under his name.
 
 

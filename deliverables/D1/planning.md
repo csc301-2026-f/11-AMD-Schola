@@ -177,7 +177,7 @@ Yes. We played skribbl.io together while being on a google meets call.
 
 **2.** Anwar skipped grade 11.
 
-**3.** Mahi has a business registered under his name.
+**3.** Mahi has an empty shell corporation registered under his name.
 
 
 

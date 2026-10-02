@@ -1,4 +1,4 @@
-# AMD Schola — Unity Integration / Oscorp
+# AMD Schola / Oscorp
 > _Note:_ This document will evolve throughout your project. You commit regularly to this file while working on the project (especially edits/additions/deletions to the _Highlights_ section). 
  > **This document will serve as a master plan between your team, your partner and your TA.**
 
@@ -6,11 +6,11 @@
  
 #### Q1: What is the product?
 
-AMD Schola - Unity Integration is a Unity package that brings AMD’s Schola reinforcement learning tools to Unity. It lets developers define training environments, train agents using Schola’s existing Python tools, and run trained models inside their games.
+We are extending AMD Schola, an open-source reinforcement learning library, by porting its engine integration from Unreal Engine to Unity, making Schola available to Unity developers.
 
-Reinforcement learning allows an agent, such as a game character, to learn through trial and error by receiving rewards for useful actions. For example, a developer could train a character to reach a destination while avoiding obstacles. Our package will let developers define what the character observes, which actions it can take, and what earns rewards.
+Reinforcement learning lets an agent, such as a game character, learn through trial and error by getting rewards for useful actions. Schola already connects Unreal Engine to popular Python training tools like Gymnasium, Stable-Baselines3 and RLlib. Unity has no equivalent support, so Unity developers have to build that connection themselves. Our Unity port will let them set up environments and agents in their scenes, train those agents with Schola's existing Python tools, and run the trained models in their games.
 
-Our partner is AMD, a company that develops processors, graphics hardware, and related software. Alexander Cann, Member of Technical Staff on AMD’s Schola team, is our partner representative and primary point of contact. Schola currently supports Unreal Engine, and our project will bring that workflow to Unity.
+Our partner is AMD, a company that develops high-performance microprocessors and graphics processors. Our partner representatives are Alexander Cann, Member of Technical Staff, and TianYue Liu, Senior Software Engineer, both on AMD's Schola team. Alexander is our primary point of contact.
 
 #### Q2: Who are your target users?
 

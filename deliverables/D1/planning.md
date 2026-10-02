@@ -153,7 +153,6 @@ Fahad does Brazilian Jiu Jitsu.
 Anwar skipped grade 11.
 
 Mahi has a business registered under his name.
-Updated Q6 now includes activity, evidence, and three fun facts.
 ![Team Bonding Photo](Team_Bonding_Image.jpeg)
 
 

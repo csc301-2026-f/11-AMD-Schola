@@ -1,13 +1,15 @@
-AMD Schola — Meeting Minutes
-Date: September 22, 2026
+# AMD Schola — Meeting Minutes
+**Date:** September 22, 2026
 
-ATTENDEES
+## Attendees
 
-AMD
+**AMD**
+
 - Alex Cann
 - Tian Yue
 
-Student team
+**Student team**
+
 - Mohammad Mahi Ali Mukati
 - Talha Asif
 - Anwar Khan
@@ -16,7 +18,7 @@ Student team
 - Muhammad Wasi Ur-Rahman
 - Fahad Moinuddin
 
-1. CONTACTS AND COMMUNICATION
+## 1. Contacts and Communication
 
 Alex Cann will serve as the AMD point of contact while AMD finalizes internal assignments. He expects to remain involved across the projects. Tian Yue may become the primary contact for a specific project once responsibilities are settled.
 
@@ -26,7 +28,7 @@ Microsoft Teams is the preferred channel for quick questions and resolving block
 
 Alex will share his email and create a Teams group chat with attendees.
 
-2. MEETING CADENCE AND PROGRAM EXPECTATIONS
+## 2. Meeting Cadence and Program Expectations
 
 Alex proposed weekly check-ins initially, with flexibility around midterms, availability, and progress. Longer gaps can leave simple blockers unresolved and slow progress alongside other school commitments. Meetings may become less frequent as the team becomes more independent.
 
@@ -34,7 +36,7 @@ No formal preparation is required for check-ins; a brief progress update, discus
 
 Alex expects the program to introduce an Agile framework or similar structure, including an internal student point of contact. These program requirements were anticipated rather than confirmed during the meeting.
 
-3. PROJECT SCOPE AND TEAM ALLOCATION
+## 3. Project Scope and Team Allocation
 
 This team is provisionally assigned to the Unity integration. A student team member expressed a preference for remaining with Unity because of existing experience.
 
@@ -44,11 +46,12 @@ If two teams are assigned to Unity, AMD may divide and expand the scope between 
 
 The student team should discuss whether it would be open to Godot or an application project and report its preference; no urgent deadline was specified.
 
-4. DESIGN MOCKUP — DELIVERABLE 1
+## 4. Design Mockup — Deliverable 1
 
 A student team member asked how to approach a design mockup for a library rather than a website or conventional end-user application.
 
 Alex recommended focusing on the interfaces exposed to game developers and designers. A mockup could show:
+
 - Which objects, tools, and interfaces the library exposes.
 - How those components interact.
 - How developers configure and use the integration.
@@ -60,9 +63,9 @@ The design should justify architectural choices, including how observers connect
 
 For the editor experience, Alex recommended extending Unity's existing interface and familiar workflows. A completely new interface should only be introduced if it offers a clear, meaningful usability benefit.
 
-5. SCHOLA ARCHITECTURE: TRAINING AND INFERENCE
+## 5. Schola Architecture: Training and Inference
 
-Training flow
+### Training flow
 
 Schola extracts information from an Unreal game and exposes it to Python as a reinforcement learning environment. This representation need not reproduce every detail of the game; it must provide the information required for RL tooling such as RLlib, Stable-Baselines3 (SB3), and Gymnasium.
 
@@ -70,7 +73,7 @@ At the engine level, the core components include an environment manager and obje
 
 The environment interface includes observations and training-related information such as rewards, episode completion status, and metadata.
 
-Inference flow
+### Inference flow
 
 A policy takes observations as input and produces actions as output. The same observation and action components can be reused for inference without training-specific fields such as rewards and episode completion status.
 
@@ -78,18 +81,20 @@ An agent is a convenience interface that bundles observation collection and acti
 
 Alex recommended running inference inside the game engine rather than relying on a separate Python process during gameplay. This avoids additional communication latency, failure points, and the complexity of waiting for an external process on the game thread.
 
-6. UNITY IMPLEMENTATION APPROACH
+## 6. Unity Implementation Approach
 
 The team could begin with either inference or training communication. Both paths should use compatible engine-level abstractions.
 
-Inference
+### Inference
+
 - Export a model from Schola's Python tooling in ONNX format.
 - Determine how to run that model inside Unity.
 - Build the supporting observation, action, and policy components.
 
 Alex suggested inference may be the easier starting point.
 
-Training communication
+### Training communication
+
 - Implement the Unity-side gRPC service using Schola's existing Protocol Buffers definitions.
 - Connect it to the existing Python side, which should remain unchanged for standard use cases.
 - Propose Python changes through a pull request if a genuine need arises.
@@ -100,11 +105,12 @@ Potential difficulties include debugging communication across processes and mana
 
 A possible additional contribution is Unity support for automatically building and launching an executable from an unbuilt project. Similar functionality already exists for Unreal and is useful for iterative testing and running multiple environment instances. This was discussed as an optional feature, not a committed deliverable.
 
-7. MILESTONES AND DESIGN RISKS
+## 7. Milestones and Design Risks
 
 No fixed implementation schedule was agreed. Alex said timing will depend on the team's velocity and how work is divided.
 
 Three anticipated challenges are:
+
 - Running ONNX inference successfully in Unity.
 - Implementing the gRPC communication layer.
 - Designing flexible, developer-friendly engine abstractions.
@@ -115,7 +121,7 @@ The design should avoid imposing unnecessary assumptions. For example, inference
 
 Expectations at the one-third and two-thirds project checkpoints will depend on whether the team develops training and inference sequentially, splits them between subteams, or progresses both in parallel.
 
-8. DEVELOPMENT PRACTICES
+## 8. Development Practices
 
 Alex described AMD's Schola development as primarily AI-assisted, with mandatory human code review, including team members reviewing each other's pull requests.
 
@@ -123,26 +129,29 @@ He advised realistic planning: available work time does not translate directly i
 
 The team should establish testing infrastructure early. Game engines are difficult to test because they produce interactive applications with interfaces that may not be readily accessible programmatically. Tests are particularly valuable for maintaining quality in AI-assisted development.
 
-9. ACTION ITEMS
+## 9. Action Items
 
-Student team
+**Student team**
+
 - Send Alex several options for recurring weekly meetings within 1–2 days of the meeting.
 - Select a formal student point of contact for AMD email communication.
 - Discuss whether the team would consider Godot or an application project, and communicate its preference. Unity remains the provisional assignment.
 
-Alex Cann
+**Alex Cann**
+
 - Share his email and create a Teams group chat with attendees.
 - Share publicly available Schola resources.
 - Check internally whether the presentation slides can be shared.
 - Coordinate with the program/TA/professor to finalize project allocation and report back.
 - Communicate any changes to AMD point-of-contact assignments.
 
-Recommended development priorities
+**Recommended development priorities**
+
 - Define and justify the Unity-facing abstraction and developer workflow.
 - Decide how to divide training communication and inference work.
 - Set up testing infrastructure early.
 
-10. ITEMS STILL TO BE CONFIRMED
+## 10. Items Still to Be Confirmed
 
 - Final allocation of student teams across Unity, Godot, and any application project.
 - AMD's long-term point-of-contact assignments.
@@ -151,4 +160,4 @@ Recommended development priorities
 - Whether the presentation slides can be shared.
 - Detailed milestones and schedule, informed by the team's initial progress.
 
-Attribution note: Unidentified speakers in the source notes are referred to as student team members; their individual identities have not been inferred.
+**Attribution:** Unidentified speakers in the source notes are referred to as student team members; their individual identities have not been inferred.

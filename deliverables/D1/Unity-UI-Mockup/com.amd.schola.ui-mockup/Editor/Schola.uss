@@ -1,0 +1,52 @@
+.schola { flex-grow: 1; color: rgb(210, 210, 210); background-color: rgb(56, 56, 56); }
+.brand-header { height: 50px; min-height: 50px; flex-direction: row; align-items: center; padding-left: 20px; padding-right: 18px; border-bottom-width: 1px; border-bottom-color: rgb(32, 32, 32); background-color: rgb(46, 46, 46); }
+.amd { font-size: 15px; -unity-font-style: bold; margin-right: 12px; color: rgb(239, 239, 239); }
+.wordmark { font-size: 17px; -unity-font-style: bold; letter-spacing: 2px; color: rgb(239, 239, 239); }
+.platform { font-size: 10px; letter-spacing: 1px; color: rgb(163, 163, 163); margin-right: 12px; }
+.badge { font-size: 9px; letter-spacing: 0.7px; padding: 4px 7px; border-width: 1px; border-color: rgb(102, 102, 102); border-radius: 3px; color: rgb(191, 191, 191); }
+.workspace-body { flex-direction: row; flex-grow: 1; min-height: 0; }
+.navigation { width: 166px; min-width: 166px; padding-top: 16px; background-color: rgb(46, 46, 46); border-right-width: 1px; border-right-color: rgb(32, 32, 32); }
+.nav-caption { font-size: 9px; letter-spacing: 1.2px; color: rgb(147, 147, 147); margin: 0 16px 14px 16px; }
+.nav-button { flex-direction: row; align-items: center; height: 34px; margin: 1px 8px; padding-left: 10px; background-color: transparent; border-width: 0; border-radius: 3px; -unity-text-align: middle-left; }
+.nav-button:hover { background-color: rgb(65, 65, 65); }
+.nav-button.selected { background-color: rgb(44, 93, 135); color: white; }
+.nav-icon { width: 16px; height: 16px; margin-right: 9px; }
+.nav-footer { white-space: normal; font-size: 10px; color: rgb(145, 145, 145); margin: 16px; }
+.details-scroll { flex-grow: 1; min-width: 0; }
+.details { padding: 16px 22px 24px 22px; }
+.page-title { font-size: 22px; -unity-font-style: bold; margin: 0 0 7px 0; }
+.description { white-space: normal; font-size: 12px; color: rgb(179, 179, 179); margin: 0 0 8px 0; }
+.preview-note { white-space: normal; font-size: 10px; color: rgb(148, 148, 148); margin: 0 0 13px 0; }
+.section { margin: 0 0 8px 0; padding: 0 0 3px 0; border-top-width: 1px; border-top-color: rgb(77, 77, 77); }
+.section > .unity-foldout__toggle { height: 25px; margin-left: 0; -unity-font-style: bold; }
+.section .section { margin-top: 5px; margin-bottom: 2px; }
+.property { min-height: 23px; margin-top: 1px; margin-bottom: 2px; flex-grow: 0; }
+.property > .unity-base-field__label { min-width: 130px; width: 43%; max-width: 245px; white-space: normal; -unity-text-align: middle-left; padding-right: 8px; font-size: 11px; }
+.property > .unity-base-field__input { min-width: 60px; flex-grow: 1; flex-shrink: 1; font-size: 11px; }
+.readonly:disabled { opacity: 0.88; }
+.selector { margin-bottom: 5px; }
+.note { white-space: normal; font-size: 11px; color: rgb(162, 162, 162); margin: 7px 3px 10px 3px; }
+.operation { align-self: flex-start; padding: 5px 18px; margin: 16px 0 0 0; }
+.inspect-button { align-self: flex-start; padding: 5px 14px; margin: 16px 0 0 0; }
+.statusbar { height: 24px; min-height: 24px; flex-direction: row; align-items: center; padding-left: 13px; background-color: rgb(46, 46, 46); border-top-width: 1px; border-top-color: rgb(32, 32, 32); }
+.status { font-size: 10px; color: rgb(158, 158, 158); }
+.ray-diagram { height: 140px; margin: 8px 3px; border-width: 1px; border-color: rgb(77, 77, 77); }
+.inspector-content { padding: 14px 8px; }
+.inspector-preview .brand-header { padding-left: 10px; padding-right: 10px; height: 48px; min-height: 48px; }
+.inspector-preview .platform { display: none; }
+.narrow .wordmark { font-size: 13px; letter-spacing: 1px; }
+.narrow .amd { font-size: 12px; margin-right: 7px; }
+.narrow .badge { font-size: 8px; padding: 3px; }
+.narrow .page-title { font-size: 18px; }
+.narrow .property { flex-direction: column; align-items: stretch; margin-bottom: 8px; }
+.narrow .property > .unity-base-field__label { width: auto; max-width: none; min-width: 0; min-height: 18px; }
+.narrow .property > .unity-base-field__input { min-height: 21px; }
+.light { color: rgb(45, 45, 45); background-color: rgb(203, 203, 203); }
+.light .brand-header, .light .navigation, .light .statusbar { background-color: rgb(190, 190, 190); border-color: rgb(157, 157, 157); }
+.light .amd, .light .wordmark { color: rgb(35, 35, 35); }
+.light .description, .light .note { color: rgb(72, 72, 72); }
+.light .preview-note, .light .nav-caption, .light .nav-footer, .light .platform, .light .status { color: rgb(88, 88, 88); }
+.light .badge { color: rgb(65, 65, 65); border-color: rgb(132, 132, 132); }
+.light .section, .light .ray-diagram { border-color: rgb(166, 166, 166); }
+.light .nav-button:hover { background-color: rgb(174, 174, 174); }
+.light .nav-button.selected { background-color: rgb(58, 114, 176); color: white; }

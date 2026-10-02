@@ -1,0 +1,7 @@
+{
+  "name": "Schola.UI.Preview.Editor",
+  "rootNamespace": "Schola.UI.Preview",
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}

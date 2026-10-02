@@ -1,0 +1,34 @@
+STAKEHOLDERS
+============
+ 
+1. PARTNERS
+-----------
+
+    Name: Alexander Cann
+    Title: Member of Technical Staff
+    Email: alexander.cann@amd.com
+ 
+    Name: TianYue Liu
+    Title: Senior Software Engineer
+    Email: tianyliu@amd.com
+ 
+ 
+2. PARTNER CONTACT ROLES
+------------------------
+ 
+ Primary Partner Contact
+    Name: Alexander Cann
+    Role/Title: Member of Technical Staff
+    Email: alexander.cann@amd.com
+     
+ Secondary Partner Contact
+    Name: TianYue Liu
+    Role/Title: Senior Software Engineer
+    Email: tianyliu@amd.com
+ 
+ 
+3. TEACHING ASSISTANT (TA)
+--------------------------
+ 
+    Name: Rui Song
+    Email: ruii.song@mail.utoronto.ca

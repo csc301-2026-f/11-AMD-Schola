@@ -142,6 +142,25 @@ Flow: Unity scene → Environment interfaces → gRPC adapter ↔ Python RL clie
 
 Third-Party Applications & APIs: gRPC (Google.Protobuf, Grpc.Tools, YetAnotherHttpHandler), Unity Sentis/Barracuda, Python RL libraries.
 
+----
+## Intellectual Property Confidentiality Agreement 
+> Note this section is **not marked** but must be completed briefly if you have a partner. If you have any questions, please ask on Piazza.
+>  
+**By default, you own any work that you do as part of your coursework.** However, some partners may want you to keep the project confidential after the course is complete. As part of your first deliverable, you should discuss and agree upon an option with your partner. Examples include:
+1. You can share the software and the code freely with anyone with or without a license, regardless of domain, for any use.
+2. You can upload the code to GitHub or other similar publicly available domains.
+3. You will only share the code under an open-source license with the partner but agree to not distribute it in any way to any other entity or individual. 
+4. You will share the code under an open-source license and distribute it as you wish but only the partner can access the system deployed during the course.
+5. You will only reference the work you did in your resume, interviews, etc. You agree to not share the code or software in any capacity with anyone unless your partner has agreed to it.
+
+**Your partner cannot ask you to sign any legal agreements or documents pertaining to non-disclosure, confidentiality, IP ownership, etc.**
+
+Briefly describe which option you have agreed to.
+
+We have agreed on option 1 & option 2. Our code is open source under the MIT License and can be shared freely and hosted publicly on GitHub.
+
+----
+
 ## Teamwork Details
 
 #### Q6: Have you met with your team?

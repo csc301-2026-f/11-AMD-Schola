@@ -1,4 +1,4 @@
-# AMD Schola — Unity Integration / Oscorp
+# AMD Schola / Oscorp
 > _Note:_ This document will evolve throughout your project. You commit regularly to this file while working on the project (especially edits/additions/deletions to the _Highlights_ section). 
  > **This document will serve as a master plan between your team, your partner and your TA.**
 
@@ -6,11 +6,11 @@
  
 #### Q1: What is the product?
 
-AMD Schola - Unity Integration is a Unity package that brings AMD’s Schola reinforcement learning tools to Unity. It lets developers define training environments, train agents using Schola’s existing Python tools, and run trained models inside their games.
+We are extending AMD Schola, an open-source reinforcement learning library, by porting its engine integration from Unreal Engine to Unity, making Schola available to Unity developers.
 
-Reinforcement learning allows an agent, such as a game character, to learn through trial and error by receiving rewards for useful actions. For example, a developer could train a character to reach a destination while avoiding obstacles. Our package will let developers define what the character observes, which actions it can take, and what earns rewards.
+Reinforcement learning lets an agent, such as a game character, learn through trial and error by getting rewards for useful actions. Schola already connects Unreal Engine to popular Python training tools like Gymnasium, Stable-Baselines3 and RLlib. Unity has no equivalent support, so Unity developers have to build that connection themselves. Our Unity port will let them set up environments and agents in their scenes, train those agents with Schola's existing Python tools, and run the trained models in their games.
 
-Our partner is AMD, a company that develops processors, graphics hardware, and related software. Alexander Cann, Member of Technical Staff on AMD’s Schola team, is our partner representative and primary point of contact. Schola currently supports Unreal Engine, and our project will bring that workflow to Unity.
+Our partner is AMD, a company that develops high-performance microprocessors and graphics processors. Our partner representatives are Alexander Cann, Member of Technical Staff, and TianYue Liu, Senior Software Engineer, both on AMD's Schola team. Alexander is our primary point of contact.
 
 #### Q2: Who are your target users?
 
@@ -164,7 +164,7 @@ Our roles follow the main parts of the project: the Unity-facing API, the traini
 | Role | Responsibilities |
 | --- | --- |
 | Partner liaison | Formal point of contact for AMD email; monitors the Teams chat; schedules partner check-ins; sends agendas, Q4/Q5 and IP questions; records AMD decisions and meeting minutes. |
-| Team coordinator (Scrum master) | Runs internal meetings; maintains the task board and sprint priorities; follows up on action items; tracks deliverable deadlines. |
+| Team coordinator | Runs internal meetings; maintains the task board and sprint priorities; follows up on action items; tracks deliverable deadlines. |
 | Unity API & editor integration | Designs the Unity-facing abstractions (agent, observers, actuators, policy, decision triggers) and their Inspector/editor workflow; leads the design review with AMD. |
 | Training communication (gRPC) | Implements the Unity-side gRPC service against Schola's existing Protocol Buffers definitions; handles step/reset and episode flow; checks compatibility with the unchanged Python client. |
 | Inference (ONNX) | Runs policies exported from Schola as ONNX inside Unity; builds the policy component; documents runtime, operator, version and platform limits. |
@@ -191,11 +191,11 @@ Our roles follow the main parts of the project: the Unity-facing API, the traini
 * _Responsibilities:_ Runs ONNX policies exported from Schola inside Unity; builds the Unity policy component and connects it to the shared observer/actuator components so inference and training use the same mappings; documents runtime and platform limits.
 * _Why:_ Has experience with game engines and C# for Unity-side work, plus hands-on ML from an ASL classifier (Python, OpenCV, TensorFlow/Keras). At ND Research, changed an existing AI system without disrupting its architecture, which is similar to extending Schola. Wants to learn more about reinforcement learning.
 
-**Fahad Moinuddin — Team coordinator (Scrum master); Inference (ONNX) & end-to-end validation**
+**Fahad Moinuddin — Team coordinator & Inference (ONNX)**
 * _Responsibilities:_ Runs internal meetings, maintains the task board and sprint priorities, and follows up on action items and deadlines. On the code side, handles model export from the Python side and checks exported model inputs/outputs with Anwar, and validates end-to-end training and inference on the benchmark environment.
 * _Why:_ Led a 6-person backend team through 7 weekly scrums and directed a 4-person team through a 4-week sprint. Has trained neural networks on large image datasets and built real-time 3D/computer vision systems, which suits model export and validation.
 
-**Muzzammil — Example environment & documentation lead**
+**Muzzammil —  Environment and documentation lead & end-to-end validation**
 * _Responsibilities:_ Builds the sample Unity scene used to demonstrate training and inference; trains and evaluates the example agent; writes setup guides, tutorials and API documentation.
 * _Why:_ Wrote Unity and C# lessons for Ultimate Coders, breaking down Unity's component/scripting model for students, which suits documentation and examples. Trained and evaluated a PPO agent on CartPole with Gymnasium and Stable-Baselines3, so has practical experience with the RL loop the example must demonstrate. Designed, tested and shipped a React Native app to the App Store, and is learning gRPC.
 
@@ -216,14 +216,14 @@ Minutes for partner meetings are stored in [`deliverables/team/minutes`](../team
 
 **Partner meetings before D1**
 
-1. **Kickoff — Tuesday, 22nd September, morning 9:30, online.** Attendees: Alex Cann and Tian Yue (AMD) and all seven team members. We covered communication channels (Teams preferred, email for async), a proposed weekly check-in cadence, provisional Unity allocation, how to approach a design mockup for a library, Schola's training and inference architecture, a suggested Unity approach (ONNX inference and a gRPC service using existing protos), key risks, and AMD's development practices. Action items: send weekly meeting options, select a formal point of contact, and report our preference on Unity/Godot/application. [Minutes](../team/minutes/26-10-22-minutes.txt).
-2. **Weekly check-in — Thursday, 1st October, morning 9:30, online on Microsoft Teams.** Attendees: All team members. Show our progress and get feedback. [TODO: link to minutes].
+1. **Kickoff — Tuesday, 22nd September, morning 9:30, online.** Attendees: Alex Cann and Tian Yue (AMD) and all seven team members. We covered communication channels (Teams preferred, email for async), a proposed weekly check-in cadence, provisional Unity allocation, how to approach a design mockup for a library, Schola's training and inference architecture, a suggested Unity approach (ONNX inference and a gRPC service using existing protos), key risks, and AMD's development practices. Action items: send weekly meeting options, select a formal point of contact, and report our preference on Unity/Godot/application. [Minutes](../team/minutes/22-09-26-minutes.txt).
+2. **Weekly check-in — Thursday, 1st October, morning 9:30, online on Microsoft Teams.** Attendees: All team members. Show our progress and get feedback as well as get clarification on inference [Minutes](../team/minutes/01-10-26).
   
 #### Q9: How will you organize your team?
 
-**Tracking work.** We use a GitHub Projects board linked to our team repository. Each of the six MVP user stories in Q4 is an epic, and it is broken into issues with one owner, a short description, a size label, and acceptance criteria copied from the story. Our Mentor TA and our AMD contacts are given access to the board. Fahad Moinuddin (team coordinator) maintains the board. The columns are **Backlog → Ready → In Progress → In Review → Done**.
+**Tracking work.** We use a shared Trello board for all implementation tasks. Each of the seven MVP user stories in Q4 (US1-US7) has its own colored label, and its work is broken into cards. Every card has one owner, a short description, a size label (small, medium, large), and acceptance criteria copied from its user story. Fahad Moinuddin (team coordinator) maintains the board. The lists are **Backlog → Ready → In Progress → In Review → Done**.
 
-**Repository setup.** We forked AMD's open-source Schola repository, and every member works from a clone of that fork. Work happens on feature branches and reaches the fork's main branch through pull requests. Once AMD confirms their contribution process, reviewed changes are proposed upstream to AMD's repository. Talha Asif keeps the fork in sync with upstream so our work does not drift from AMD's changes.
+**Repository setup.** We forked AMD's open-source Schola repository into the course organization, and every member works from a local clone of that fork. Work happens on feature branches and reaches the fork's main branch through pull requests.
 
 **Sizing and velocity.** On AMD's advice, we do not estimate in hours, because teams tend to overestimate how much focused work fits in a block, especially when using AI tools. We size tasks as small, medium, or large, and track how many of each we finish per week. That tells us our real velocity, and we use it to plan the next sprint and to tell AMD honestly what will fit in the term.
 
@@ -236,14 +236,14 @@ Stretch goals from Q4 (multi-agent support, concurrent environments, broader RL 
 **Task assignment.** At the weekly internal meeting, members pick up tasks from *Ready* based on the roles in Q7 and their current workload, and every member takes at least one coding task. Each task has exactly one owner. Large tasks are split into vertical slices that can be finished in about a week, and pair work on high-risk pieces is arranged in our ad hoc coding sessions. If two people want the same task, or a task has no clear owner, Fahad makes the final call.
 
 **Tracking status from start to finish.**
-- *In Progress*: the owner has started work on a feature branch.
-- *In Review*: a pull request is open and linked to the issue.
-- *Done*: the PR is merged after review by at least one teammate, the acceptance criteria are met, and automated checks pass (set up by Talha Asif, testing and CI lead).
-- A user story is complete when all of its issues are Done and its acceptance criteria from Q4 have been demonstrated in the example scene.
-- Blocked tasks get a "blocked" label and a note in the team Teams chat explaining the blocker.
+- *In Progress*: The owner has started work on a feature branch.
+- *In Review*: A pull request is open, and its link is attached to the Trello card.
+- *Done*: The PR is merged after review by at least one teammate, the acceptance criteria are met, and automated checks pass (set up by Talha Asif, testing and CI lead).
+- A user story is complete when all of its cards are Done and its acceptance criteria from Q4 have been demonstrated in the example scene.
+- Blocked cards get a "blocked" label and a note in the team Teams chat explaining the blocker.
 
 **Other artifacts.**
-- Meeting minutes for every partner meeting in `deliverables/team/minutes/`, written up by a rotating note-taker.
+- Meeting minutes for every partner meeting in `deliverables/team/minutes/`, written up by an AI note-taker.
 - The team CSV and `Stakeholders.txt` in `deliverables/team/`.
 - The README, updated as setup and tooling change.
 - A decision log recording each open question for AMD, who owns it, and AMD's answer with a date. Mahi Ali Mukati (partner liaison) maintains it.
@@ -257,8 +257,8 @@ Stretch goals from Q4 (multi-agent support, concurrent environments, broader RL 
 * **Meetings:** A weekly AMD check-in and a weekly internal meeting, both on Microsoft Teams in the Tuesday or Thursday morning slot (see Q8).
 
 **Collaboration:**
-* **Accountability:** Every meeting has a rotating note-taker, and action items are recorded with an owner and a date. Members who cannot attend tell the team beforehand and read the minutes. Fahad reviews open action items at the start of each internal meeting and follows up on anything overdue.
-* **Code standards:** Each member works on a feature branch in our fork, and the main branch is protected. Every change goes through a pull request that a human teammate reviews before merging, following AMD's Schola practice. This applies to AI-assisted code as well: whoever opens the PR is responsible for understanding it and must be able to explain it in review. We set up automated tests early so that AI-assisted changes are checked automatically. Commits and PRs link to their issue.
+* **Accountability:** Every meeting has an AI note-taker, and action items are recorded with an owner and a date. Members who cannot attend tell the team beforehand and read the minutes. 
+* **Code standards:** Each member works on a feature branch in our fork, and the main branch is protected. Every change goes through a pull request that a teammate reviews before merging, following AMD's Schola practice. This applies to AI-assisted code as well: whoever opens the PR is responsible for understanding it and must be able to explain it in review. We set up automated tests early so that AI-assisted changes are checked automatically. Commits and PRs link to their issue.
 * **If someone isn't contributing or responding:**
   1. Fahad or a teammate checks in privately within two days to find out what is blocking them.
   2. If it continues, we discuss it as a team and agree on a smaller, clearly defined task with a deadline.

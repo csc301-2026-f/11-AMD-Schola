@@ -1,0 +1,14 @@
+{
+  "name": "com.amd.schola.ui-mockup",
+  "version": "0.1.0",
+  "displayName": "AMD Schola \u2014 Unity UI Mockup",
+  "description": "Editor-only UI mockup of proposed Schola workflows. Read-only example settings; no training, inference, Python connection, or saved configuration.",
+  "unity": "6000.3",
+  "keywords": [
+    "schola",
+    "reinforcement-learning",
+    "editor",
+    "mockup"
+  ],
+  "license": "MIT"
+}

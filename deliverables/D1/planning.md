@@ -91,78 +91,131 @@ The team will send this artifact and the accompanying architecture to AMD throug
 
 #### Q5: Have you decided on how you will build it? Share what you know now or tell us the options you are considering.
 
-Technology Stack: C# (Unity plugin), Python 3.10–3.12 (training client). gRPC/Protobuf for communication. Gymnasium, Ray RLlib, Stable-Baselines3. ONNX via Unity Sentis.
+**Technology Stack:** C# for the Unity plugin and Python 3.10–3.12 for Schola’s existing training client. gRPC/Protobuf for communication; Gymnasium, Ray RLlib, and Stable-Baselines3 for training; ONNX and Unity Sentis for model import and inference.
 
-Deployment: Distributed as a Unity Package Manager (UPM) package (Git URL/tarball). Includes sample project, tests, and README. No web deployment.
+**Deployment:** Distributed as a Unity Package Manager (UPM) package through a Git URL or tarball, with a sample project, tests, and README. Developers install it in their Unity projects and include local inference in their game builds. No web hosting or PaaS is required.
 
-Architecture:
+**Architecture:**
 
-Unity: Environment Manager, Observation/Action/Policy interfaces.
+![Schola Unity architecture](architecture.jpeg)
 
-Training Adapter: Implements gRPC/Protobuf service to connect Unity to Python RL client.
+The C# layer contains environments, sensors, actuators, and agents. For training, a Gym Connector and gRPC/Protobuf service exchange actions, observations, and rewards with Schola’s reused Python tools. For local inference, an inference stepper controls when the Unity Sentis policy runs an imported ONNX model and returns actions to the agent, without Python.
 
-Inference Adapter: Loads compatible ONNX policy locally, applies actions without Python.
+**Third-Party Applications & APIs:** Schola’s existing Python APIs, Gymnasium, Ray RLlib, Stable-Baselines3, and Unity Sentis. Communication dependencies under consideration include Google.Protobuf, Grpc.Tools, and YetAnotherHttpHandler.
 
-Flow: Unity scene → Environment interfaces → gRPC adapter ↔ Python RL client → ONNX → Unity inference adapter → actions.
+----
+## Intellectual Property Confidentiality Agreement 
+> Note this section is **not marked** but must be completed briefly if you have a partner. If you have any questions, please ask on Piazza.
+>  
+**By default, you own any work that you do as part of your coursework.** However, some partners may want you to keep the project confidential after the course is complete. As part of your first deliverable, you should discuss and agree upon an option with your partner. Examples include:
+1. You can share the software and the code freely with anyone with or without a license, regardless of domain, for any use.
+2. You can upload the code to GitHub or other similar publicly available domains.
+3. You will only share the code under an open-source license with the partner but agree to not distribute it in any way to any other entity or individual. 
+4. You will share the code under an open-source license and distribute it as you wish but only the partner can access the system deployed during the course.
+5. You will only reference the work you did in your resume, interviews, etc. You agree to not share the code or software in any capacity with anyone unless your partner has agreed to it.
 
-Third-Party Applications & APIs: gRPC (Google.Protobuf, Grpc.Tools, YetAnotherHttpHandler), Unity Sentis/Barracuda, Python RL libraries.
+**Your partner cannot ask you to sign any legal agreements or documents pertaining to non-disclosure, confidentiality, IP ownership, etc.**
+
+Briefly describe which option you have agreed to.
+
+We have agreed on option 1 & option 2. Our code is open source under the MIT License and can be shared freely and hosted publicly on GitHub.
+
+----
 
 ## Teamwork Details
 
 #### Q6: Have you met with your team?
 
-Q6: Yes. Team-building activity: played Volleyball and met online. Evidence: attached screenshot of the online team call. Fun facts:
+Yes. We played skribbl.io together while being on a google meets call.
 
-Fahad does Brazilian Jiu Jitsu.
-
-Anwar skipped grade 11.
-
-Mahi has a business registered under his name.
+**Evidence:**
+ 
 ![Team Bonding Photo](Team_Bonding_Image.jpeg)
 
+**Fun facts:**
 
-#### Q7: What are the roles & responsibilities on the team?
+**1.** Fahad does Brazilian Jiu Jitsu.
 
-Our roles follow the main parts of the project: the Unity-facing API, the training connection to Schola's Python side (gRPC), local inference (ONNX), and the testing and example work that ties them together. Every member owns at least one code component. Non-code roles (liaison, coordinator) are added on top of coding work, not in place of it.
+**2.** Anwar skipped grade 11.
 
-| Role | Responsibilities |
+**3.** Mahi has an empty shell corporation registered under his name.
+
+
+
+#### Q7 What are the roles and responsibilities on the team?
+
+We have divided the work into Unity components, the Python training connection, ONNX inference, testing, and examples. Everyone contributes to coding. The partner liaison and team coordinator also handle communication and planning.
+
+<table>
+<thead>
+<tr><th>Role</th><th>Responsibilities</th></tr>
+</thead>
+<tbody>
+<tr><td>Partner liaison</td><td>Communicates with AMD through email and Teams, schedules meetings, shares questions and feedback, and makes sure meeting notes and decisions are recorded.</td></tr>
+<tr><td>Team coordinator</td><td>Organizes team meetings, updates the task board, helps set priorities, and tracks tasks and deadlines.</td></tr>
+<tr><td>Unity API and editor integration</td><td>Builds the Unity components for environments, agents, sensors, actuators, and policies. Makes them easy to configure in the Unity editor and reviews the design with AMD.</td></tr>
+<tr><td>Training communication using gRPC</td><td>Builds the Unity service using Schola’s existing Protocol Buffers definitions. Handles environment steps, resets, and episodes, and checks that it works with the existing Python client.</td></tr>
+<tr><td>Inference using ONNX</td><td>Loads and runs exported ONNX policies in Unity. Connects the model to the agent’s observations and actions and documents runtime and platform limitations.</td></tr>
+<tr><td>Testing and CI</td><td>Sets up automated tests, checks that training and inference work together, and helps review pull requests.</td></tr>
+<tr><td>Example environment and documentation</td><td>Builds a sample Unity scene to demonstrate training and inference. Writes setup instructions, examples, and API documentation.</td></tr>
+</tbody>
+</table>
+
+### Mohammad Mahi Ali Mukati
+
+| Field | Description |
 | --- | --- |
-| Partner liaison | Formal point of contact for AMD email; monitors the Teams chat; schedules partner check-ins; sends agendas, Q4/Q5 and IP questions; records AMD decisions and meeting minutes. |
-| Team coordinator | Runs internal meetings; maintains the task board and sprint priorities; follows up on action items; tracks deliverable deadlines. |
-| Unity API & editor integration | Designs the Unity-facing abstractions (agent, observers, actuators, policy, decision triggers) and their Inspector/editor workflow; leads the design review with AMD. |
-| Training communication (gRPC) | Implements the Unity-side gRPC service against Schola's existing Protocol Buffers definitions; handles step/reset and episode flow; checks compatibility with the unchanged Python client. |
-| Inference (ONNX) | Runs policies exported from Schola as ONNX inside Unity; builds the policy component; documents runtime, operator, version and platform limits. |
-| Testing & CI | Sets up Unity test infrastructure and automated checks early; writes shape/contract tests that keep training and inference paths consistent; coordinates pull request reviews. |
-| Example environment & documentation | Builds the sample Unity scene used for the end-to-end demo; writes setup guides and API documentation. |
+| Role | Unity integration lead |
+| Responsibilities | Designs the Unity environment, agent, sensor, actuator, and policy components and how developers configure them in the editor. Reviews the design with AMD and helps with testing. Handles partner communication, schedules meetings, and records feedback and decisions. |
+| Relevant experience | Previously ran a Unity game studio and worked with C#, NPC AI, and gameplay programming. Built reusable components in a JavaFX project. At REP, worked as a developer and QA tester, attended client meetings, and used feedback to guide development. |
 
-**Mohammad Mahi Ali Mukati — Partner liaison; Unity API & editor integration lead**
-* _Responsibilities:_ Designs the Unity-facing Environment, Agent, observer (sensor), actuator and policy components and how developers configure them in the Unity editor; leads the interface design review with AMD; supports Unity-side testing. As liaison, is the formal email contact for AMD, schedules check-ins, relays requirements and feedback to the team, and ensures minutes are recorded.
-* _Why:_ Previously ran a Unity game studio, is fluent in C#, and has written NPC AI and gameplay algorithms in Unity. A JavaFX project using MVC and design patterns gives experience structuring reusable, modular components. As a developer and QA tester at REP, took part in client meetings and turned feedback into development priorities, which fits the liaison role.
+### Yahyaa Yasin
 
-**Yahyaa Yasin — Training communication (gRPC) lead**
-* _Responsibilities:_ Implements the Unity-side gRPC service in C# against Schola's existing Protocol Buffers definitions, including step/reset and episode handling; compares behaviour with the Unreal reference implementation to reach feature parity with the unchanged Python client.
-* _Why:_ Built and optimized production server-side C#/.NET systems at Freedom Mobile. Wrote a concurrent TCP client/server system in C with multiplexed socket communication, which is the same problem as exchanging structured messages between two runtimes in a tight loop. Has hands-on Python/PyTorch experience, including reproducing a research paper from scratch, so is comfortable on both sides of the bridge.
+| Field | Description |
+| --- | --- |
+| Role | Training communication lead |
+| Responsibilities | Builds the Unity gRPC service in C# using Schola’s existing Protocol Buffers definitions. Handles environment steps, resets, and episodes. Uses the Unreal implementation to check that Unity works with the existing Python client. |
+| Relevant experience | Built and improved C# and .NET backend systems at Freedom Mobile. Built a TCP client and server in C that handled multiple connections. Has Python and PyTorch experience, including reproducing a research paper. |
 
-**Raahim Chaghtai — Training communication (gRPC) & Python bridge**
-* _Responsibilities:_ Works with Yahyaa on the engine-to-Python bridge: verifies the Unity service against the Python client's contract, adds logging at request/response boundaries, and profiles latency and failures in the training loop. Picks up Unity-side C# tasks as he ramps up.
-* _Why:_ Profiled backend latency across AWS Lambda, AI processing and databases at Safi Data; integrated an LLM through a server-side service layer at Dominarlo; built FastAPI REST APIs at FrontYard, so has experience defining clean contracts between separate systems. Wrote a Unix shell in C covering process control, file descriptors and signals, which is relevant to process/IPC issues. Is currently doing Unity's "Create with Code" path to build C# and Unity foundations.
+### Raahim Chaghtai
 
-**Talha Asif — Python integration & training validation; Testing & CI lead**
-* _Responsibilities:_ Connects the Unity environment to Schola's Python training stack and sets up reproducible training runs; builds evaluation tooling to check that the example agent actually learns; sets up automated checks and end-to-end smoke tests, including a Docker-based setup; contributes to setup documentation.
-* _Why:_ During an AI/ML engineering internship at DevFortress, built configurable training pipelines and evaluated models through controlled experiments. Built APIs and deployed applications with Docker through the Provision project and agent/MCP server development. Wants to build familiarity with Unity and reinforcement learning.
+| Field | Description |
+| --- | --- |
+| Role | Python integration developer |
+| Responsibilities | Works with Yahyaa on the connection between Unity and Python. Checks that messages are exchanged correctly, adds logging, and investigates delays and errors during training. Contributes to Unity development as he learns C# and the engine. |
+| Relevant experience | Investigated backend delays at Safi Data, integrated an LLM into a backend service at Dominarlo, and built FastAPI APIs at FrontYard. Built a Unix shell in C and is currently completing Unity’s Create with Code course. |
 
-**Anwar Khan — Inference (ONNX) lead**
-* _Responsibilities:_ Runs ONNX policies exported from Schola inside Unity; builds the Unity policy component and connects it to the shared observer/actuator components so inference and training use the same mappings; documents runtime and platform limits.
-* _Why:_ Has experience with game engines and C# for Unity-side work, plus hands-on ML from an ASL classifier (Python, OpenCV, TensorFlow/Keras). At ND Research, changed an existing AI system without disrupting its architecture, which is similar to extending Schola. Wants to learn more about reinforcement learning.
+### Talha Asif
 
-**Fahad Moinuddin — Team coordinator & Inference (ONNX)**
-* _Responsibilities:_ Runs internal meetings, maintains the task board and sprint priorities, and follows up on action items and deadlines. On the code side, handles model export from the Python side and checks exported model inputs/outputs with Anwar, and validates end-to-end training and inference on the benchmark environment.
-* _Why:_ Led a 6-person backend team through 7 weekly scrums and directed a 4-person team through a 4-week sprint. Has trained neural networks on large image datasets and built real-time 3D/computer vision systems, which suits model export and validation.
+| Field | Description |
+| --- | --- |
+| Role | Testing and validation lead |
+| Responsibilities | Sets up repeatable training runs using Unity and Schola’s Python tools. Evaluates whether the example agent learns and builds automated checks for the full workflow. Helps with Docker setup and documentation. |
+| Relevant experience | Built training pipelines and evaluated models through controlled experiments during an AI/ML engineering internship at DevFortress. Gained experience building APIs and deploying applications with Docker through Provision and agent and MCP server projects. Wants to develop his Unity and reinforcement learning skills. |
 
-**Muzzammil —  Environment and documentation lead & end-to-end validation**
-* _Responsibilities:_ Builds the sample Unity scene used to demonstrate training and inference; trains and evaluates the example agent; writes setup guides, tutorials and API documentation.
-* _Why:_ Wrote Unity and C# lessons for Ultimate Coders, breaking down Unity's component/scripting model for students, which suits documentation and examples. Trained and evaluated a PPO agent on CartPole with Gymnasium and Stable-Baselines3, so has practical experience with the RL loop the example must demonstrate. Designed, tested and shipped a React Native app to the App Store, and is learning gRPC.
+### Anwar Khan
 
+| Field | Description |
+| --- | --- |
+| Role | ONNX inference lead |
+| Responsibilities | Runs exported ONNX policies inside Unity and builds the policy component. Connects it to the shared sensors and actuators so training and inference use observations and actions consistently. Documents runtime and platform limitations. |
+| Relevant experience | Has experience with game engines and C#. Built an ASL classifier using Python, OpenCV, TensorFlow, and Keras. At ND Research, modified an existing AI system while keeping its overall structure intact. Wants to learn more about reinforcement learning. |
+
+### Fahad Moinuddin
+
+| Field | Description |
+| --- | --- |
+| Role | Team coordinator |
+| Responsibilities | Organizes team meetings, updates the task board, and follows up on tasks and deadlines. Also contributes to model export from Python, checks model inputs and outputs with Anwar, and tests training and inference in the example environment. |
+| Relevant experience | Led six backend developers through seven weekly scrum meetings and a team of four through a four week sprint. Has trained neural networks on large image datasets and built real time 3D and computer vision systems. |
+
+### Muzzammil Siddiqui
+
+| Field | Description |
+| --- | --- |
+| Role | Example environment lead |
+| Responsibilities | Builds the sample Unity scene used to demonstrate training and inference. Trains and evaluates the example agent and writes setup guides, tutorials, and API documentation. |
+| Relevant experience | Wrote Unity and C# lessons for Ultimate Coders. Trained and evaluated a PPO agent on CartPole using Gymnasium and Stable Baselines3. Designed, tested, and published a React Native app to the App Store and is currently learning gRPC. |
 
 #### Q8: How will you work as a team?
 

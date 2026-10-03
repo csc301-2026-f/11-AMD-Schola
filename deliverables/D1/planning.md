@@ -126,21 +126,17 @@ The team will send this artifact and the accompanying architecture to AMD throug
 
 #### Q5: Have you decided on how you will build it? Share what you know now or tell us the options you are considering.
 
-Technology Stack: C# (Unity plugin), Python 3.10–3.12 (training client). gRPC/Protobuf for communication. Gymnasium, Ray RLlib, Stable-Baselines3. ONNX via Unity Sentis.
+**Technology Stack:** C# for the Unity plugin and Python 3.10–3.12 for Schola’s existing training client. gRPC/Protobuf for communication; Gymnasium, Ray RLlib, and Stable-Baselines3 for training; ONNX and Unity Sentis for model import and inference.
 
-Deployment: Distributed as a Unity Package Manager (UPM) package (Git URL/tarball). Includes sample project, tests, and README. No web deployment.
+**Deployment:** Distributed as a Unity Package Manager (UPM) package through a Git URL or tarball, with a sample project, tests, and README. Developers install it in their Unity projects and include local inference in their game builds. No web hosting or PaaS is required.
 
-Architecture:
+**Architecture:**
 
-Unity: Environment Manager, Observation/Action/Policy interfaces.
+![Schola Unity architecture](architecture.jpeg)
 
-Training Adapter: Implements gRPC/Protobuf service to connect Unity to Python RL client.
+The C# layer contains environments, sensors, actuators, and agents. For training, a Gym Connector and gRPC/Protobuf service exchange actions, observations, and rewards with Schola’s reused Python tools. For local inference, an inference stepper controls when the Unity Sentis policy runs an imported ONNX model and returns actions to the agent, without Python.
 
-Inference Adapter: Loads compatible ONNX policy locally, applies actions without Python.
-
-Flow: Unity scene → Environment interfaces → gRPC adapter ↔ Python RL client → ONNX → Unity inference adapter → actions.
-
-Third-Party Applications & APIs: gRPC (Google.Protobuf, Grpc.Tools, YetAnotherHttpHandler), Unity Sentis/Barracuda, Python RL libraries.
+**Third-Party Applications & APIs:** Schola’s existing Python APIs, Gymnasium, Ray RLlib, Stable-Baselines3, and Unity Sentis. Communication dependencies under consideration include Google.Protobuf, Grpc.Tools, and YetAnotherHttpHandler.
 
 ----
 ## Intellectual Property Confidentiality Agreement 

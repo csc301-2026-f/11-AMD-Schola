@@ -87,8 +87,8 @@ Story: As an RL engineer, I want to connect my Unity environment to Schola’s e
 
 #### Partner review
 
-We will send the artifact and the architecture to AMD partners using our Microsoft team channel.
-Proof of communication and any changes will be added here.
+AMD partners agreed on user stories in second meeting. Summary can be found at D1/team/minutes/26-10-01-minutes.md
+
 
 #### Q5: Have you decided on how you will build it? Share what you know now or tell us the options you are considering.
 

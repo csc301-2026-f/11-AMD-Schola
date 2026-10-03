@@ -30,95 +30,60 @@ User stories agreed upon in initial meeting with partner.
 
 These stories describe the minimum end-to-end product: a Unity developer can define an RL environment, train through Schola’s Python ecosystem, export an ONNX policy, and run it in Unity without Python. Trello tracks implementation tasks.
 
-##### US1: Define a reinforcement-learning environment
+##### US1. Define agent inputs
 
-**Story:** As a Unity developer, I want to define a reinforcement-learning environment through a small engine-independent interface so that I can make an environment trainable without writing networking code.
+**Story:** As a Unity game developer, I want to configure what an agent observes so that it can make decisions using relevant game information.
 
-**Acceptance criteria:**
+**Acceptance Criteria:**
 
-- Developer can configure initialization, reset, observation, reward, and terminal-state behavior.
-- Environment can contain at least one agent.
-- Environment code does not directly manage sockets, RPC calls, or serialized protocol messages.
-- Environment accepts a reproducible random seed and optional reset configuration.
-- Invalid or incomplete configuration produces a clear error.
+- Observation values update with the scene.
+- Observation values keep a consistent format.
 
-##### US2: Declare observation and action spaces
+##### US2. Apply agent actions
 
-**Story:** As a Unity developer, I want to define observation and action spaces using reusable types so that Schola can validate and communicate agent inputs and outputs.
+**Story:** As a Unity game developer, I want to connect policy outputs to game actions so that the trained agent can control a game object.
 
-**Acceptance criteria:**
+**Acceptance Criteria:**
 
-- Core supports Box, Discrete, MultiDiscrete, and MultiBinary spaces and point values.
-- Spaces expose shape, bounds, and data type where applicable.
-- Omitted Box bound represents an unbounded dimension.
-- Mismatched observation or action is rejected with a useful error.
-- Spaces translate to the existing Schola Python representation.
-- Round-trip tests preserve serialized spaces, points, definitions, and agent states.
+- Valid actions change the object’s behaviour.
+- Invalid actions produce a clear error.
 
-##### US3: Connect to existing Python training tools
+##### US3. Control training episodes
 
-**Story:** As an ML practitioner, I want a Unity environment to connect to Schola’s existing Python training tools so that I can train policies without a separate Unity-specific workflow.
+**Story:** As an RL engineer, I want to define rewards, episode endings, and resets so that the agent can learn from repeated attempts.
 
-**Acceptance criteria:**
+**Acceptance Criteria:**
 
-- Unity integration completes connection and environment-definition exchange with the existing Python client.
-- Integration uses Schola’s existing protocol and gRPC services unless.
-- Transport implements StartGymConnector, RequestTrainingDefinition, and UpdateState.
-- Python can discover environments, agents, observation spaces, and action spaces.
-- Transport is isolated behind a core interface so engine-independent code does not depend on gRPC.
-- Connection failures and incompatible protocol data produce actionable errors.
+- The environment reports rewards and episode status to Python.
+- The environment resets correctly for the next episode.
 
-##### US4: Execute the episode lifecycle
+##### US4. Train through Schola
 
-**Story:** As an ML practitioner, I want Schola to coordinate observations, actions, rewards, terminal states, and resets so that training proceeds across complete episodes.
+Story: As an RL engineer, I want to connect my Unity environment to Schola’s existing Python tools so that I can train agents without writing a custom training connection.
 
-**Acceptance criteria:**
+**Acceptance Criteria:**
 
-- Each step, Unity supplies an observation and accepts a compatible action from Python.
-- Each step returns resulting observation, reward, and termination/truncation state.
-- Reset restores the environment to a valid initial state and returns an initial observation.
-- Connector supports disabled, same-step, and next-step auto-reset modes matching Schola’s Python API.
-- Connector can coordinate more than one environment in a running scene.
-- Integration test completes multiple episodes without deadlock or state leakage.
+- Unity exchanges observations and actions through Schola’s existing communication contract.
+- A short training run completes successfully.
 
-##### US5: Configure Schola through Unity-native tools
+##### US5. Run a trained policy
 
-**Story:** As a Unity developer, I want to configure agents and environments through GameObjects and the Inspector so that I can use familiar Unity workflows instead of editing protocol or networking code.
+**Story:** As a Unity game developer, I want to load a compatible trained model so that my agent can act during gameplay without a separate Python process.
 
-**Acceptance criteria:**
+**Acceptance Criteria:**
 
-- Developer can add required Schola components using Unity’s normal component workflow.
-- Essential settings are visible and editable in the Inspector with understandable names and defaults.
-- Demonstration project can be configured without modifying Schola’s internal source code.
-- Reward and penalty values are configurable through the Inspector.
-- Configurable maximum step count truncates episodes that do not otherwise terminate.
-- Running the scene reports missing or conflicting configuration clearly.
+- Unity loads the model.
+- Unity supplies observations.
+- Unity applies its actions with Python stopped.
 
-##### US6: Export a trained policy to ONNX
+##### US6. Set up the integration
 
-**Story:** As a Unity developer, I want to export a trained policy to ONNX so that I can transfer the learned policy from Python training into Unity.
+**Story:** As a Unity game developer, I want a setup guide and sample scene so that I can install the package and adapt it to my own project.
 
-**Acceptance criteria:**
+**Acceptance Criteria:**
 
-- Stable-Baselines3 policy can be exported through Schola’s existing Python export workflow.
-- Resulting file is valid ONNX openable by an independent inspection tool.
-- Model input/output names, shapes, and data types are documented.
-- Policy trained for the Unity demonstration environment exports with inputs/outputs matching declared spaces.
-
-##### US7: Run and ship an ONNX policy
-
-**Story:** As a Unity developer, I want a trained policy to drive my agent with Python closed and exclude training-only dependencies from builds so that I can ship an autonomous agent without training infrastructure.
-
-**Acceptance criteria:**
-
-- Unity loads exported ONNX model and validates inputs/outputs match agent spaces.
-- On each physics step, agent follows observe-infer-act loop applying model output as action.
-- Demonstration agent performs intended learned behavior while Python is not running.
-- Missing, invalid, or incompatible model files produce a clear error.
-- Training and transport code are packaged separately from core environment API and inference code.
-- Unity build containing demonstration environment runs trained policy without Python or live gRPC.
-- Exported build excludes training add-on without preventing loading or inference.
-- Documentation identifies which modules are required for training and which for shipped games.
+- A new team member can follow the guide to run training.
+- A new team member can then use a trained model in Unity.
 
 #### Partner review
 

@@ -26,9 +26,9 @@ The main advantage over Unity ML-Agents would be compatibility with Schola’s t
 
 #### Q4: What are the user stories that make up the Minumum Viable Product (MVP)?
 
-User stories agreed upon in initial meeting with partner.
+Partners agreed on user stories in earlier meetings.
 
-These stories describe the minimum end-to-end product: a Unity developer can define an RL environment, train through Schola’s Python ecosystem, export an ONNX policy, and run it in Unity without Python. Trello tracks implementation tasks.
+The following user stories outline the requirments for the MVP. These will allow a Unity developer to create a RL environment, train through Schola's Python ecosystems, export the trained model in an ONNX policy, then run it in Unity without Python. 
 
 ##### US1. Define agent inputs
 
@@ -87,7 +87,8 @@ Story: As an RL engineer, I want to connect my Unity environment to Schola’s e
 
 #### Partner review
 
-The team will send this artifact and the accompanying architecture to AMD through the shared Microsoft Teams channel. Evidence of that communication and any requested revisions will be linked here after the review.
+We will send the artifact and the architecture to AMD partners using our Microsoft team channel.
+Proof of communication and any changes will be added here.
 
 #### Q5: Have you decided on how you will build it? Share what you know now or tell us the options you are considering.
 

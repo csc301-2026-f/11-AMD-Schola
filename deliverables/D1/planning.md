@@ -239,7 +239,7 @@ Minutes for partner meetings are stored in [`deliverables/team/minutes`](../team
   
 #### Q9: How will you organize your team?
 
-**Tracking work.** We use a shared Trello board for all implementation tasks. Each of the seven MVP user stories in Q4 (US1-US7) has its own colored label, and its work is broken into cards. Every card has one owner, a short description, a size label (small, medium, large), and acceptance criteria copied from its user story. Fahad Moinuddin (team coordinator) maintains the board. The lists are **Backlog → Ready → In Progress → In Review → Done**.
+**Tracking work.** We use a shared Trello board for all implementation tasks. Each of the six MVP user stories in Q4 (US1-US6) has its own colored label, and its work is broken into cards. Every card has one owner, a short description, a size label (small, medium, large), and acceptance criteria copied from its user story. Fahad Moinuddin (team coordinator) maintains the board. The lists are **Backlog → Ready → In Progress → In Review → Done**.
 
 **Repository setup.** We forked AMD's open-source Schola repository into the course organization, and every member works from a local clone of that fork. Work happens on feature branches and reaches the fork's main branch through pull requests.
 

@@ -1,0 +1,17 @@
+# CSharpier settings for C# under Unity/. JSON files can't hold comments, so the setup
+# instructions for .config/dotnet-tools.json live here too.
+#
+# TODO:
+#   1. Pin CSharpier in .config/dotnet-tools.json by running, from the repo root:
+#        dotnet tool install csharpier
+#      This fills in the "tools" entry with the exact version; commit the result.
+#   2. Agree the settings below with the team and uncomment them.
+#   3. Check locally:   dotnet tool restore && dotnet csharpier check Unity/
+#      Format locally:  dotnet csharpier format Unity/
+#   4. Do the one-time reformat of existing C# in its own PR, after
+#      feature/us-1-define-agent-inputs has merged, to avoid conflicts with it.
+#
+# printWidth: 100
+# useTabs: false
+# indentSize: 4
+# endOfLine: auto

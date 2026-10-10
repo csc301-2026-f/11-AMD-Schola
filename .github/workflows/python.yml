@@ -1,0 +1,28 @@
+# Regression guard for AMD's existing Python package. Our team should not normally change
+# Resources/python, so this only checks that nothing we touch breaks it. Called by ci.yml
+# when Resources/python/, Test/, Proto/ or pytest.ini change. Target runtime: under 5 minutes.
+#
+# TODO: replace the placeholder job with:
+#   1. actions/checkout@v4
+#   2. actions/setup-python@v5 with python-version: '3.11' and cache: pip
+#      (cache-dependency-path: Resources/python/pyproject.toml)
+#   3. Install (needs pip >= 25.1 for --group):
+#        python -m pip install --upgrade pip
+#        pip install --group test -e "./Resources/python[sb3]"
+#      Install CPU-only torch first to save time/space:
+#        pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   4. Run a subset that passes on Linux, e.g.:
+#        python -m pytest Test/core/protobuf --import-mode=importlib -n 0
+#      Check locally which Test/ folders run on Linux without Unreal before widening the subset.
+#      Do not add Source/ - the Unreal C++ tests only run on Windows with Unreal installed.
+
+name: Python
+
+on:
+  workflow_call:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder - Python regression tests not implemented yet."

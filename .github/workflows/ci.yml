@@ -1,0 +1,64 @@
+# Entry point for all CI. This is the only workflow (besides release.yml) with real
+# triggers; every other workflow in this folder is a reusable workflow (`on: workflow_call`)
+# that this file calls. Add a new `uses:` job here only when a new workflow file is created.
+#
+# Branch protection on `main` should require ONLY the `ci-ok` job. Jobs skipped by path
+# filters never report a status, so requiring them directly would block PRs forever.
+#
+# TODO:
+#   1. Add a `changes` job using dorny/paths-filter@v3 with these outputs:
+#        unity:  'Unity/**'
+#        python: 'Resources/python/**', 'Test/**', 'Proto/**', 'pytest.ini'
+#        proto:  'Proto/**', 'Unity/**/Generated/**'
+#      then add `needs: changes` and `if: needs.changes.outputs.<area> == 'true'` to
+#      unity-tests, python, codegen-check and smoke-test. `checks` always runs.
+#   2. Keep `ci-ok` listing every job in `needs`, so it fails if any job that ran failed.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  unity-tests:
+    uses: ./.github/workflows/unity-tests.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      checks: write
+
+  python:
+    uses: ./.github/workflows/python.yml
+
+  codegen-check:
+    uses: ./.github/workflows/codegen-check.yml
+
+  smoke-test:
+    uses: ./.github/workflows/smoke-test.yml
+    secrets: inherit
+
+  ci-ok:
+    if: always()
+    needs: [checks, unity-tests, python, codegen-check, smoke-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - run: echo "All CI jobs that ran succeeded."

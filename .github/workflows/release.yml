@@ -1,0 +1,32 @@
+# CD: publishes the Unity package as a GitHub Release when a version tag is pushed.
+# Developers then install it in Unity's Package Manager with the Git URL:
+#   https://github.com/csc301-2026-f/11-AMD-Schola.git?path=Unity/com.amd.schola#unity-v<version>
+#
+# Release process: bump "version" in Unity/com.amd.schola/package.json in a PR, merge it,
+# then tag that commit on main: `git tag unity-v0.1.0 && git push origin unity-v0.1.0`.
+#
+# TODO: replace the placeholder job with:
+#   1. Job `verify`:
+#        - actions/checkout@v4, actions/setup-python@v5
+#        - `python .github/scripts/check_release_version.py "${GITHUB_REF_NAME}"`
+#   2. Job `test`, needs: verify:
+#        - `uses: ./.github/workflows/unity-tests.yml` with `secrets: inherit`
+#   3. Job `publish`, needs: test, with `permissions: contents: write`:
+#        - actions/checkout@v4, actions/setup-node@v4
+#        - `npm pack` inside Unity/com.amd.schola  (produces com.amd.schola-<version>.tgz)
+#        - softprops/action-gh-release@v2 attaching the .tgz, with install instructions in the body
+
+name: Release
+
+on:
+  push:
+    tags: ['unity-v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder - release for ${{ github.ref_name }} not implemented yet."

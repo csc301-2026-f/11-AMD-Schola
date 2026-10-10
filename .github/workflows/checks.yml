@@ -1,0 +1,31 @@
+# Fast checks that need no Unity license. Called by ci.yml on every pull request.
+# Target runtime: about one minute.
+#
+# TODO: replace the placeholder job with these steps (one job on ubuntu-latest is fine):
+#   1. actions/checkout@v4
+#   2. C# formatting
+#        - actions/setup-dotnet@v4 (dotnet-version: 8.0.x)
+#        - `dotnet tool restore`           (installs the CSharpier version pinned in .config/dotnet-tools.json)
+#        - `dotnet csharpier check Unity/` (fails if any C# file is not formatted)
+#   3. Unity .meta files
+#        - actions/setup-python@v5 (python-version: '3.11')
+#        - `python .github/scripts/check_meta_files.py`
+#   4. Package manifest
+#        - `python .github/scripts/check_package_json.py`
+#   5. PR title follows Conventional Commits (only on pull_request events)
+#        - amannn/action-semantic-pull-request@v5 with `env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`
+#        - guard the step with `if: github.event_name == 'pull_request'`
+#        - allowed types should match CONTRIBUTING.md: feat, fix, docs, test, refactor, build, chore, ci
+#
+# Permissions are granted by the caller (ci.yml): contents: read, pull-requests: read.
+
+name: Checks
+
+on:
+  workflow_call:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder - fast checks not implemented yet."

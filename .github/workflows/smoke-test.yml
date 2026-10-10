@@ -1,0 +1,30 @@
+# End-to-end check that a Unity build and Schola's Python client can train together.
+# Called by ci.yml when Unity/ changes. Not needed until training over gRPC works.
+#
+# Agree on these before starting either job:
+#   - build artifact name and path (e.g. artifact "unity-smoke-build", binary "SmokeTest.x86_64")
+#   - gRPC port the build listens on and how it is passed (command-line flag or env var)
+#
+# TODO - job `build`:
+#   1. actions/checkout@v4 (lfs: true)
+#   2. game-ci/unity-builder@v4 with UNITY_LICENSE / UNITY_EMAIL / UNITY_PASSWORD from secrets,
+#      targetPlatform: StandaloneLinux64, the sample scene's project path, and a headless/server build
+#   3. actions/upload-artifact@v4 with the built player
+#
+# TODO - job `run`, `needs: build`:
+#   1. actions/checkout@v4, actions/download-artifact@v4, chmod +x the binary
+#   2. Install Python + the schola package (same as python.yml)
+#   3. Start the build in the background with -batchmode -nographics and the agreed port
+#   4. `python .github/scripts/unity_smoke_test.py --port <port>`
+#   5. Always upload the Unity player log as an artifact for debugging
+
+name: Smoke test
+
+on:
+  workflow_call:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder - end-to-end smoke test not implemented yet."

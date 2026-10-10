@@ -1,0 +1,21 @@
+# Fails if the generated C# gRPC/Protobuf code committed under Unity/ is out of date with
+# the .proto files in Proto/. Called by ci.yml when Proto/ or the generated folder changes.
+# Not needed until the Unity gRPC service exists.
+#
+# TODO (once the team has decided how C# code is generated from Proto/):
+#   1. actions/checkout@v4
+#   2. Install the same protoc / Grpc.Tools versions the team uses locally (pin them)
+#   3. Regenerate C# into the committed generated folder using the team's documented command
+#   4. `git diff --exit-code -- <generated folder>`  (fails if regeneration changed anything)
+#   5. On failure, print the command developers should run to regenerate
+
+name: Codegen check
+
+on:
+  workflow_call:
+
+jobs:
+  codegen-check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder - codegen check not implemented yet."

@@ -1,0 +1,35 @@
+# Runs the Unity package's tests with GameCI. Called by ci.yml when files under Unity/ change.
+#
+# Prerequisites (repo Settings > Secrets and variables > Actions):
+#   UNITY_LICENSE   contents of the Unity_lic.ulf file from a Personal license activated in Unity Hub
+#   UNITY_EMAIL     team Unity account email
+#   UNITY_PASSWORD  team Unity account password
+#   See https://game.ci/docs/github/activation
+#
+# TODO: replace the placeholder job with:
+#   1. actions/checkout@v4 (with lfs: true)
+#   2. actions/cache@v4 for the Unity Library folder, keyed on hashFiles('Unity/com.amd.schola/**')
+#   3. game-ci/unity-test-runner@v4 with
+#        env:   UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD from secrets
+#        with:  packageMode: true
+#               projectPath: Unity/com.amd.schola
+#               unityVersion: <exact team version, e.g. 6000.3.xf1 - not just "6000.3">
+#               testMode: editmode   (add a matrix with playmode once PlayMode tests exist)
+#               githubToken: ${{ secrets.GITHUB_TOKEN }}
+#               checkName: Unity EditMode Test Results
+#               coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+AMD.Schola.*'
+#   4. actions/upload-artifact@v4 (if: always()) for the test results and coverage outputs
+#
+# Validate against the tests on feature/us-1-define-agent-inputs (Unity/com.amd.schola/Tests/EditMode).
+# Permissions are granted by the caller (ci.yml): contents: read, checks: write.
+
+name: Unity tests
+
+on:
+  workflow_call:
+
+jobs:
+  unity-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder - Unity tests not implemented yet."

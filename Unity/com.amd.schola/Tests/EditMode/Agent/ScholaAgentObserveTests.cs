@@ -39,11 +39,21 @@ namespace AMD.Schola.Tests.Agent
                 sensorB.InitSensor();
 
                 var defined = agent.Define() as DictSpace;
-                Assert.That(defined, Is.Not.Null, "Define must return a DictSpace for multi-sensor agents");
-                Assert.That(defined.Spaces.ContainsKey(PositionKey), Is.True,
-                    "Define must include stable key for sensor A");
-                Assert.That(defined.Spaces.ContainsKey(VelocityProxyKey), Is.True,
-                    "Define must include stable key for sensor B");
+                Assert.That(
+                    defined,
+                    Is.Not.Null,
+                    "Define must return a DictSpace for multi-sensor agents"
+                );
+                Assert.That(
+                    defined.Spaces.ContainsKey(PositionKey),
+                    Is.True,
+                    "Define must include stable key for sensor A"
+                );
+                Assert.That(
+                    defined.Spaces.ContainsKey(VelocityProxyKey),
+                    Is.True,
+                    "Define must include stable key for sensor B"
+                );
                 Assert.That(defined.Spaces[PositionKey], Is.TypeOf<BoxSpace>());
                 Assert.That(defined.Spaces[VelocityProxyKey], Is.TypeOf<BoxSpace>());
 
@@ -52,8 +62,11 @@ namespace AMD.Schola.Tests.Agent
 
                 var obsA = agent.Observe() as DictPoint;
                 Assert.That(obsA, Is.Not.Null, "Observe must return a DictPoint");
-                Assert.That(obsA.Points.Keys, Is.EquivalentTo(new[] { PositionKey, VelocityProxyKey }),
-                    "Observe keys must match Define keys");
+                Assert.That(
+                    obsA.Points.Keys,
+                    Is.EquivalentTo(new[] { PositionKey, VelocityProxyKey }),
+                    "Observe keys must match Define keys"
+                );
 
                 var nestedA = obsA.Points[PositionKey] as BoxPoint;
                 var nestedB = obsA.Points[VelocityProxyKey] as BoxPoint;
@@ -67,8 +80,11 @@ namespace AMD.Schola.Tests.Agent
 
                 var obsB = agent.Observe() as DictPoint;
                 Assert.That(obsB, Is.Not.Null);
-                Assert.That(obsB.Points.Keys, Is.EquivalentTo(obsA.Points.Keys),
-                    "Dict keys must remain stable across Observe calls");
+                Assert.That(
+                    obsB.Points.Keys,
+                    Is.EquivalentTo(obsA.Points.Keys),
+                    "Dict keys must remain stable across Observe calls"
+                );
 
                 var nestedA2 = obsB.Points[PositionKey] as BoxPoint;
                 var nestedB2 = obsB.Points[VelocityProxyKey] as BoxPoint;
@@ -81,8 +97,11 @@ namespace AMD.Schola.Tests.Agent
                 Assert.That(nestedB2.Values[1], Is.EqualTo(4f).Within(Tolerance));
                 Assert.That(nestedB2.Values[2], Is.EqualTo(5f).Within(Tolerance));
 
-                Assert.That(Mathf.Abs(nestedA2.Values[0] - nestedA.Values[0]), Is.GreaterThan(Tolerance),
-                    "Nested observation must not be stale from prior Observe");
+                Assert.That(
+                    Mathf.Abs(nestedA2.Values[0] - nestedA.Values[0]),
+                    Is.GreaterThan(Tolerance),
+                    "Nested observation must not be stale from prior Observe"
+                );
             }
             finally
             {

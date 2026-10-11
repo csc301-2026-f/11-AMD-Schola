@@ -29,13 +29,12 @@
 - [ ] Ran: `python -m pytest Test --import-mode=importlib -n 0`
 - [ ] Not applicable
 
-<!--
-TODO: add a "### Unity (`Unity/com.amd.schola`)" section here with checkboxes for:
-  - Ran EditMode tests in the Unity Test Runner (and PlayMode tests if any)
-  - Every new or moved asset/folder has its .meta file committed
-  - Ran `dotnet csharpier format Unity/`
-  - Not applicable
--->
+### Unity (`Unity/com.amd.schola`)
+
+- [ ] Ran EditMode tests in the Unity Test Runner (and PlayMode tests if any)
+- [ ] Every new or moved asset/folder has its .meta file committed
+- [ ] Ran `dotnet csharpier format Unity/`
+- [ ] Not applicable
 
 ### Unreal C++ (`Source`)
 

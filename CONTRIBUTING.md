@@ -54,6 +54,9 @@ We follow the angular convention for additional common types such as:
 | `refactor` | Code changes that are not fixes or features |
 | `build` | Build scripts, dependencies, or third-party rebuilds |
 | `chore` | Maintenance (tooling, configs) that does not fit above |
+| `ci` | CI workflows and checks |
+
+Pull request titles must use the same Conventional Commits format and one of the types above. CI validates the title, including when it is edited.
 
 Optional scopes help when a change is localized, for example `python`, `unreal`, `proto`, or `docs`.
 

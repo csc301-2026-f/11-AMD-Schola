@@ -5,14 +5,11 @@
 # Branch protection on `main` should require ONLY the `ci-ok` job. Jobs skipped by path
 # filters never report a status, so requiring them directly would block PRs forever.
 #
-# TODO:
-#   1. Add a `changes` job using dorny/paths-filter@v3 with these outputs:
-#        unity:  'Unity/**'
-#        python: 'Resources/python/**', 'Test/**', 'Proto/**', 'pytest.ini'
-#        proto:  'Proto/**', 'Unity/**/Generated/**'
-#      then add `needs: changes` and `if: needs.changes.outputs.<area> == 'true'` to
-#      unity-tests, python, codegen-check and smoke-test. `checks` always runs.
-#   2. Keep `ci-ok` listing every job in `needs`, so it fails if any job that ran failed.
+# `ci-ok` must list every job in `needs`, so it fails if any job that ran failed.
+# Manual runs (workflow_dispatch) skip change detection and run every job.
+
+# Note: If Task 6 decides the generated C# code lives somewhere other than a Generated/ folder, 
+# update the proto filter to match.
 
 name: CI
 
@@ -30,6 +27,34 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      unity: ${{ steps.filter.outputs.unity == 'true' || github.event_name == 'workflow_dispatch' }}
+      python: ${{ steps.filter.outputs.python == 'true' || github.event_name == 'workflow_dispatch' }}
+      proto: ${{ steps.filter.outputs.proto == 'true' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name != 'workflow_dispatch'
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          filters: |
+            unity:
+              - 'Unity/**'
+            python:
+              - 'Resources/python/**'
+              - 'Test/**'
+              - 'Proto/**'
+              - 'pytest.ini'
+            proto:
+              - 'Proto/**'
+              - 'Unity/**/Generated/**'
+
   checks:
     uses: ./.github/workflows/checks.yml
     permissions:
@@ -37,6 +62,8 @@ jobs:
       pull-requests: read
 
   unity-tests:
+    needs: changes
+    if: needs.changes.outputs.unity == 'true'
     uses: ./.github/workflows/unity-tests.yml
     secrets: inherit
     permissions:
@@ -44,18 +71,24 @@ jobs:
       checks: write
 
   python:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     uses: ./.github/workflows/python.yml
 
   codegen-check:
+    needs: changes
+    if: needs.changes.outputs.proto == 'true'
     uses: ./.github/workflows/codegen-check.yml
 
   smoke-test:
+    needs: changes
+    if: needs.changes.outputs.unity == 'true'
     uses: ./.github/workflows/smoke-test.yml
     secrets: inherit
 
   ci-ok:
     if: always()
-    needs: [checks, unity-tests, python, codegen-check, smoke-test]
+    needs: [changes, checks, unity-tests, python, codegen-check, smoke-test]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled

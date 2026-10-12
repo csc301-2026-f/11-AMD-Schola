@@ -47,6 +47,7 @@ jobs:
           filters: |
             unity:
               - 'Unity/**'
+              - '.github/workflows/unity-tests.yml'
             python:
               - 'Resources/python/**'
               - 'Test/**'

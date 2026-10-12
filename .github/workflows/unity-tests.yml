@@ -6,30 +6,74 @@
 #   UNITY_PASSWORD  team Unity account password
 #   See https://game.ci/docs/github/activation
 #
-# TODO: replace the placeholder job with:
-#   1. actions/checkout@v4 (with lfs: true)
-#   2. actions/cache@v4 for the Unity Library folder, keyed on hashFiles('Unity/com.amd.schola/**')
-#   3. game-ci/unity-test-runner@v4 with
-#        env:   UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD from secrets
-#        with:  packageMode: true
-#               projectPath: Unity/com.amd.schola
-#               unityVersion: <exact team version, e.g. 6000.3.xf1 - not just "6000.3">
-#               testMode: editmode   (add a matrix with playmode once PlayMode tests exist)
-#               githubToken: ${{ secrets.GITHUB_TOKEN }}
-#               checkName: Unity EditMode Test Results
-#               coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+AMD.Schola.*'
-#   4. actions/upload-artifact@v4 (if: always()) for the test results and coverage outputs
-#
-# Validate against the tests on feature/us-1-define-agent-inputs (Unity/com.amd.schola/Tests/EditMode).
+# Runs the US1 tests in Unity/com.amd.schola/Tests/EditMode.
+# Add a playmode matrix entry once PlayMode tests exist.
 # Permissions are granted by the caller (ci.yml): contents: read, checks: write.
 
 name: Unity tests
 
 on:
   workflow_call:
+    secrets:
+      UNITY_LICENSE:
+        required: true
+      UNITY_EMAIL:
+        required: true
+      UNITY_PASSWORD:
+        required: true
 
 jobs:
   unity-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # D1/planning.md does not pin an editor version. Use the exact version in
+      # deliverables/D1/Unity-UI-Mockup/HOW-TO-VIEW-MOCKUP.md.
+      UNITY_VERSION: '6000.3.24f1'
     steps:
-      - run: echo "Placeholder - Unity tests not implemented yet."
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Retain the requested Library cache, but GameCI currently creates a
+      # temporary project in package mode and does not support caching it.
+      # https://game.ci/docs/github/test-runner/#caveats
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Unity/com.amd.schola/Library
+          key: unity-library-${{ runner.os }}-${{ env.UNITY_VERSION }}-editmode-${{ hashFiles('Unity/com.amd.schola/**') }}
+          restore-keys: |
+            unity-library-${{ runner.os }}-${{ env.UNITY_VERSION }}-editmode-
+
+      - name: Run Unity EditMode tests
+        id: tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          packageMode: true
+          projectPath: Unity/com.amd.schola
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: editmode
+          artifactsPath: artifacts/unity-tests
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Unity EditMode Test Results
+          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+AMD.Schola.*'
+
+      - name: Upload Unity test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-editmode-test-results
+          path: ${{ steps.tests.outputs.artifactsPath || 'artifacts/unity-tests' }}
+
+      - name: Upload Unity coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-editmode-coverage
+          path: ${{ steps.tests.outputs.coveragePath || 'CodeCoverage' }}

@@ -52,6 +52,7 @@ jobs:
               - 'Test/**'
               - 'Proto/**'
               - 'pytest.ini'
+              - '.github/workflows/python.yml'
             proto:
               - 'Proto/**'
               - 'Unity/**/Generated/**'

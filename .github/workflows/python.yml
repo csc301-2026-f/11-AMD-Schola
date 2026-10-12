@@ -1,20 +1,6 @@
 # Regression guard for AMD's existing Python package. Our team should not normally change
 # Resources/python, so this only checks that nothing we touch breaks it. Called by ci.yml
 # when Resources/python/, Test/, Proto/ or pytest.ini change. Target runtime: under 5 minutes.
-#
-# TODO: replace the placeholder job with:
-#   1. actions/checkout@v4
-#   2. actions/setup-python@v5 with python-version: '3.11' and cache: pip
-#      (cache-dependency-path: Resources/python/pyproject.toml)
-#   3. Install (needs pip >= 25.1 for --group):
-#        python -m pip install --upgrade pip
-#        pip install --group test -e "./Resources/python[sb3]"
-#      Install CPU-only torch first to save time/space:
-#        pip install torch --index-url https://download.pytorch.org/whl/cpu
-#   4. Run a subset that passes on Linux, e.g.:
-#        python -m pytest Test/core/protobuf --import-mode=importlib -n 0
-#      Check locally which Test/ folders run on Linux without Unreal before widening the subset.
-#      Do not add Source/ - the Unreal C++ tests only run on Windows with Unreal installed.
 
 name: Python
 
@@ -24,5 +10,30 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - run: echo "Placeholder - Python regression tests not implemented yet."
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: Resources/python/pyproject.toml
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install CPU-only PyTorch
+        run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install Schola and test dependencies
+        run: >
+          python -m pip install
+          --group Resources/python/pyproject.toml:test
+          -e "./Resources/python[sb3]"
+          pyyaml
+          "cyclopts<5"
+      - name: Run Python regression tests
+        run: >
+          python -m pytest Test/core Test/scripts Test/sb3
+          --import-mode=importlib -n 0 --timeout=60
+          --ignore=Test/core/test_ubt.py
+          --ignore=Test/sb3/test_async_env.py
+          --ignore=Test/sb3/test_env.py
+

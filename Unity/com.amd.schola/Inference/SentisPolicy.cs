@@ -80,13 +80,21 @@ namespace AMD.Schola
             var inputs = new List<Tensor>();
 
             try {
-                foreach (var key in m_ObservationSpace.Spaces.Keys) {
+                foreach (var entry in m_ObservationSpace.Spaces) {
+                    var key = entry.Key;
                     if (!(observationDict.Points.TryGetValue(key, out var point) && (point is BoxPoint box))) {
                         Debug.LogError($"{nameof(SentisPolicy)}.Think(): Missing BoxPoint observation '{key}'.");
                         return false;
                     }
 
-                    var input = new Tensor<float>(BatchedShape(box.Shape, box.Values.Count), box.Values.ToArray());
+                    var shape = ObservationShape((BoxSpace)entry.Value);
+                    var expectedCount = ValueCount(shape);
+                    if (box.Values.Count != expectedCount) {
+                        Debug.LogError($"{nameof(SentisPolicy)}.Think(): Observation '{key}' has {box.Values.Count} values but its space expects {expectedCount}.");
+                        return false;
+                    }
+
+                    var input = new Tensor<float>(BatchedShape(shape), box.Values.ToArray());
                     inputs.Add(input);
                     m_Worker.SetInput(key, input);
                 }
@@ -157,21 +165,30 @@ namespace AMD.Schola
         }
 
         static bool ValidateObservations(Model model, DictSpace observationSpace) {
-            var modelInputs = model.inputs.Select(input => input.name).ToHashSet();
+            var modelInputs = new Dictionary<string, DynamicTensorShape>();
+            foreach (var input in model.inputs) {
+                modelInputs[input.name] = input.shape;
+            }
 
             foreach (var entry in observationSpace.Spaces) {
-                if (!(entry.Value is BoxSpace)) {
+                if (!(entry.Value is BoxSpace box)) {
                     Debug.LogError($"{nameof(SentisPolicy)}.Init(): Observation '{entry.Key}' must be a BoxSpace, got {TypeName(entry.Value)}.");
                     return false;
                 }
 
-                if (!modelInputs.Contains(entry.Key)) {
-                    Debug.LogError($"{nameof(SentisPolicy)}.Init(): Model has no input named '{entry.Key}'. Model inputs: {string.Join(", ", modelInputs)}.");
+                if (!modelInputs.TryGetValue(entry.Key, out var modelShape)) {
+                    Debug.LogError($"{nameof(SentisPolicy)}.Init(): Model has no input named '{entry.Key}'. Model inputs: {string.Join(", ", modelInputs.Keys)}.");
+                    return false;
+                }
+
+                var shape = ObservationShape(box);
+                if (!ShapeMatchesModel(shape, modelShape)) {
+                    Debug.LogError($"{nameof(SentisPolicy)}.Init(): Observation '{entry.Key}' has shape [{string.Join(", ", shape)}] but model input '{entry.Key}' expects {modelShape} (first dimension is the batch).");
                     return false;
                 }
             }
 
-            foreach (var name in modelInputs) {
+            foreach (var name in modelInputs.Keys) {
                 if (!observationSpace.Spaces.ContainsKey(name)) {
                     Debug.LogError($"{nameof(SentisPolicy)}.Init(): Model expects input '{name}' but no observation has that key.");
                     return false;
@@ -195,20 +212,56 @@ namespace AMD.Schola
         }
 
         /// <summary>
-        /// Prepends a batch dimension of 1 to the point's shape.
+        /// Shape of one observation. An empty Shape means 1D with one value per dimension.
         /// </summary>
-        static TensorShape BatchedShape(List<int> shape, int count)
-        {
-            var dims = new List<int> { 1 };
-            if (shape.Count == 0)
-            {
-                dims.Add(count);
-            }
-            else
-            {
-                dims.AddRange(shape);
+        static List<int> ObservationShape(BoxSpace space) {
+            if (space.Shape.Count > 0) {
+                return new List<int>(space.Shape);
             }
 
+            return new List<int> { space.Dimensions.Count };
+        }
+
+        /// <summary>
+        /// Model input shapes are [batch, ...observation shape]. Dynamic model dimensions match any size.
+        /// </summary>
+        static bool ShapeMatchesModel(List<int> observationShape, DynamicTensorShape modelShape) {
+            if (modelShape.isRankDynamic) {
+                return true;
+            }
+
+            if (modelShape.rank != observationShape.Count + 1) {
+                return false;
+            }
+
+            for (var i = 0; i < observationShape.Count; i++) {
+                var modelDim = modelShape.Get(i + 1);
+                if (modelDim != -1 && modelDim != observationShape[i]) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Total number of values in a tensor of this shape.
+        /// </summary>
+        static int ValueCount(List<int> shape) {
+            var count = 1;
+            foreach (var dim in shape) {
+                count *= dim;
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Prepends a batch dimension of 1 to the observation shape.
+        /// </summary>
+        static TensorShape BatchedShape(List<int> shape) {
+            var dims = new List<int> { 1 };
+            dims.AddRange(shape);
             return new TensorShape(dims.ToArray());
         }
 

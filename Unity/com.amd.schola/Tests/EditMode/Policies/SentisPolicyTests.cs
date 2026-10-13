@@ -78,6 +78,28 @@ namespace AMD.Schola.Tests.Policies {
         }
 
         [Test]
+        public void Init_ObservationDimensionsDoNotMatchModel_FailsWithClearError() {
+            var definition = CartPoleDefinition();
+            var observation = (BoxSpace)((DictSpace)definition.ObservationSpace).Spaces[ObservationKey];
+            observation.Dimensions.RemoveAt(0);
+
+            LogAssert.Expect(LogType.Error, new Regex(@"Observation 'obs' has shape \[3\] but model input 'obs' expects"));
+            Assert.That(m_Policy.Init(definition), Is.False);
+            Assert.That(m_Policy.IsInitialized, Is.False);
+        }
+
+        [Test]
+        public void Think_ObservationValueCountDoesNotMatchSpace_Fails() {
+            Assert.That(m_Policy.Init(CartPoleDefinition()), Is.True);
+            var observations = CartPoleObservation(0f);
+            ((BoxPoint)observations.Points[ObservationKey]).Values.RemoveAt(0);
+
+            LogAssert.Expect(LogType.Error, new Regex("Observation 'obs' has 3 values but its space expects 4"));
+            Assert.That(m_Policy.Think(observations, out var actions), Is.False);
+            Assert.That(actions, Is.Null);
+        }
+
+        [Test]
         public void Think_BeforeInit_Fails() {
             LogAssert.Expect(LogType.Error, new Regex("Init must succeed before Think"));
             Assert.That(m_Policy.Think(CartPoleObservation(0f), out var actions), Is.False);

@@ -16,6 +16,7 @@ namespace AMD.Schola
     /// after an action key, so both spaces must be <see cref="DictSpace"/> and their keys must
     /// match the model's input and output names. Supports <see cref="BoxSpace"/> observations 
     /// or <see cref="DiscreteSpace"/> actions, one agent per call.
+    /// Claude Opus 5.5 was used to help create this class
     /// </remarks>
     public sealed class SentisPolicy : IPolicy, IDisposable {
         readonly ModelAsset m_ModelAsset;
@@ -212,7 +213,7 @@ namespace AMD.Schola
         }
 
         /// <summary>
-        /// Shape of one observation. An empty Shape means 1D with one value per dimension.
+        /// Shape of one observation.
         /// </summary>
         static List<int> ObservationShape(BoxSpace space) {
             if (space.Shape.Count > 0) {
@@ -223,7 +224,7 @@ namespace AMD.Schola
         }
 
         /// <summary>
-        /// Model input shapes are [batch, ...observation shape]. Dynamic model dimensions match any size.
+        /// Checks whether an observation shape fits the model's input shape.
         /// </summary>
         static bool ShapeMatchesModel(List<int> observationShape, DynamicTensorShape modelShape) {
             if (modelShape.isRankDynamic) {

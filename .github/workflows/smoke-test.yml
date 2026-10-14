@@ -1,30 +1,165 @@
-# End-to-end check that a Unity build and Schola's Python client can train together.
-# Called by ci.yml when Unity/ changes. Not needed until training over gRPC works.
+# End-to-end check that a running Schola gRPC server and Schola's Python client can
+# reset and step together. Called by ci.yml.
 #
-# Agree on these before starting either job:
-#   - build artifact name and path (e.g. artifact "unity-smoke-build", binary "SmokeTest.x86_64")
-#   - gRPC port the build listens on and how it is passed (command-line flag or env var)
+# Jobs:
+#   mock    Always runs. Drives AMD's mock CartPole server (docker/cluster-sim/mock_ue_server.py)
+#           with .github/scripts/unity_smoke_test.py, so the client side is tested before
+#           Unity training exists.
+#   detect  Reports whether the Unity smoke-test project exists.
+#   build   Builds the Unity project as a Linux player. Skipped until the project exists.
+#   run     Starts that player headless and drives it with the same script.
 #
-# TODO - job `build`:
-#   1. actions/checkout@v4 (lfs: true)
-#   2. game-ci/unity-builder@v4 with UNITY_LICENSE / UNITY_EMAIL / UNITY_PASSWORD from secrets,
-#      targetPlatform: StandaloneLinux64, the sample scene's project path, and a headless/server build
-#   3. actions/upload-artifact@v4 with the built player
-#
-# TODO - job `run`, `needs: build`:
-#   1. actions/checkout@v4, actions/download-artifact@v4, chmod +x the binary
-#   2. Install Python + the schola package (same as python.yml)
-#   3. Start the build in the background with -batchmode -nographics and the agreed port
-#   4. `python .github/scripts/unity_smoke_test.py --port <port>`
-#   5. Always upload the Unity player log as an artifact for debugging
+# Contract for the Unity side (build and run switch on automatically once it is met):
+#   - Project:  Unity/SmokeTestProject, Unity version must match UNITY_VERSION in unity-tests.yml.
+#               Packages/manifest.json references the package with "file:../../com.amd.schola".
+#   - Port:     the player reads -ScholaPort=<port>, the same flag Unreal's gRPCGymConnector reads.
+#   - Scene:    the only scene in Build Settings starts the gRPC GymService on launch. All agents
+#               share one observation space and one action space, agents in the same environment
+#               finish episodes together, and episodes end within ~100 steps.
+#   - Artifact: unity-smoke-build, containing SmokeTest.x86_64.
+#   - Before committing the project, check_meta_files.py must skip ProjectSettings/ and
+#     Packages/ (they have no .meta files).
 
 name: Smoke test
 
 on:
   workflow_call:
+    secrets:
+      UNITY_LICENSE:
+        required: false
+      UNITY_EMAIL:
+        required: false
+      UNITY_PASSWORD:
+        required: false
+
+env:
+  UNITY_VERSION: '6000.3.24f1'
+  SMOKE_PROJECT: Unity/SmokeTestProject
+  SMOKE_PORT: '50051'
+  PYTHONUNBUFFERED: '1'
 
 jobs:
-  smoke-test:
+  mock:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - run: echo "Placeholder - end-to-end smoke test not implemented yet."
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: Resources/python/pyproject.toml
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install CPU-only PyTorch
+        run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install Schola
+        run: python -m pip install -e ./Resources/python
+      - name: Start mock Schola server
+        run: |
+          python docker/cluster-sim/mock_ue_server.py --port "$SMOKE_PORT" > mock-server.log 2>&1 &
+          echo $! > mock-server.pid
+      - name: Run smoke test against mock server
+        run: python .github/scripts/unity_smoke_test.py --port "$SMOKE_PORT" --steps 200 --timeout 60
+      - name: Stop mock server
+        if: always()
+        run: kill "$(cat mock-server.pid)" 2>/dev/null || true
+      - name: Upload mock server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mock-server-log
+          path: mock-server.log
+          if-no-files-found: ignore
+
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.project.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for Unity smoke-test project
+        id: project
+        run: |
+          if [ -f "$SMOKE_PROJECT/ProjectSettings/ProjectVersion.txt" ]; then
+            enabled=true
+          else
+            enabled=false
+          fi
+          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
+          echo "Unity smoke-test project present at $SMOKE_PROJECT: $enabled"
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SMOKE_PROJECT }}/Library
+          key: smoke-library-${{ runner.os }}-${{ env.UNITY_VERSION }}-${{ hashFiles('Unity/SmokeTestProject/Assets/**', 'Unity/SmokeTestProject/Packages/**', 'Unity/SmokeTestProject/ProjectSettings/**', 'Unity/com.amd.schola/**') }}
+          restore-keys: |
+            smoke-library-${{ runner.os }}-${{ env.UNITY_VERSION }}-
+      - name: Build Linux player
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ env.SMOKE_PROJECT }}
+          targetPlatform: StandaloneLinux64
+          unityVersion: ${{ env.UNITY_VERSION }}
+          buildName: SmokeTest
+      - name: Upload player
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-smoke-build
+          path: build/StandaloneLinux64
+          retention-days: 3
+
+  run:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download player
+        uses: actions/download-artifact@v4
+        with:
+          name: unity-smoke-build
+          path: smoke-build
+      - name: Make player executable
+        run: chmod +x smoke-build/SmokeTest.x86_64
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: Resources/python/pyproject.toml
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install CPU-only PyTorch
+        run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install Schola
+        run: python -m pip install -e ./Resources/python
+      - name: Start Unity player
+        run: |
+          ./smoke-build/SmokeTest.x86_64 -batchmode -nographics -ScholaPort="$SMOKE_PORT" -logFile "$GITHUB_WORKSPACE/unity-player.log" &
+          echo $! > unity-player.pid
+      - name: Run smoke test against Unity player
+        run: python .github/scripts/unity_smoke_test.py --port "$SMOKE_PORT" --steps 500 --timeout 120
+      - name: Stop Unity player
+        if: always()
+        run: kill "$(cat unity-player.pid)" 2>/dev/null || true
+      - name: Upload Unity player log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-unity-player-log
+          path: unity-player.log
+          if-no-files-found: ignore

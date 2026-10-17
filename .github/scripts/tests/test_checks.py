@@ -1,5 +1,15 @@
 # Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
-"""Regression tests for the fast CI validators; no Unity installation required."""
+"""Regression tests for the fast CI validators; no Unity installation required.
+
+AGENT TODO (with check_meta_files.py): when Unity project folders are supported,
+add a test that builds a fake Unity/SmokeTestProject with:
+  - ProjectSettings/ProjectVersion.txt (no .meta)
+  - Packages/manifest.json (no .meta)
+  - Assets/Foo.cs + Assets/Foo.cs.meta
+and asserts meta.validate(root) == []. Today validate() would flag ProjectSettings
+and Packages as missing .meta; do not commit a real SmokeTestProject until that
+passes.
+"""
 
 import contextlib
 import io

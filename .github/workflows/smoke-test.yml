@@ -13,12 +13,20 @@
 #   - Project:  Unity/SmokeTestProject, Unity version must match UNITY_VERSION in unity-tests.yml.
 #               Packages/manifest.json references the package with "file:../../com.amd.schola".
 #   - Port:     the player reads -ScholaPort=<port>, the same flag Unreal's gRPCGymConnector reads.
-#   - Scene:    the only scene in Build Settings starts the gRPC GymService on launch. All agents
-#               share one observation space and one action space, agents in the same environment
-#               finish episodes together, and episodes end within ~100 steps.
+#               See Unity/com.amd.schola/Training/README.md (AGENT TODO for gRPC port parsing).
+#   - Scene:    the only scene in Build Settings starts the gRPC GymService on launch. Agents
+#               share one observation space and one action space; agents in the same environment
+#               finish episodes together; episodes end within ~100 steps.
 #   - Artifact: unity-smoke-build, containing SmokeTest.x86_64.
-#   - Before committing the project, check_meta_files.py must skip ProjectSettings/ and
-#     Packages/ (they have no .meta files).
+#
+# AGENT BLOCKERS (do these before committing Unity/SmokeTestProject; no smoke-test.yml edits):
+#   1. Meta check: update .github/scripts/check_meta_files.py so Unity projects only validate
+#      Assets/ and skip ProjectSettings/ and Packages/. Docstring + inline TODO are in that file;
+#      add the regression test described there in .github/scripts/tests/test_checks.py.
+#   2. Port flag: Unity Training gRPC service must parse -ScholaPort=<port> (CI uses 50051).
+#      Spec is in Unity/com.amd.schola/Training/README.md. Unreal reference:
+#      Source/ScholaProtobuf/Private/GymConnectors/gRPC/gRPCGymConnector.cpp
+#   After both land and the project is committed, detect flips to true and build/run run.
 
 name: Smoke test
 

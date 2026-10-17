@@ -7,6 +7,13 @@ headless Unity build:
 
 Kept out of Test/ on purpose: pytest.ini collects everything under Test/, and this script
 needs a running server.
+
+AGENT notes (not implemented here):
+  - Unity player must listen on ``-ScholaPort=<port>``; see
+    ``Unity/com.amd.schola/Training/README.md``.
+  - Before committing ``Unity/SmokeTestProject``, fix
+    ``.github/scripts/check_meta_files.py`` so project ``ProjectSettings/`` and
+    ``Packages/`` are not required to have ``.meta`` files.
 """
 
 import argparse

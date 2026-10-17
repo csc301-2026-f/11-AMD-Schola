@@ -2,6 +2,10 @@
 # the .proto files in Proto/. Called by ci.yml when Proto/ or the generated folder changes.
 # Not needed until the Unity gRPC service exists.
 #
+# Related AGENT TODO (training communication, not this workflow): the Unity gRPC server
+# must parse -ScholaPort=<port> so smoke-test.yml's run job can connect. Spec:
+# Unity/com.amd.schola/Training/README.md
+#
 # TODO (once the team has decided how C# code is generated from Proto/):
 #   1. actions/checkout@v4
 #   2. Install the same protoc / Grpc.Tools versions the team uses locally (pin them)

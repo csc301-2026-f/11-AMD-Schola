@@ -40,7 +40,7 @@ namespace AMD.Schola.Tests.Actuators
             }
             finally
             {
-                Object.DestroyImmediate(go);
+                UnityEngine.Object.DestroyImmediate(go);
             }
         }
 
@@ -61,7 +61,7 @@ namespace AMD.Schola.Tests.Actuators
             }
             finally
             {
-                Object.DestroyImmediate(go);
+                UnityEngine.Object.DestroyImmediate(go);
             }
         }
 
@@ -85,7 +85,7 @@ namespace AMD.Schola.Tests.Actuators
             }
             finally
             {
-                Object.DestroyImmediate(go);
+                UnityEngine.Object.DestroyImmediate(go);
             }
         }
     }

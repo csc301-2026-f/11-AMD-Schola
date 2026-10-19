@@ -53,7 +53,7 @@ namespace AMD.Schola.Tests.Agent
             }
             finally
             {
-                Object.DestroyImmediate(agentGo);
+                UnityEngine.Object.DestroyImmediate(agentGo);
             }
         }
 
@@ -77,7 +77,7 @@ namespace AMD.Schola.Tests.Agent
             }
             finally
             {
-                Object.DestroyImmediate(agentGo);
+                UnityEngine.Object.DestroyImmediate(agentGo);
             }
         }
 
@@ -108,7 +108,7 @@ namespace AMD.Schola.Tests.Agent
             }
             finally
             {
-                Object.DestroyImmediate(agentGo);
+                UnityEngine.Object.DestroyImmediate(agentGo);
             }
         }
 
@@ -145,7 +145,7 @@ namespace AMD.Schola.Tests.Agent
             }
             finally
             {
-                Object.DestroyImmediate(agentGo);
+                UnityEngine.Object.DestroyImmediate(agentGo);
             }
         }
 
@@ -179,7 +179,7 @@ namespace AMD.Schola.Tests.Agent
             }
             finally
             {
-                Object.DestroyImmediate(agentGo);
+                UnityEngine.Object.DestroyImmediate(agentGo);
             }
         }
     }

@@ -37,6 +37,7 @@ jobs:
       unity: ${{ steps.filter.outputs.unity == 'true' || github.event_name == 'workflow_dispatch' }}
       python: ${{ steps.filter.outputs.python == 'true' || github.event_name == 'workflow_dispatch' }}
       proto: ${{ steps.filter.outputs.proto == 'true' || github.event_name == 'workflow_dispatch' }}
+      smoke: ${{ steps.filter.outputs.smoke == 'true' || github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v4
         if: github.event_name != 'workflow_dispatch'
@@ -57,6 +58,11 @@ jobs:
             proto:
               - 'Proto/**'
               - 'Unity/**/Generated/**'
+            smoke:
+              - 'Unity/**'
+              - '.github/workflows/smoke-test.yml'
+              - '.github/scripts/unity_smoke_test.py'
+              - 'docker/cluster-sim/mock_ue_server.py'
 
   checks:
     uses: ./.github/workflows/checks.yml
@@ -85,7 +91,7 @@ jobs:
 
   smoke-test:
     needs: changes
-    if: needs.changes.outputs.unity == 'true'
+    if: needs.changes.outputs.smoke == 'true'
     uses: ./.github/workflows/smoke-test.yml
     secrets: inherit
 

@@ -92,6 +92,7 @@ namespace AMD.Schola
 
         /// <summary>
         /// Applies a DictPoint action to attached actuators keyed by <see cref="TranslateActuator.ActionKey"/>.
+        /// All keys are checked before any actuator is applied so a missing key leaves the scene unchanged.
         /// </summary>
         public void Act(Point action)
         {
@@ -120,8 +121,16 @@ namespace AMD.Schola
                         $"Missing action key '{actuator.ActionKey}'; expected keys: {FormatExpectedActionKeys()}.",
                         nameof(action));
                 }
+            }
 
-                actuator.TakeAction(nested);
+            foreach (var actuator in m_Actuators)
+            {
+                if (actuator == null)
+                {
+                    continue;
+                }
+
+                actuator.TakeAction(dictPoint.Points[actuator.ActionKey]);
             }
         }
 

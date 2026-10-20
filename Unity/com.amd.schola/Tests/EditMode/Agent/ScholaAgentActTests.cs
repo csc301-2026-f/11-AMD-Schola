@@ -150,6 +150,57 @@ namespace AMD.Schola.Tests.Agent
         }
 
         [Test]
+        public void Act_MissingLaterKey_DoesNotApplyEarlierActuators()
+        {
+            var agentGo = new GameObject("ScholaAgent_ActMissingLaterKey");
+            var actuatorAGo = new GameObject("TranslateActuatorA");
+            var actuatorBGo = new GameObject("TranslateActuatorB");
+            try
+            {
+                actuatorAGo.transform.SetParent(agentGo.transform);
+                actuatorBGo.transform.SetParent(agentGo.transform);
+                actuatorAGo.transform.position = new Vector3(10f, 20f, 30f);
+                actuatorBGo.transform.position = new Vector3(1f, 2f, 3f);
+
+                var actuatorA = actuatorAGo.AddComponent<TranslateActuator>();
+                actuatorA.ActionKey = TranslateKey;
+                var actuatorB = actuatorBGo.AddComponent<TranslateActuator>();
+                actuatorB.ActionKey = "translate_b";
+
+                var agent = agentGo.AddComponent<ScholaAgent>();
+                agent.SetActuators(new[] { actuatorA, actuatorB });
+                actuatorA.InitActuator();
+                actuatorB.InitActuator();
+
+                var startA = actuatorAGo.transform.position;
+                var startB = actuatorBGo.transform.position;
+
+                var action = new DictPoint
+                {
+                    Points =
+                    {
+                        [TranslateKey] = new BoxPoint
+                        {
+                            Values = { 1f, -2f, 0.5f },
+                        },
+                    },
+                };
+
+                var ex = Assert.Throws<ArgumentException>(() => agent.Act(action));
+                Assert.That(ex.Message, Does.Contain("translate_b"),
+                    "Error must mention the missing later action key");
+                Assert.That(actuatorAGo.transform.position, Is.EqualTo(startA),
+                    "Earlier actuator must not move when a later action key is missing");
+                Assert.That(actuatorBGo.transform.position, Is.EqualTo(startB),
+                    "Later actuator must not move when its action key is missing");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(agentGo);
+            }
+        }
+
+        [Test]
         public void DefineActionSpace_StableKeys()
         {
             var agentGo = new GameObject("ScholaAgent_DefineActionSpace");

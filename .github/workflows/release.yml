@@ -5,16 +5,10 @@
 # Release process: bump "version" in Unity/com.amd.schola/package.json in a PR, merge it,
 # then tag that commit on main: `git tag unity-v0.1.0 && git push origin unity-v0.1.0`.
 #
-# TODO: replace the placeholder job with:
-#   1. Job `verify`:
-#        - actions/checkout@v4, actions/setup-python@v5
-#        - `python .github/scripts/check_release_version.py "${GITHUB_REF_NAME}"`
-#   2. Job `test`, needs: verify:
-#        - `uses: ./.github/workflows/unity-tests.yml` with `secrets: inherit`
-#   3. Job `publish`, needs: test, with `permissions: contents: write`:
-#        - actions/checkout@v4, actions/setup-node@v4
-#        - `npm pack` inside Unity/com.amd.schola  (produces com.amd.schola-<version>.tgz)
-#        - softprops/action-gh-release@v2 attaching the .tgz, with install instructions in the body
+# Jobs (each needs the one before it, so nothing is published unless everything passes):
+#   verify   The tag must be unity-v<version> and match "version" in package.json.
+#   test     Runs the Unity EditMode tests (needs the UNITY_* secrets, see unity-tests.yml).
+#   publish  Packs the package with `npm pack` and creates the GitHub Release with the .tgz.
 
 name: Release
 
@@ -26,7 +20,57 @@ permissions:
   contents: read
 
 jobs:
-  release:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - run: echo "Placeholder - release for ${{ github.ref_name }} not implemented yet."
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check tag matches package version
+        run: python .github/scripts/check_release_version.py "${GITHUB_REF_NAME}"
+
+  test:
+    needs: verify
+    uses: ./.github/workflows/unity-tests.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      checks: write
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#unity-v}" >> "$GITHUB_OUTPUT"
+      - name: Pack the Unity package
+        working-directory: Unity/com.amd.schola
+        run: npm pack
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: AMD Schola for Unity ${{ steps.version.outputs.version }}
+          files: Unity/com.amd.schola/com.amd.schola-${{ steps.version.outputs.version }}.tgz
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            **Git URL** (Unity: Window > Package Management > Package Manager > + > Install package from git URL):
+
+            ```
+            https://github.com/${{ github.repository }}.git?path=Unity/com.amd.schola#${{ github.ref_name }}
+            ```
+
+            **Tarball**: download `com.amd.schola-${{ steps.version.outputs.version }}.tgz` below, then in the
+            Package Manager choose + > Install package from tarball.

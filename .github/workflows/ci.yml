@@ -8,9 +8,6 @@
 # `ci-ok` must list every job in `needs`, so it fails if any job that ran failed.
 # Manual runs (workflow_dispatch) skip change detection and run every job.
 
-# Note: If Task 6 decides the generated C# code lives somewhere other than a Generated/ folder, 
-# update the proto filter to match.
-
 name: CI
 
 on:
@@ -58,6 +55,9 @@ jobs:
             proto:
               - 'Proto/**'
               - 'Unity/**/Generated/**'
+              - '.github/scripts/generate_csharp.py'
+              - '.github/workflows/codegen-check.yml'
+              - '.github/workflows/ci.yml'
             smoke:
               - 'Unity/**'
               - '.github/workflows/smoke-test.yml'

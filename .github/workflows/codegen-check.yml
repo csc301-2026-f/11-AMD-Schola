@@ -1,25 +1,39 @@
-# Fails if the generated C# gRPC/Protobuf code committed under Unity/ is out of date with
-# the .proto files in Proto/. Called by ci.yml when Proto/ or the generated folder changes.
-# Not needed until the Unity gRPC service exists.
-#
-# Related AGENT TODO (training communication, not this workflow): the Unity gRPC server
-# must parse -ScholaPort=<port> so smoke-test.yml's run job can connect. Spec:
-# Unity/com.amd.schola/Training/README.md
-#
-# TODO (once the team has decided how C# code is generated from Proto/):
-#   1. actions/checkout@v4
-#   2. Install the same protoc / Grpc.Tools versions the team uses locally (pin them)
-#   3. Regenerate C# into the committed generated folder using the team's documented command
-#   4. `git diff --exit-code -- <generated folder>`  (fails if regeneration changed anything)
-#   5. On failure, print the command developers should run to regenerate
-
+# Regenerate with the same pinned tools used locally and compare all C# files.
+# Training does not yet commit stubs; activate automatically with the first baseline.
 name: Codegen check
 
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   codegen-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - run: echo "Placeholder - codegen check not implemented yet."
+      - uses: actions/checkout@v4
+        with:
+          # History prevents deletion of the entire baseline from disabling the check.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Detect committed C# baseline
+        id: baseline
+        shell: bash
+        run: |
+          if [[ -n "$(git log -1 --format=%H -- 'Unity/com.amd.schola/Training/Generated/*.cs')" ]]; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+            echo 'Codegen comparison skipped: no committed C# baseline in Unity/com.amd.schola/Training/Generated/.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Generate the baseline with: python .github/scripts/generate_csharp.py' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Validate generation before the first baseline
+        if: steps.baseline.outputs.present != 'true'
+        run: python .github/scripts/generate_csharp.py --output "$RUNNER_TEMP/schola-generated"
+      - name: Verify generated C# matches Proto/
+        if: steps.baseline.outputs.present == 'true'
+        run: python .github/scripts/generate_csharp.py --check

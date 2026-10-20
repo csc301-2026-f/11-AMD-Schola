@@ -9,7 +9,7 @@ namespace AMD.Schola {
     /// on the calling thread, so the caller waits while the policy runs. Suitable for small models.
     /// </summary>
     public sealed class SimpleStepper : IStepper {
-        IReadOnlyList<IAgent> m_Agents;
+        List<IAgent> m_Agents;
         IPolicy m_Policy;
 
         public bool Init(IReadOnlyList<IAgent> agents, IPolicy policy) {
@@ -21,9 +21,12 @@ namespace AMD.Schola {
                 return false;
             }
 
-            for (var i = 0; i < agents.Count; i++) {
-                if (agents[i] == null) {
-                    Debug.LogError($"{nameof(SimpleStepper)}.Init(): Agent {i} is null.");
+            // Our own copy, so the caller changing their list later cannot break Step.
+            var agentCopy = new List<IAgent>(agents);
+
+            for (var i = 0; i < agentCopy.Count; i++) {
+                if (!IsAlive(agentCopy[i])) {
+                    Debug.LogError($"{nameof(SimpleStepper)}.Init(): Agent {i} is null or destroyed.");
                     return false;
                 }
             }
@@ -33,7 +36,7 @@ namespace AMD.Schola {
                 return false;
             }
 
-            m_Agents = agents;
+            m_Agents = agentCopy;
             m_Policy = policy;
             return true;
         }
@@ -41,6 +44,17 @@ namespace AMD.Schola {
         public bool Step() {
             if (m_Agents == null || m_Policy == null) {
                 Debug.LogError($"{nameof(SimpleStepper)}.Step(): Init must succeed before Step can run.");
+                return false;
+            }
+
+            // Drop agents whose GameObject was destroyed since the last step (killed, respawned,
+            // scene change). Done before observing so observations and actions stay aligned.
+            if (m_Agents.RemoveAll(agent => !IsAlive(agent)) > 0) {
+                Debug.LogWarning($"{nameof(SimpleStepper)}.Step(): Removed destroyed agent(s).");
+            }
+
+            if (m_Agents.Count == 0) {
+                Debug.LogError($"{nameof(SimpleStepper)}.Step(): All agents were destroyed.");
                 return false;
             }
 
@@ -67,6 +81,16 @@ namespace AMD.Schola {
             }
 
             return true;
+        }
+
+        // Unity overloads == on UnityEngine.Object so a destroyed object compares equal to null.
+        // Through the IAgent interface that overload is skipped, so test the Unity object directly.
+        static bool IsAlive(IAgent agent) {
+            if (agent is UnityEngine.Object unityObject) {
+                return unityObject != null;
+            }
+
+            return agent != null;
         }
     }
 }

@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,6 +20,8 @@ namespace AMD.Schola {
 
         /// <summary>
         /// Initialises the stepper and starts running it. The policy must already be initialised.
+        /// The runner does not own the policy: if it is IDisposable (like SentisPolicy), the code
+        /// that created it must dispose it, for example in OnDestroy.
         /// </summary>
         /// <returns>False if the stepper could not be initialised; nothing runs in that case.</returns>
         public bool Setup(IStepper stepper, IReadOnlyList<IAgent> agents, IPolicy policy) {
@@ -57,11 +60,20 @@ namespace AMD.Schola {
 
             m_FrameCounter = 0;
 
-            if (!m_Stepper.Step()) {
-                // Stop, otherwise the same error would repeat every frame.
+            try {
+                if (m_Stepper.Step()) {
+                    return;
+                }
+
                 Debug.LogError($"{nameof(StepperRunner)}: Step failed, stopping.");
-                m_Stepper = null;
             }
+            catch (Exception e) {
+                // An agent or policy threw. Log it once and stop, instead of repeating every frame.
+                Debug.LogException(e, this);
+                Debug.LogError($"{nameof(StepperRunner)}: Step threw, stopping.");
+            }
+
+            m_Stepper = null;
         }
     }
 }

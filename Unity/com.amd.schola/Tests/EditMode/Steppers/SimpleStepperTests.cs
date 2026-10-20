@@ -37,6 +37,17 @@ namespace AMD.Schola.Tests.Steppers
             }
         }
 
+        // A real MonoBehaviour agent, so a test can destroy its GameObject.
+        sealed class FakeBehaviourAgent : MonoBehaviour, IAgent
+        {
+            public Point Observe()
+            {
+                return new DiscretePoint { Value = 99 };
+            }
+
+            public void Act(Point action) { }
+        }
+
         // Echoes the observation back as the action, so a test can tell which agent got which.
         sealed class FakePolicy : IPolicy
         {
@@ -163,6 +174,33 @@ namespace AMD.Schola.Tests.Steppers
             Assert.That(m_Stepper.Step(), Is.False);
 
             Assert.That(m_Log, Has.None.StartWith("act:"));
+        }
+
+        [Test]
+        public void Step_CallerEditsListAfterInit_StillRunsOriginalAgents()
+        {
+            var agents = new List<IAgent> { new FakeAgent(0, m_Log) };
+            Assert.That(m_Stepper.Init(agents, m_Policy), Is.True);
+
+            agents.Add(null); // would crash Step if the stepper kept this list
+
+            Assert.That(m_Stepper.Step(), Is.True);
+            Assert.That(m_Log, Is.EqualTo(new[] { "observe:0", "act:0" }));
+        }
+
+        [Test]
+        public void Step_DestroyedAgent_IsSkipped()
+        {
+            var go = new GameObject("agent");
+            var behaviourAgent = go.AddComponent<FakeBehaviourAgent>();
+            var agents = new List<IAgent> { new FakeAgent(0, m_Log), behaviourAgent };
+            Assert.That(m_Stepper.Init(agents, m_Policy), Is.True);
+
+            UnityEngine.Object.DestroyImmediate(go);
+
+            LogAssert.Expect(LogType.Warning, new Regex("Removed destroyed agent"));
+            Assert.That(m_Stepper.Step(), Is.True);
+            Assert.That(m_Log, Is.EqualTo(new[] { "observe:0", "act:0" }));
         }
 
         [Test]

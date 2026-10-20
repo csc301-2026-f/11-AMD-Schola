@@ -54,6 +54,7 @@ namespace AMD.Schola
 
         /// <summary>
         /// Builds the published action space from attached actuators (DictSpace of actuator spaces).
+        /// Duplicate <see cref="TranslateActuator.ActionKey"/> values warn and last-write-wins.
         /// </summary>
         public Space DefineActionSpace()
         {
@@ -63,6 +64,13 @@ namespace AMD.Schola
                 if (actuator == null)
                 {
                     continue;
+                }
+
+                if (dictSpace.Spaces.ContainsKey(actuator.ActionKey))
+                {
+                    Debug.LogWarning(
+                        $"Duplicate action key '{actuator.ActionKey}' on {nameof(ScholaAgent)} '{name}'; later actuator overwrites the earlier action space entry.",
+                        this);
                 }
 
                 dictSpace.Spaces[actuator.ActionKey] = actuator.GetActionSpace();

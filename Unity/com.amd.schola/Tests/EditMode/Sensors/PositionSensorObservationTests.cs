@@ -38,14 +38,21 @@ namespace AMD.Schola.Tests.Sensors
                 go.transform.position = stateB;
                 var obsB = sensor.CollectObservations() as BoxPoint;
 
-                Assert.That(obsB, Is.Not.Null, "CollectObservations must return a BoxPoint after scene change");
+                Assert.That(
+                    obsB,
+                    Is.Not.Null,
+                    "CollectObservations must return a BoxPoint after scene change"
+                );
                 Assert.That(obsB.Values.Count, Is.EqualTo(3));
                 Assert.That(obsB.Values[0], Is.EqualTo(stateB.x).Within(Tolerance));
                 Assert.That(obsB.Values[1], Is.EqualTo(stateB.y).Within(Tolerance));
                 Assert.That(obsB.Values[2], Is.EqualTo(stateB.z).Within(Tolerance));
 
-                Assert.That(Mathf.Abs(obsB.Values[0] - obsA.Values[0]), Is.GreaterThan(Tolerance),
-                    "Observation must not be stale from state A");
+                Assert.That(
+                    Mathf.Abs(obsB.Values[0] - obsA.Values[0]),
+                    Is.GreaterThan(Tolerance),
+                    "Observation must not be stale from state A"
+                );
             }
             finally
             {
@@ -64,8 +71,11 @@ namespace AMD.Schola.Tests.Sensors
 
                 var space = sensor.GetObservationSpace() as BoxSpace;
                 Assert.That(space, Is.Not.Null, "GetObservationSpace must return a BoxSpace");
-                Assert.That(space.Dimensions.Count, Is.EqualTo(3),
-                    "Position sensor space must declare 3 dimensions (x, y, z)");
+                Assert.That(
+                    space.Dimensions.Count,
+                    Is.EqualTo(3),
+                    "Position sensor space must declare 3 dimensions (x, y, z)"
+                );
 
                 go.transform.position = new Vector3(1f, 2f, 3f);
                 var obsA = sensor.CollectObservations() as BoxPoint;
@@ -78,12 +88,27 @@ namespace AMD.Schola.Tests.Sensors
                 AssertObservationMatchesSpace(obsB, space);
 
                 Assert.That(obsB.Values.Count, Is.EqualTo(obsA.Values.Count));
-                Assert.That(obsB.Shape, Is.EqualTo(obsA.Shape),
-                    "Shape must be stable across CollectObservations calls");
+                Assert.That(
+                    obsB.Shape,
+                    Is.EqualTo(obsA.Shape),
+                    "Shape must be stable across CollectObservations calls"
+                );
                 Assert.That(obsA.Values.Count, Is.EqualTo(3));
-                Assert.That(obsB.Values[0], Is.EqualTo(10f).Within(Tolerance), "Ordering: index 0 is x");
-                Assert.That(obsB.Values[1], Is.EqualTo(-20f).Within(Tolerance), "Ordering: index 1 is y");
-                Assert.That(obsB.Values[2], Is.EqualTo(0.25f).Within(Tolerance), "Ordering: index 2 is z");
+                Assert.That(
+                    obsB.Values[0],
+                    Is.EqualTo(10f).Within(Tolerance),
+                    "Ordering: index 0 is x"
+                );
+                Assert.That(
+                    obsB.Values[1],
+                    Is.EqualTo(-20f).Within(Tolerance),
+                    "Ordering: index 1 is y"
+                );
+                Assert.That(
+                    obsB.Values[2],
+                    Is.EqualTo(0.25f).Within(Tolerance),
+                    "Ordering: index 2 is z"
+                );
             }
             finally
             {
@@ -93,13 +118,19 @@ namespace AMD.Schola.Tests.Sensors
 
         static void AssertObservationMatchesSpace(BoxPoint point, BoxSpace space)
         {
-            Assert.That(point.Values.Count, Is.EqualTo(space.Dimensions.Count),
-                "BoxPoint length must match BoxSpace dimension count");
+            Assert.That(
+                point.Values.Count,
+                Is.EqualTo(space.Dimensions.Count),
+                "BoxPoint length must match BoxSpace dimension count"
+            );
 
             if (space.Shape != null && space.Shape.Count > 0)
             {
-                Assert.That(point.Shape, Is.EqualTo(space.Shape),
-                    "BoxPoint shape must match BoxSpace shape when shape is declared");
+                Assert.That(
+                    point.Shape,
+                    Is.EqualTo(space.Shape),
+                    "BoxPoint shape must match BoxSpace shape when shape is declared"
+                );
             }
         }
     }

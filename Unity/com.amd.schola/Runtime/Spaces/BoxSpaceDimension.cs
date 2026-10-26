@@ -10,9 +10,7 @@ namespace AMD.Schola
         public float? Low { get; set; }
         public float? High { get; set; }
 
-        public BoxSpaceDimension()
-        {
-        }
+        public BoxSpaceDimension() { }
 
         public BoxSpaceDimension(float? low, float? high)
         {

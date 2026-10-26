@@ -27,7 +27,10 @@ namespace AMD.Schola
         {
             if (string.IsNullOrEmpty(m_ObservationKey))
             {
-                Debug.LogWarning($"{nameof(PositionSensor)} on '{name}' has an empty {nameof(ObservationKey)}.", this);
+                Debug.LogWarning(
+                    $"{nameof(PositionSensor)} on '{name}' has an empty {nameof(ObservationKey)}.",
+                    this
+                );
             }
         }
 
@@ -45,10 +48,7 @@ namespace AMD.Schola
         public Point CollectObservations()
         {
             var position = transform.position;
-            return new BoxPoint
-            {
-                Values = { position.x, position.y, position.z },
-            };
+            return new BoxPoint { Values = { position.x, position.y, position.z } };
         }
     }
 }

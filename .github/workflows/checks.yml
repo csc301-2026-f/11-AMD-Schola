@@ -1,0 +1,46 @@
+# Fast checks that need no Unity license. Called by ci.yml on every pull request.
+# Target runtime: about one minute.
+#
+# Permissions are granted by the caller (ci.yml): contents: read, pull-requests: read.
+
+name: Checks
+
+on:
+  workflow_call:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore formatter
+        run: dotnet tool restore
+      - name: Check C# formatting
+        run: dotnet csharpier check Unity/
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test fast-check validators
+        run: python -m unittest discover -s .github/scripts/tests
+      - name: Check Unity meta files
+        run: python .github/scripts/check_meta_files.py
+      - name: Check package manifest
+        run: python .github/scripts/check_package_json.py
+      - name: Check PR title
+        if: github.event_name == 'pull_request'
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            test
+            refactor
+            build
+            chore
+            ci

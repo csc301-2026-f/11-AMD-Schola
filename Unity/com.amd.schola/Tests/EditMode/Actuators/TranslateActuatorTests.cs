@@ -26,10 +26,7 @@ namespace AMD.Schola.Tests.Actuators
                 var actuator = go.AddComponent<TranslateActuator>();
                 actuator.InitActuator();
 
-                var action = new BoxPoint
-                {
-                    Values = { 0.5f, -1f, 2f },
-                };
+                var action = new BoxPoint { Values = { 0.5f, -1f, 2f } };
 
                 actuator.TakeAction(action);
 
@@ -56,8 +53,11 @@ namespace AMD.Schola.Tests.Actuators
                 var wrong = new DictPoint();
 
                 var ex = Assert.Throws<ArgumentException>(() => actuator.TakeAction(wrong));
-                Assert.That(ex.Message, Does.Contain("BoxPoint").IgnoreCase,
-                    "Error must mention the expected BoxPoint type");
+                Assert.That(
+                    ex.Message,
+                    Does.Contain("BoxPoint").IgnoreCase,
+                    "Error must mention the expected BoxPoint type"
+                );
             }
             finally
             {
@@ -74,14 +74,14 @@ namespace AMD.Schola.Tests.Actuators
                 var actuator = go.AddComponent<TranslateActuator>();
                 actuator.InitActuator();
 
-                var wrong = new BoxPoint
-                {
-                    Values = { 1f, 2f },
-                };
+                var wrong = new BoxPoint { Values = { 1f, 2f } };
 
                 var ex = Assert.Throws<ArgumentException>(() => actuator.TakeAction(wrong));
-                Assert.That(ex.Message, Does.Contain("3"),
-                    "Error must mention the expected dimension count of 3");
+                Assert.That(
+                    ex.Message,
+                    Does.Contain("3"),
+                    "Error must mention the expected dimension count of 3"
+                );
             }
             finally
             {

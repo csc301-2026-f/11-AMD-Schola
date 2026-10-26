@@ -2,12 +2,14 @@
 
 using System.Collections.Generic;
 
-namespace AMD.Schola {
+namespace AMD.Schola
+{
     /// <summary>
     /// Drives the observe, think, act loop: each step it asks every agent what it sees,
     /// asks the policy what to do, and tells every agent to do it.
     /// </summary>
-    public interface IStepper {
+    public interface IStepper
+    {
         /// <summary>
         /// Prepares the stepper to drive the given agents with the given policy.
         /// The policy must already be initialised by the caller.

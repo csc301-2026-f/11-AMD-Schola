@@ -1,0 +1,39 @@
+# Regression guard for AMD's existing Python package. Our team should not normally change
+# Resources/python, so this only checks that nothing we touch breaks it. Called by ci.yml
+# when Resources/python/, Test/, Proto/ or pytest.ini change. Target runtime: under 5 minutes.
+
+name: Python
+
+on:
+  workflow_call:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: Resources/python/pyproject.toml
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install CPU-only PyTorch
+        run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install Schola and test dependencies
+        run: >
+          python -m pip install
+          --group Resources/python/pyproject.toml:test
+          -e "./Resources/python[sb3]"
+          pyyaml
+          "cyclopts<5"
+      - name: Run Python regression tests
+        run: >
+          python -m pytest Test/core Test/scripts Test/sb3
+          --import-mode=importlib -n 0 --timeout=60
+          --ignore=Test/core/test_ubt.py
+          --ignore=Test/sb3/test_async_env.py
+          --ignore=Test/sb3/test_env.py
+

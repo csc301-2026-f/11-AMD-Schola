@@ -5,7 +5,5 @@ namespace AMD.Schola
     /// <summary>
     /// Base type for observation/action values. Mirrors Unreal FPoint / Proto Point.
     /// </summary>
-    public abstract class Point
-    {
-    }
+    public abstract class Point { }
 }

@@ -53,8 +53,8 @@ namespace AMD.Schola.Tests.Environment
         public void SeedAndSetOptions_DoNotThrow()
         {
             Assert.DoesNotThrow(() => m_Fixture.Environment.Seed(0));
-            Assert.DoesNotThrow(
-                () => m_Fixture.Environment.SetOptions(new Dictionary<string, string>())
+            Assert.DoesNotThrow(() =>
+                m_Fixture.Environment.SetOptions(new Dictionary<string, string>())
             );
         }
 

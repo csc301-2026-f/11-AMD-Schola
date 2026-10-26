@@ -67,8 +67,9 @@ namespace AMD.Schola.Tests.Environment
             var initial = m_Fixture.Environment.Reset();
 
             Assert.That(initial, Is.Not.Null);
-            var observed =
-                ScholaEnvironmentTestFixture.PositionFromObservations(initial.Observations);
+            var observed = ScholaEnvironmentTestFixture.PositionFromObservations(
+                initial.Observations
+            );
             Assert.That(
                 observed.x,
                 Is.EqualTo(ScholaEnvironmentTestFixture.StartPose.x)
@@ -101,8 +102,7 @@ namespace AMD.Schola.Tests.Environment
             const float nextDeltaX = 0.5f;
             m_Fixture.Environment.Step(m_Fixture.TranslateAction(nextDeltaX));
 
-            var expected =
-                ScholaEnvironmentTestFixture.StartPose + new Vector3(nextDeltaX, 0f, 0f);
+            var expected = ScholaEnvironmentTestFixture.StartPose + new Vector3(nextDeltaX, 0f, 0f);
             Assert.That(
                 m_Fixture.AgentGo.transform.position.x,
                 Is.EqualTo(expected.x).Within(ScholaEnvironmentTestFixture.Tolerance),
@@ -148,13 +148,17 @@ namespace AMD.Schola.Tests.Environment
         [Test]
         public void Reset_StatefulStatusHook_StartsFreshEpisodeWithoutCallerClearingState()
         {
-            var status = m_Fixture
-                .AgentGo.AddComponent<ScholaEnvironmentTestFixture.TruncateAfterNStepsStatus>();
+            var status =
+                m_Fixture.AgentGo.AddComponent<ScholaEnvironmentTestFixture.TruncateAfterNStepsStatus>();
             status.MaxSteps = 2;
             m_Fixture.Environment.SetEpisodeStatus(status);
 
             var step1 = m_Fixture.Environment.Step(m_Fixture.TranslateAction(0.1f));
-            Assert.That(step1.Truncated, Is.False, "First step of an episode must not truncate yet");
+            Assert.That(
+                step1.Truncated,
+                Is.False,
+                "First step of an episode must not truncate yet"
+            );
 
             var step2 = m_Fixture.Environment.Step(m_Fixture.TranslateAction(0.1f));
             Assert.That(step2.Truncated, Is.True, "Status hook truncates after N steps");

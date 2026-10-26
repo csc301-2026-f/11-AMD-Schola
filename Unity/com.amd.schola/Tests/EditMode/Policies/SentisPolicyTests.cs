@@ -9,12 +9,15 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace AMD.Schola.Tests.Policies {
+namespace AMD.Schola.Tests.Policies
+{
     /// <summary>
     /// US5 policy tests using a PPO CartPole model exported by Schola's SB3 exporter.
     /// </summary>
-    public sealed class SentisPolicyTests {
-        const string ModelPath = "Packages/com.amd.schola/Tests/EditMode/Policies/TestModels/cartpole.onnx";
+    public sealed class SentisPolicyTests
+    {
+        const string ModelPath =
+            "Packages/com.amd.schola/Tests/EditMode/Policies/TestModels/cartpole.onnx";
         const string ObservationKey = "obs";
         const string ActionKey = "action";
 
@@ -22,26 +25,30 @@ namespace AMD.Schola.Tests.Policies {
         SentisPolicy m_Policy;
 
         [SetUp]
-        public void SetUp() {
+        public void SetUp()
+        {
             m_ModelAsset = AssetDatabase.LoadAssetAtPath<ModelAsset>(ModelPath);
             Assert.That(m_ModelAsset, Is.Not.Null, $"Test model missing at {ModelPath}");
             m_Policy = new SentisPolicy(m_ModelAsset);
         }
 
         [TearDown]
-        public void TearDown() {
+        public void TearDown()
+        {
             m_Policy.Dispose();
         }
 
         [Test]
-        public void Init_WithMatchingKeys_Succeeds() {
+        public void Init_WithMatchingKeys_Succeeds()
+        {
             Assert.That(m_Policy.Init(CartPoleDefinition()), Is.True);
             Assert.That(m_Policy.IsInitialized, Is.True);
         }
 
         [TestCase(0.05f, 1, TestName = "Think_PoleLeaningRight_PushesRight")]
         [TestCase(-0.05f, 0, TestName = "Think_PoleLeaningLeft_PushesLeft")]
-        public void Think_ReturnsTrainedAction(float poleAngle, int expectedAction) {
+        public void Think_ReturnsTrainedAction(float poleAngle, int expectedAction)
+        {
             Assert.That(m_Policy.Init(CartPoleDefinition()), Is.True);
 
             Assert.That(m_Policy.Think(CartPoleObservation(poleAngle), out var actions), Is.True);
@@ -55,7 +62,8 @@ namespace AMD.Schola.Tests.Policies {
         }
 
         [Test]
-        public void Init_ObservationKeyNotInModel_FailsWithClearError() {
+        public void Init_ObservationKeyNotInModel_FailsWithClearError()
+        {
             var definition = CartPoleDefinition();
             var observationSpace = (DictSpace)definition.ObservationSpace;
             observationSpace.Spaces["position"] = observationSpace.Spaces[ObservationKey];
@@ -67,7 +75,8 @@ namespace AMD.Schola.Tests.Policies {
         }
 
         [Test]
-        public void Init_ActionKeyNotInModel_FailsWithClearError() {
+        public void Init_ActionKeyNotInModel_FailsWithClearError()
+        {
             var definition = CartPoleDefinition();
             var actionSpace = (DictSpace)definition.ActionSpace;
             actionSpace.Spaces["jump"] = actionSpace.Spaces[ActionKey];
@@ -78,51 +87,68 @@ namespace AMD.Schola.Tests.Policies {
         }
 
         [Test]
-        public void Init_ObservationDimensionsDoNotMatchModel_FailsWithClearError() {
+        public void Init_ObservationDimensionsDoNotMatchModel_FailsWithClearError()
+        {
             var definition = CartPoleDefinition();
-            var observation = (BoxSpace)((DictSpace)definition.ObservationSpace).Spaces[ObservationKey];
+            var observation = (BoxSpace)
+                ((DictSpace)definition.ObservationSpace).Spaces[ObservationKey];
             observation.Dimensions.RemoveAt(0);
 
-            LogAssert.Expect(LogType.Error, new Regex(@"Observation 'obs' has shape \[3\] but model input 'obs' expects"));
+            LogAssert.Expect(
+                LogType.Error,
+                new Regex(@"Observation 'obs' has shape \[3\] but model input 'obs' expects")
+            );
             Assert.That(m_Policy.Init(definition), Is.False);
             Assert.That(m_Policy.IsInitialized, Is.False);
         }
 
         [Test]
-        public void Think_ObservationValueCountDoesNotMatchSpace_Fails() {
+        public void Think_ObservationValueCountDoesNotMatchSpace_Fails()
+        {
             Assert.That(m_Policy.Init(CartPoleDefinition()), Is.True);
             var observations = CartPoleObservation(0f);
             ((BoxPoint)observations.Points[ObservationKey]).Values.RemoveAt(0);
 
-            LogAssert.Expect(LogType.Error, new Regex("Observation 'obs' has 3 values but its space expects 4"));
+            LogAssert.Expect(
+                LogType.Error,
+                new Regex("Observation 'obs' has 3 values but its space expects 4")
+            );
             Assert.That(m_Policy.Think(observations, out var actions), Is.False);
             Assert.That(actions, Is.Null);
         }
 
         [Test]
-        public void Think_BeforeInit_Fails() {
+        public void Think_BeforeInit_Fails()
+        {
             LogAssert.Expect(LogType.Error, new Regex("Init must succeed before Think"));
             Assert.That(m_Policy.Think(CartPoleObservation(0f), out var actions), Is.False);
             Assert.That(actions, Is.Null);
         }
 
-        static InteractionDefinition CartPoleDefinition() {
+        static InteractionDefinition CartPoleDefinition()
+        {
             var observation = new BoxSpace();
-            for (var i = 0; i < 4; i++) {
+            for (var i = 0; i < 4; i++)
+            {
                 observation.Dimensions.Add(new BoxSpaceDimension());
             }
 
             return new InteractionDefinition(
                 new DictSpace { Spaces = { [ObservationKey] = observation } },
-                new DictSpace { Spaces = { [ActionKey] = new DiscreteSpace(2) } });
+                new DictSpace { Spaces = { [ActionKey] = new DiscreteSpace(2) } }
+            );
         }
 
-
-
-        static DictPoint CartPoleObservation(float poleAngle) {
-            return new DictPoint {
-                Points ={
-                    [ObservationKey] = new BoxPoint { Values = new List<float> { 0f, 0f, poleAngle, 0f } },
+        static DictPoint CartPoleObservation(float poleAngle)
+        {
+            return new DictPoint
+            {
+                Points =
+                {
+                    [ObservationKey] = new BoxPoint
+                    {
+                        Values = new List<float> { 0f, 0f, poleAngle, 0f },
+                    },
                 },
             };
         }

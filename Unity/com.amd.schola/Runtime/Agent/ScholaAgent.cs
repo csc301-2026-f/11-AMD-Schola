@@ -70,7 +70,8 @@ namespace AMD.Schola
                 {
                     Debug.LogWarning(
                         $"Duplicate action key '{actuator.ActionKey}' on {nameof(ScholaAgent)} '{name}'; later actuator overwrites the earlier action space entry.",
-                        this);
+                        this
+                    );
                 }
 
                 dictSpace.Spaces[actuator.ActionKey] = actuator.GetActionSpace();
@@ -113,7 +114,8 @@ namespace AMD.Schola
             {
                 throw new ArgumentException(
                     $"Expected {nameof(DictPoint)}, got {action.GetType().Name}.",
-                    nameof(action));
+                    nameof(action)
+                );
             }
 
             foreach (var actuator in m_Actuators)
@@ -123,11 +125,15 @@ namespace AMD.Schola
                     continue;
                 }
 
-                if (!dictPoint.Points.TryGetValue(actuator.ActionKey, out var nested) || nested == null)
+                if (
+                    !dictPoint.Points.TryGetValue(actuator.ActionKey, out var nested)
+                    || nested == null
+                )
                 {
                     throw new ArgumentException(
                         $"Missing action key '{actuator.ActionKey}'; expected keys: {FormatExpectedActionKeys()}.",
-                        nameof(action));
+                        nameof(action)
+                    );
                 }
             }
 

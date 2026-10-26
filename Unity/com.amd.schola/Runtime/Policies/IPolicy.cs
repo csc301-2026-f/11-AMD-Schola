@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 
-namespace AMD.Schola {
+namespace AMD.Schola
+{
     /// <summary>
     /// Policy maps observations to actions.
     /// </summary>
-    public interface IPolicy {
+    public interface IPolicy
+    {
         /// <summary>
         /// Prepares the policy for the given observation and action spaces.
         /// </summary>

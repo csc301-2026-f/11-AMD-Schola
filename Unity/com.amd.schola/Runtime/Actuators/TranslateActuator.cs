@@ -28,7 +28,10 @@ namespace AMD.Schola
         {
             if (string.IsNullOrEmpty(m_ActionKey))
             {
-                Debug.LogWarning($"{nameof(TranslateActuator)} on '{name}' has an empty {nameof(ActionKey)}.", this);
+                Debug.LogWarning(
+                    $"{nameof(TranslateActuator)} on '{name}' has an empty {nameof(ActionKey)}.",
+                    this
+                );
             }
         }
 
@@ -54,7 +57,8 @@ namespace AMD.Schola
             {
                 throw new ArgumentException(
                     $"Expected {nameof(BoxPoint)}, got {action.GetType().Name}.",
-                    nameof(action));
+                    nameof(action)
+                );
             }
 
             if (boxPoint.Values == null || boxPoint.Values.Count != DimensionCount)
@@ -62,10 +66,15 @@ namespace AMD.Schola
                 var actualCount = boxPoint.Values == null ? 0 : boxPoint.Values.Count;
                 throw new ArgumentException(
                     $"Action '{m_ActionKey}' expected {nameof(BoxPoint)} with {DimensionCount} values, got {actualCount}.",
-                    nameof(action));
+                    nameof(action)
+                );
             }
 
-            transform.position += new Vector3(boxPoint.Values[0], boxPoint.Values[1], boxPoint.Values[2]);
+            transform.position += new Vector3(
+                boxPoint.Values[0],
+                boxPoint.Values[1],
+                boxPoint.Values[2]
+            );
         }
     }
 }

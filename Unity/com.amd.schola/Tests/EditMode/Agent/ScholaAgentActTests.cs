@@ -37,21 +37,24 @@ namespace AMD.Schola.Tests.Agent
 
                 var action = new DictPoint
                 {
-                    Points =
-                    {
-                        [TranslateKey] = new BoxPoint
-                        {
-                            Values = { 1f, -2f, 0.5f },
-                        },
-                    },
+                    Points = { [TranslateKey] = new BoxPoint { Values = { 1f, -2f, 0.5f } } },
                 };
 
                 agent.Act(action);
 
                 var expected = new Vector3(11f, 18f, 30.5f);
-                Assert.That(actuatorGo.transform.position.x, Is.EqualTo(expected.x).Within(Tolerance));
-                Assert.That(actuatorGo.transform.position.y, Is.EqualTo(expected.y).Within(Tolerance));
-                Assert.That(actuatorGo.transform.position.z, Is.EqualTo(expected.z).Within(Tolerance));
+                Assert.That(
+                    actuatorGo.transform.position.x,
+                    Is.EqualTo(expected.x).Within(Tolerance)
+                );
+                Assert.That(
+                    actuatorGo.transform.position.y,
+                    Is.EqualTo(expected.y).Within(Tolerance)
+                );
+                Assert.That(
+                    actuatorGo.transform.position.z,
+                    Is.EqualTo(expected.z).Within(Tolerance)
+                );
             }
             finally
             {
@@ -99,14 +102,14 @@ namespace AMD.Schola.Tests.Agent
                 agent.SetActuators(new[] { actuator });
                 actuator.InitActuator();
 
-                var wrong = new BoxPoint
-                {
-                    Values = { 1f, 2f, 3f },
-                };
+                var wrong = new BoxPoint { Values = { 1f, 2f, 3f } };
 
                 var ex = Assert.Throws<ArgumentException>(() => agent.Act(wrong));
-                Assert.That(ex.Message, Does.Contain("DictPoint").IgnoreCase,
-                    "Error must mention the expected DictPoint type");
+                Assert.That(
+                    ex.Message,
+                    Does.Contain("DictPoint").IgnoreCase,
+                    "Error must mention the expected DictPoint type"
+                );
             }
             finally
             {
@@ -132,18 +135,15 @@ namespace AMD.Schola.Tests.Agent
 
                 var action = new DictPoint
                 {
-                    Points =
-                    {
-                        ["other"] = new BoxPoint
-                        {
-                            Values = { 1f, 2f, 3f },
-                        },
-                    },
+                    Points = { ["other"] = new BoxPoint { Values = { 1f, 2f, 3f } } },
                 };
 
                 var ex = Assert.Throws<ArgumentException>(() => agent.Act(action));
-                Assert.That(ex.Message, Does.Contain(TranslateKey),
-                    "Error must mention the missing expected action key");
+                Assert.That(
+                    ex.Message,
+                    Does.Contain(TranslateKey),
+                    "Error must mention the missing expected action key"
+                );
             }
             finally
             {
@@ -179,22 +179,25 @@ namespace AMD.Schola.Tests.Agent
 
                 var action = new DictPoint
                 {
-                    Points =
-                    {
-                        [TranslateKey] = new BoxPoint
-                        {
-                            Values = { 1f, -2f, 0.5f },
-                        },
-                    },
+                    Points = { [TranslateKey] = new BoxPoint { Values = { 1f, -2f, 0.5f } } },
                 };
 
                 var ex = Assert.Throws<ArgumentException>(() => agent.Act(action));
-                Assert.That(ex.Message, Does.Contain("translate_b"),
-                    "Error must mention the missing later action key");
-                Assert.That(actuatorAGo.transform.position, Is.EqualTo(startA),
-                    "Earlier actuator must not move when a later action key is missing");
-                Assert.That(actuatorBGo.transform.position, Is.EqualTo(startB),
-                    "Later actuator must not move when its action key is missing");
+                Assert.That(
+                    ex.Message,
+                    Does.Contain("translate_b"),
+                    "Error must mention the missing later action key"
+                );
+                Assert.That(
+                    actuatorAGo.transform.position,
+                    Is.EqualTo(startA),
+                    "Earlier actuator must not move when a later action key is missing"
+                );
+                Assert.That(
+                    actuatorBGo.transform.position,
+                    Is.EqualTo(startB),
+                    "Later actuator must not move when its action key is missing"
+                );
             }
             finally
             {
@@ -225,8 +228,11 @@ namespace AMD.Schola.Tests.Agent
 
                 var defined = agent.DefineActionSpace() as DictSpace;
                 Assert.That(defined, Is.Not.Null, "DefineActionSpace must return a DictSpace");
-                Assert.That(defined.Spaces.Keys, Is.EquivalentTo(new[] { TranslateKey, "translate_b" }),
-                    "Action space keys must match actuator ActionKeys");
+                Assert.That(
+                    defined.Spaces.Keys,
+                    Is.EquivalentTo(new[] { TranslateKey, "translate_b" }),
+                    "Action space keys must match actuator ActionKeys"
+                );
                 Assert.That(defined.Spaces[TranslateKey], Is.TypeOf<BoxSpace>());
                 Assert.That(defined.Spaces["translate_b"], Is.TypeOf<BoxSpace>());
             }
@@ -257,12 +263,18 @@ namespace AMD.Schola.Tests.Agent
                 actuatorA.InitActuator();
                 actuatorB.InitActuator();
 
-                LogAssert.Expect(LogType.Warning, new Regex($"Duplicate action key '{TranslateKey}'"));
+                LogAssert.Expect(
+                    LogType.Warning,
+                    new Regex($"Duplicate action key '{TranslateKey}'")
+                );
 
                 var defined = agent.DefineActionSpace() as DictSpace;
                 Assert.That(defined, Is.Not.Null, "DefineActionSpace must return a DictSpace");
-                Assert.That(defined.Spaces.Keys, Is.EquivalentTo(new[] { TranslateKey }),
-                    "Duplicate ActionKeys still publish a single last-write-wins space entry");
+                Assert.That(
+                    defined.Spaces.Keys,
+                    Is.EquivalentTo(new[] { TranslateKey }),
+                    "Duplicate ActionKeys still publish a single last-write-wins space entry"
+                );
             }
             finally
             {

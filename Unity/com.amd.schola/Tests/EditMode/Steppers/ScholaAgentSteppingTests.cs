@@ -29,10 +29,12 @@ namespace AMD.Schola.Tests.Steppers
             {
                 actions = null;
 
-                if (!(observations is DictPoint dict)
+                if (
+                    !(observations is DictPoint dict)
                     || !dict.Points.TryGetValue(PositionKey, out var point)
                     || !(point is BoxPoint position)
-                    || position.Values.Count != 3)
+                    || position.Values.Count != 3
+                )
                 {
                     return false;
                 }

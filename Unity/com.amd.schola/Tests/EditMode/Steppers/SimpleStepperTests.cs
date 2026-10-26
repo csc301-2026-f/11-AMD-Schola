@@ -144,10 +144,7 @@ namespace AMD.Schola.Tests.Steppers
 
             Assert.That(m_Stepper.Step(), Is.True);
 
-            Assert.That(
-                m_Log,
-                Is.EqualTo(new[] { "observe:0", "observe:1", "act:0", "act:1" })
-            );
+            Assert.That(m_Log, Is.EqualTo(new[] { "observe:0", "observe:1", "act:0", "act:1" }));
         }
 
         [Test]
@@ -213,10 +210,7 @@ namespace AMD.Schola.Tests.Steppers
             Assert.That(m_Stepper.Step(), Is.True);
 
             Assert.That(m_Policy.ThinkCalls, Is.EqualTo(2));
-            Assert.That(
-                m_Log,
-                Is.EqualTo(new[] { "observe:0", "act:0", "observe:0", "act:0" })
-            );
+            Assert.That(m_Log, Is.EqualTo(new[] { "observe:0", "act:0", "observe:0", "act:0" }));
         }
     }
 }

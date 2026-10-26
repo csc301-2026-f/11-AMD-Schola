@@ -26,9 +26,7 @@ namespace AMD.Schola.Tests.Environment
         {
             public float Reward;
 
-            public void OnEpisodeReset()
-            {
-            }
+            public void OnEpisodeReset() { }
 
             public float ComputeReward()
             {
@@ -147,13 +145,7 @@ namespace AMD.Schola.Tests.Environment
         {
             return new DictPoint
             {
-                Points =
-                {
-                    [TranslateKey] = new BoxPoint
-                    {
-                        Values = { dx, dy, dz },
-                    },
-                },
+                Points = { [TranslateKey] = new BoxPoint { Values = { dx, dy, dz } } },
             };
         }
 

@@ -64,7 +64,8 @@ namespace AMD.Schola
             if (m_Agent == null)
             {
                 throw new InvalidOperationException(
-                    $"{nameof(ScholaEnvironment)} requires a {nameof(ScholaAgent)}.");
+                    $"{nameof(ScholaEnvironment)} requires a {nameof(ScholaAgent)}."
+                );
             }
 
             foreach (var sensor in m_Agent.Sensors)
@@ -126,10 +127,7 @@ namespace AMD.Schola
 
             RestorePoses();
             NotifyEpisodeReset();
-            var initial = new InitialAgentState
-            {
-                Observations = m_Agent.Observe(),
-            };
+            var initial = new InitialAgentState { Observations = m_Agent.Observe() };
             m_Sink?.SubmitInitialState(initial);
             return initial;
         }
@@ -142,7 +140,8 @@ namespace AMD.Schola
             if (m_Agent == null)
             {
                 throw new InvalidOperationException(
-                    $"{nameof(ScholaEnvironment)} requires a {nameof(ScholaAgent)}.");
+                    $"{nameof(ScholaEnvironment)} requires a {nameof(ScholaAgent)}."
+                );
             }
 
             m_Agent.Act(action);
@@ -203,13 +202,15 @@ namespace AMD.Schola
             var transforms = m_Agent.GetComponentsInChildren<Transform>(true);
             foreach (var t in transforms)
             {
-                m_PoseSnapshot.Add(new TransformSnapshot
-                {
-                    Transform = t,
-                    LocalPosition = t.localPosition,
-                    LocalRotation = t.localRotation,
-                    LocalScale = t.localScale,
-                });
+                m_PoseSnapshot.Add(
+                    new TransformSnapshot
+                    {
+                        Transform = t,
+                        LocalPosition = t.localPosition,
+                        LocalRotation = t.localRotation,
+                        LocalScale = t.localScale,
+                    }
+                );
             }
         }
 

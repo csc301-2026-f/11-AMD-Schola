@@ -56,7 +56,11 @@ namespace AMD.Schola.Tests.Environment
             var second = m_Fixture.Environment.Step(m_Fixture.TranslateAction(0.1f));
 
             Assert.That(first.Reward, Is.EqualTo(1.5f), "First step must keep its own reward");
-            Assert.That(second.Reward, Is.EqualTo(0.25f), "Second step must not bleed the first reward");
+            Assert.That(
+                second.Reward,
+                Is.EqualTo(0.25f),
+                "Second step must not bleed the first reward"
+            );
             Assert.That(m_Fixture.Sink.States, Has.Count.EqualTo(2));
             Assert.That(m_Fixture.Sink.States[0].Reward, Is.EqualTo(1.5f));
             Assert.That(m_Fixture.Sink.States[1].Reward, Is.EqualTo(0.25f));

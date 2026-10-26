@@ -25,13 +25,7 @@ namespace AMD.Schola.Tests.Environment
         {
             var observations = new DictPoint
             {
-                Points =
-                {
-                    ["position"] = new BoxPoint
-                    {
-                        Values = { 1f, 2f, 3f },
-                    },
-                },
+                Points = { ["position"] = new BoxPoint { Values = { 1f, 2f, 3f } } },
             };
 
             var state = new AgentState

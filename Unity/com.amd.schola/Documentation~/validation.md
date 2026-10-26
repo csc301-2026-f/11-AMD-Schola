@@ -1,26 +1,27 @@
 # US6 validation record
 
-Recorded **2026-10-26** on `US6-setup-integration`, based on `8397c92`. No commit, push, merge, cherry-pick, or PR was made. No applicable `AGENTS.md` was found in the checkout or its ancestor directories. `CONTRIBUTING.md`, the package source/tests/manifest, CI workflows, mockup version documentation, remote branch files/diffs, and all repository PRs were inspected before editing.
+Updated **2026-10-26** for the explicitly requested US2 integration on `US6-setup-integration`, starting from the owner's clean committed US6 state **`9ef5127`**. The original setup implementation was based on `8397c92`. No commit, push, merge, cherry-pick, or PR was made by this follow-up. It reuses the existing US2 runtime/tests and metadata from **`49f354a`**, then wires the sample through the action API. No applicable `AGENTS.md` was found. Repository instructions, package code/tests, and relevant branch diffs were inspected before editing.
 
 ## Checks actually performed
 
 | Check | Result |
 | --- | --- |
-| `git fetch origin` | Passed after an initial sandbox denial writing `.git/FETCH_HEAD`; fetched refs without changing the checkout. |
-| `git rev-list --left-right --count origin/main...HEAD` | `19 9`; kept the existing US6 branch and its divergent CI work. |
-| Existing `.github/scripts/tests/test_checks.py` suite | **7 tests passed** with Python's `unittest` runner. The pre-existing deleted `check_meta_files.py` was loaded from `git show HEAD:...` into an in-memory module; the deleted file was not restored. |
+| `git fetch origin` | Passed; refreshed refs without changing the checkout. Discovered the US3 branch advanced to `722840d`; no US3 code was integrated. |
+| US2 source inspection | `git diff origin/feature/us2-apply-agent-actions origin/main -- Unity/com.amd.schola/Runtime/Actuators Unity/com.amd.schola/Runtime/Agent/ScholaAgent.cs` shows that main's only additional change in this action runtime is `ScholaAgent : IAgent`. Reused US2's self-contained version to avoid importing US5 dependencies. |
+| Existing `.github/scripts/tests/test_checks.py` suite | **7 tests passed** with Python's `unittest` runner. The absent `check_meta_files.py` was loaded from `git show 8397c92:.github/scripts/check_meta_files.py` into an in-memory module; the file was not restored. |
 | `.github/scripts/check_package_json.py` validation against the changed manifest | Passed. |
-| Existing metadata validator against `Unity/` | Passed using its tracked HEAD version in memory. This validator intentionally ignores `Samples~`, so a separate sample inspection was also run. |
-| Additional sample layout inspection | Passed: registered sample directory exists; every sample file/subfolder has metadata; no orphan metadata; **38 package/sample metadata files** have valid unique 32-character GUIDs. |
+| Existing metadata validator against `Unity/` | Passed using its `8397c92` version in memory. This validator intentionally ignores `Samples~`, so a separate sample inspection was also run. |
+| Additional sample layout inspection | Passed: registered sample directory exists; every sample file/subfolder has metadata; no orphan metadata; **44 package/sample metadata files** have valid unique 32-character GUIDs. US2 metadata retains its existing GUIDs. |
 | Assembly inspection | Passed: all **5** package/sample `.asmdef` files parse as JSON, have unique names and resolving explicit assembly references. Sample builder/tests target Editor only. |
-| CSharpier **1.3.0** | Formatted the 3 new C# files, then checked **15 C# files** under `Unity/`; passed with no syntax/format errors. Used the cached .NET 10 tool DLL and the tracked HEAD formatter configuration copied outside the repository because the working-tree tool/config files were already deleted. This parses C#; it is not a Unity compilation or API/type check. |
+| CSharpier **1.3.0** | Formatted the 8 integrated/changed C# files, then checked **19 C# files** under `Unity/`; passed with no syntax/format errors. Used the cached .NET 10 tool DLL and the formatter configuration preserved from `8397c92` outside the repository because the checkout has no formatter tool/config files. This parses C#; it is not a Unity compilation or API/type check. |
+| Controller action-path inspection | Passed: controller source calls `m_Agent.Act(...)` and has no direct position assignments. The builder registers a cube-local `TranslateActuator`; the controller initializes actuators and defines the action space. This source inspection is not a runtime test. |
 | `git diff --check` and inspection of new files for trailing whitespace | Passed. |
 | Clean Unity installation/import, compilation, scene generation/save/reload, EditMode execution, Play Mode and visuals | **Not run: Unity Editor was not available.** No `.unity` scene is presented as Editor-verified. |
 | Python/Unreal regression suites | Not run: the changes do not modify Python training or Unreal code. |
 
-The first validator run encountered Windows sandbox temporary-directory access errors. Redirecting `tempfile.tempdir` to the allowed task artifact directory resolved them; all seven tests then passed. An initial CSharpier `check` invocation used the unsupported `--no-cache` argument; rerunning with the documented `check` options passed.
+This follow-up's static checks passed. Python temporary files were directed to the allowed task artifact directory, reusing the workaround from the initial implementation's sandbox access errors. The initial implementation also corrected an unsupported CSharpier `check --no-cache` invocation; that argument was not used for this follow-up's check.
 
-The working tree already had deletions of `.config/dotnet-tools.json`, `.csharpierrc.yaml`, and `.github/scripts/check_meta_files.py`. Those are preserved. The normal CI commands below rely on those files, so the equivalent local checks above used their tracked contents without changing the user's deletions. CI/tooling restoration is a separate decision for the owner.
+The original working tree had deletions of `.config/dotnet-tools.json`, `.csharpierrc.yaml`, and `.github/scripts/check_meta_files.py`. They remain absent in the owner's committed `9ef5127` state and were not restored. The normal CI commands below rely on those files, so the equivalent local checks above used their preserved baseline contents. CI/tooling restoration is a separate decision for the owner.
 
 ## Reproduce standard checks with intact repository tooling
 
@@ -35,7 +36,7 @@ python .github/scripts/check_package_json.py
 git diff --check
 ```
 
-These are the existing branch CI entry points, not a claim that those literal commands succeeded with the pre-existing local deletions. The metadata validator does not traverse `Samples~`. The implementation additionally inspected that tree, GUIDs, and assembly definitions with Python standard-library assertions.
+These are the existing branch CI entry points, not a claim that those literal commands succeeded with the absent tooling. The metadata validator does not traverse `Samples~`. The implementation additionally inspected that tree, GUIDs, and assembly definitions with Python standard-library assertions. Unity source tests are present but **not run**: **10 reused US2 action tests** and **5 sample tests**, plus the existing observation tests.
 
 ## Unity acceptance checklist still to run
 
@@ -43,14 +44,15 @@ Use **Unity 6000.3.24f1** and a new **3D Built-In** project, following [setup.md
 
 - [ ] Install **from disk**, selecting this checkout's `Unity/com.amd.schola/package.json`. Confirm AMD Schola 0.1.0 resolves with no Console errors.
 - [ ] Import **Setup Demo** through Package Manager. Confirm the sample's scripts compile, and its Tools menu appears.
-- [ ] Run **Tools > AMD Schola > Create Setup Demo Scene** and save under `Assets`. Confirm all five expected objects, real Schola components, keys, and Inspector references match the guide; no Missing Script entries.
+- [ ] Back up customizations and reimport an older Setup Demo before using the updated builder. Create a new scene or add/register its missing actuator as described in the guide.
+- [ ] Run **Tools > AMD Schola > Create Setup Demo Scene** and save under `Assets`. Confirm all five expected objects, real Schola components, keys, and Inspector references match the guide; no Missing Script entries. Schola Cube must have a Translate Actuator with Action Key `translate`, registered as the agent's single Actuators entry.
 - [ ] Close and reopen the saved scene. Confirm references persist and the Game camera frames the cube and target.
 - [ ] Press Play. Confirm the setup-demo message, moving observation values, cube arrival in about three seconds, and the arrival message without errors.
 - [ ] Move Target to `(0, 0.5, 2)` while playing. Confirm its observation changes and the cube follows. Stop and restart Play Mode to repeat from the saved state.
-- [ ] In **Window > General > Test Runner > EditMode**, run `AMD.Schola.Samples.SetupDemo.Tests`: **3 tests** cover observation-driven movement/no overshoot/following a moved target, invalid keys, and real scene save/reload reference integrity.
-- [ ] Add `"testables": ["com.amd.schola"]` at the root of the project's `Packages/manifest.json` alongside `dependencies`, then run the existing package observation tests too. Imported sample tests live under Assets and do not depend on `testables`.
+- [ ] In **Window > General > Test Runner > EditMode**, run `AMD.Schola.Samples.SetupDemo.Tests`: **5 tests** cover observation/action-driven movement, no overshoot/following a moved target, invalid observation keys, missing actuators, action-key rejection before movement, and scene save/reload of sensor/actuator references.
+- [ ] Add `"testables": ["com.amd.schola"]` at the root of the project's `Packages/manifest.json` alongside `dependencies`, then run the package observation tests and the **10 US2 tests** in `ScholaAgentActTests` / `TranslateActuatorTests`. Imported sample tests live under Assets and do not depend on `testables`.
 - [ ] Test canceling the builder's save dialog and creating a second scene after saving current changes. Check your existing scene is preserved.
-- [ ] Adapt a duplicated scene to another controlled object and goal; reconnect the two sensors and controller references and repeat the demonstration.
+- [ ] Adapt a duplicated scene to another controlled object and goal; reconnect the two sensors, registered actuator and controller references and repeat the demonstration.
 
 Optional Editor test automation after importing the sample (replace the project path):
 
@@ -67,6 +69,6 @@ Close the interactive Editor for that project first. This command is supplied fo
 
 ## CI coverage and acceptance limits
 
-The branch's GameCI workflow targets package EditMode tests using `packageMode: true`. It does **not** automatically import `Samples~`; therefore the three new sample tests require import into a consumer project. The end-to-end training smoke workflow/client are existing placeholders and cannot verify US6, US4, or training.
+The branch's GameCI workflow targets package EditMode tests using `packageMode: true`, which includes the reused US2 package tests. It does **not** automatically import `Samples~`; therefore the five sample tests require import into a consumer project. The end-to-end training smoke workflow/client are existing placeholders and cannot verify US6, US4, or training.
 
-US6 now supplies the installable sample sources, a Unity scene-creation command, metadata/assembly isolation, and the installation/adaptation guide. Acceptance remains pending for actual Editor compilation, sample import, generated scene reference integrity, tests, and Play Mode behavior. Full Schola actions require deliberate US2 integration; rewards/resets, training connectivity, and compatible trained-model execution remain outside this branch's setup demonstration. See the source/PR findings in [setup.md](setup.md).
+US6 supplies the installable sample sources, a Unity scene-creation command, metadata/assembly isolation, and the installation/adaptation guide. The explicitly requested US2 integration now routes deterministic decisions through the real `Observe > Act > TranslateActuator` path. Acceptance remains pending for actual Editor compilation, sample import, generated scene reference integrity, tests, and Play Mode behavior. Rewards/resets, training connectivity, and compatible trained-model execution remain outside this branch's setup demonstration. See the source/PR findings in [setup.md](setup.md).

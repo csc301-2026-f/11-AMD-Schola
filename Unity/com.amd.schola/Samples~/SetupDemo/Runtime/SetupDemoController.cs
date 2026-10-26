@@ -5,13 +5,14 @@ using UnityEngine;
 namespace AMD.Schola.Samples
 {
     /// <summary>
-    /// Installation demonstration using real Schola observations. Movement is sample-only:
-    /// this branch has no ScholaAgent.Act API. This is neither a policy nor an episode system.
+    /// Installation demonstration using Schola observations and actions. A deterministic
+    /// controller chooses displacements; Schola applies them. No training or episode system.
     /// </summary>
     public sealed class SetupDemoController : MonoBehaviour
     {
         public const string AgentPositionKey = "agent_position";
         public const string TargetPositionKey = "target_position";
+        public const string TranslateKey = "translate";
 
         [SerializeField]
         ScholaAgent m_Agent;
@@ -50,11 +51,20 @@ namespace AMD.Schola.Samples
                 sensor.InitSensor();
             }
 
+            foreach (var actuator in m_Agent.Actuators)
+            {
+                actuator.InitActuator();
+            }
+
             m_Agent.Define();
-            Debug.Log("Schola Setup Demo: deterministic movement; no training or inference.", this);
+            m_Agent.DefineActionSpace();
+            Debug.Log(
+                "Schola Setup Demo: deterministic Schola actions; no training or inference.",
+                this
+            );
         }
 
-        /// <summary>Reject ambiguous keys and sensors attached to the wrong scene objects.</summary>
+        /// <summary>Reject ambiguous keys and sensors/actuators on the wrong scene objects.</summary>
         public bool ValidateConfiguration()
         {
             if (
@@ -88,6 +98,21 @@ namespace AMD.Schola.Samples
                 return false;
             }
 
+            var actuators = m_Agent.Actuators;
+            if (
+                actuators.Count != 1
+                || actuators[0] == null
+                || actuators[0].transform != m_Agent.transform
+                || actuators[0].ActionKey != TranslateKey
+            )
+            {
+                Debug.LogError(
+                    "Schola Setup Demo: Actuators must contain one TranslateActuator on the cube with Action Key 'translate'. See the setup guide.",
+                    this
+                );
+                return false;
+            }
+
             return true;
         }
 
@@ -98,7 +123,7 @@ namespace AMD.Schola.Samples
 
         /// <summary>
         /// Reads Observe() before deciding movement, then reads it again for the display.
-        /// Direct Transform movement is the single replacement point for US2's action path.
+        /// Sends the chosen displacement through ScholaAgent.Act and its TranslateActuator.
         /// </summary>
         public void Step(float deltaTime)
         {
@@ -108,10 +133,23 @@ namespace AMD.Schola.Samples
             HasArrived = Vector3.Distance(current, target) <= m_ArrivalDistance;
             if (!HasArrived)
             {
-                m_Agent.transform.position = Vector3.MoveTowards(
+                var nextPosition = Vector3.MoveTowards(
                     current,
                     target,
                     m_Speed * Mathf.Max(0f, deltaTime)
+                );
+                var delta = nextPosition - current;
+                m_Agent.Act(
+                    new DictPoint
+                    {
+                        Points =
+                        {
+                            [TranslateKey] = new BoxPoint
+                            {
+                                Values = { delta.x, delta.y, delta.z },
+                            },
+                        },
+                    }
                 );
             }
 
@@ -144,7 +182,7 @@ namespace AMD.Schola.Samples
             }
 
             GUILayout.BeginArea(new Rect(12f, 12f, 470f, 140f), GUI.skin.box);
-            GUILayout.Label("Schola Setup Demo - deterministic movement");
+            GUILayout.Label("Schola Setup Demo - deterministic Schola actions");
             GUILayout.Label("No training, episode logic, or model inference");
             GUILayout.Label(
                 $"{AgentPositionKey}: {ReadPosition(LastObservation, AgentPositionKey):F2}"

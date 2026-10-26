@@ -57,6 +57,9 @@ namespace AMD.Schola.Samples.Editor
                 var cubeSensor = cube.AddComponent<PositionSensor>();
                 cubeSensor.ObservationKey = SetupDemoController.AgentPositionKey;
                 var agent = cube.AddComponent<ScholaAgent>();
+                var actuator = cube.AddComponent<TranslateActuator>();
+                actuator.ActionKey = SetupDemoController.TranslateKey;
+                agent.SetActuators(new[] { actuator });
 
                 var target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 target.name = "Target";

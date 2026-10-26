@@ -2,7 +2,7 @@
   "name": "com.amd.schola",
   "version": "0.1.0",
   "displayName": "AMD Schola",
-  "description": "Schola's Unity integration. Define agent observations and import the Setup Demo to learn package installation and scene wiring. Training and inference availability depends on the integration branch.",
+  "description": "Schola's Unity integration. Define agent observations and actions, and import the Setup Demo to learn package installation and scene wiring. Training and inference availability depends on the integration branch.",
   "unity": "6000.3",
   "keywords": [
     "schola",
@@ -18,7 +18,7 @@
   "samples": [
     {
       "displayName": "Setup Demo",
-      "description": "Create a cube-to-target scene using Schola position observations and a deterministic demo controller. No Python or model required. See README.md in the imported sample.",
+      "description": "Create a cube-to-target scene using Schola observations, Act and TranslateActuator with a deterministic controller. No Python or model required. See README.md in the imported sample.",
       "path": "Samples~/SetupDemo"
     }
   ]

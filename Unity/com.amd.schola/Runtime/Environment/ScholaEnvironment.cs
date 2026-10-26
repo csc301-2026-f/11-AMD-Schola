@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,12 +18,22 @@ namespace AMD.Schola
         /// </summary>
         public const string DefaultAgentId = "SingleAgent";
 
+        struct TransformSnapshot
+        {
+            public Transform Transform;
+            public Vector3 LocalPosition;
+            public Quaternion LocalRotation;
+            public Vector3 LocalScale;
+        }
+
         [SerializeField]
         ScholaAgent m_Agent;
 
         IReward m_Reward;
         IEpisodeStatus m_Status;
         ITrainingStateSink m_Sink;
+        readonly List<TransformSnapshot> m_PoseSnapshot = new List<TransformSnapshot>();
+        bool m_Initialized;
 
         public void SetAgent(ScholaAgent agent)
         {
@@ -44,10 +55,37 @@ namespace AMD.Schola
             m_Sink = sink;
         }
 
+        /// <summary>
+        /// Binds the agent, inits sensors/actuators, snapshots local poses, and returns obs/action spaces.
+        /// </summary>
         public InteractionDefinition Initialize()
         {
-            _ = m_Agent;
-            return new InteractionDefinition();
+            ResolveBindings();
+            if (m_Agent == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(ScholaEnvironment)} requires a {nameof(ScholaAgent)}.");
+            }
+
+            foreach (var sensor in m_Agent.Sensors)
+            {
+                if (sensor != null)
+                {
+                    sensor.InitSensor();
+                }
+            }
+
+            foreach (var actuator in m_Agent.Actuators)
+            {
+                if (actuator != null)
+                {
+                    actuator.InitActuator();
+                }
+            }
+
+            SnapshotPoses();
+            m_Initialized = true;
+            return new InteractionDefinition(m_Agent.Define(), m_Agent.DefineActionSpace());
         }
 
         public void Seed(int seed)
@@ -60,18 +98,119 @@ namespace AMD.Schola
             _ = options;
         }
 
+        /// <summary>
+        /// Restores the initialize snapshot, observes, and returns <see cref="InitialAgentState"/> (obs + info only).
+        /// Does not auto-reset after a terminal step; the caller must invoke this to start the next episode.
+        /// </summary>
+        /// <remarks>
+        /// Unity invokes a method named <c>Reset</c> when the component is first added, before
+        /// <see cref="SetAgent"/> runs. If no agent is bound yet, this is that editor callback and is a no-op.
+        /// </remarks>
         public InitialAgentState Reset()
         {
-            _ = m_Sink;
-            return new InitialAgentState();
+            if (m_Agent == null)
+            {
+                ResolveBindings();
+            }
+
+            if (m_Agent == null)
+            {
+                return new InitialAgentState();
+            }
+
+            if (!m_Initialized)
+            {
+                Initialize();
+            }
+
+            RestorePoses();
+            var initial = new InitialAgentState
+            {
+                Observations = m_Agent.Observe(),
+            };
+            m_Sink?.SubmitInitialState(initial);
+            return initial;
         }
 
+        /// <summary>
+        /// Applies <paramref name="action"/>, then reports reward, episode flags, and a fresh observation.
+        /// </summary>
         public AgentState Step(Point action)
         {
-            _ = action;
-            _ = m_Reward;
-            _ = m_Status;
-            return new AgentState();
+            if (m_Agent == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(ScholaEnvironment)} requires a {nameof(ScholaAgent)}.");
+            }
+
+            m_Agent.Act(action);
+
+            var reward = m_Reward != null ? m_Reward.ComputeReward() : 0f;
+            var terminated = false;
+            var truncated = false;
+            if (m_Status != null)
+            {
+                m_Status.GetStatus(out terminated, out truncated);
+            }
+
+            var state = new AgentState
+            {
+                Observations = m_Agent.Observe(),
+                Reward = reward,
+                Terminated = terminated,
+                Truncated = truncated,
+            };
+            m_Sink?.SubmitState(state);
+            return state;
+        }
+
+        void ResolveBindings()
+        {
+            if (m_Agent == null)
+            {
+                m_Agent = GetComponentInChildren<ScholaAgent>();
+            }
+
+            if (m_Reward == null)
+            {
+                m_Reward = GetComponentInChildren<IReward>();
+            }
+
+            if (m_Status == null)
+            {
+                m_Status = GetComponentInChildren<IEpisodeStatus>();
+            }
+        }
+
+        void SnapshotPoses()
+        {
+            m_PoseSnapshot.Clear();
+            var transforms = m_Agent.GetComponentsInChildren<Transform>(true);
+            foreach (var t in transforms)
+            {
+                m_PoseSnapshot.Add(new TransformSnapshot
+                {
+                    Transform = t,
+                    LocalPosition = t.localPosition,
+                    LocalRotation = t.localRotation,
+                    LocalScale = t.localScale,
+                });
+            }
+        }
+
+        void RestorePoses()
+        {
+            foreach (var pose in m_PoseSnapshot)
+            {
+                if (pose.Transform == null)
+                {
+                    continue;
+                }
+
+                pose.Transform.localPosition = pose.LocalPosition;
+                pose.Transform.localRotation = pose.LocalRotation;
+                pose.Transform.localScale = pose.LocalScale;
+            }
         }
     }
 }

@@ -99,8 +99,9 @@ namespace AMD.Schola
         }
 
         /// <summary>
-        /// Restores the initialize snapshot, observes, and returns <see cref="InitialAgentState"/> (obs + info only).
-        /// Does not auto-reset after a terminal step; the caller must invoke this to start the next episode.
+        /// Restores the initialize snapshot, notifies episode hooks, observes, and returns
+        /// <see cref="InitialAgentState"/> (obs + info only). Does not auto-reset after a
+        /// terminal step; the caller must invoke this to start the next episode.
         /// </summary>
         /// <remarks>
         /// Unity invokes a method named <c>Reset</c> when the component is first added, before
@@ -124,6 +125,7 @@ namespace AMD.Schola
             }
 
             RestorePoses();
+            NotifyEpisodeReset();
             var initial = new InitialAgentState
             {
                 Observations = m_Agent.Observe(),
@@ -162,6 +164,19 @@ namespace AMD.Schola
             };
             m_Sink?.SubmitState(state);
             return state;
+        }
+
+        void NotifyEpisodeReset()
+        {
+            if (m_Reward != null)
+            {
+                m_Reward.OnEpisodeReset();
+            }
+
+            if (m_Status != null)
+            {
+                m_Status.OnEpisodeReset();
+            }
         }
 
         void ResolveBindings()

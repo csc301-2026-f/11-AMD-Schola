@@ -73,7 +73,6 @@ namespace AMD.Schola.Tests.Environment
         public void Step_AfterReset_AppliesTranslateActionFromResetPose()
         {
             StepToTerminalPose();
-            m_Fixture.Status.Terminated = false;
             m_Fixture.Environment.Reset();
 
             const float nextDeltaX = 0.5f;
@@ -105,6 +104,31 @@ namespace AMD.Schola.Tests.Environment
                 "Reset must submit InitialAgentState to the sink");
             Assert.That(m_Fixture.Sink.States, Has.Count.EqualTo(trainingCountAfterTerminal),
                 "Reset must not submit a training AgentState with the terminal reward");
+        }
+
+        [Test]
+        public void Reset_StatefulStatusHook_StartsFreshEpisodeWithoutCallerClearingState()
+        {
+            var status = m_Fixture.AgentGo.AddComponent<ScholaEnvironmentTestFixture.TruncateAfterNStepsStatus>();
+            status.MaxSteps = 2;
+            m_Fixture.Environment.SetEpisodeStatus(status);
+
+            var step1 = m_Fixture.Environment.Step(m_Fixture.TranslateAction(0.1f));
+            Assert.That(step1.Truncated, Is.False, "First step of an episode must not truncate yet");
+
+            var step2 = m_Fixture.Environment.Step(m_Fixture.TranslateAction(0.1f));
+            Assert.That(step2.Truncated, Is.True, "Status hook truncates after N steps");
+
+            m_Fixture.Environment.Reset();
+
+            var next1 = m_Fixture.Environment.Step(m_Fixture.TranslateAction(0.1f));
+            Assert.That(next1.Truncated, Is.False,
+                "After Reset, a stateful status hook must start a fresh episode; the caller must not clear its counter");
+            Assert.That(next1.Terminated, Is.False);
+
+            var next2 = m_Fixture.Environment.Step(m_Fixture.TranslateAction(0.1f));
+            Assert.That(next2.Truncated, Is.True,
+                "The hook must still truncate after N steps in the new episode");
         }
 
         void StepToTerminalPose()

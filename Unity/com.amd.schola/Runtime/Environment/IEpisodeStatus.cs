@@ -8,6 +8,13 @@ namespace AMD.Schola
     /// </summary>
     public interface IEpisodeStatus
     {
+        /// <summary>
+        /// Clears per-episode status state (step counters, latched flags). Called by
+        /// <see cref="ScholaEnvironment.Reset"/> after restoring snapshot poses and
+        /// before collecting initial observations.
+        /// </summary>
+        void OnEpisodeReset();
+
         void GetStatus(out bool terminated, out bool truncated);
     }
 }

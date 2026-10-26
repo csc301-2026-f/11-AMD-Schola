@@ -79,7 +79,6 @@ namespace AMD.Schola.Tests.Environment
             Assert.That(m_Fixture.Sink.States, Has.Count.EqualTo(2));
             Assert.That(m_Fixture.Sink.States[1].Terminated, Is.True);
 
-            m_Fixture.Status.Terminated = false;
             m_Fixture.Reward.Reward = 0.25f;
             var reset2 = m_Fixture.Environment.Reset();
             Assert.That(reset2, Is.InstanceOf<InitialAgentState>());
@@ -95,6 +94,8 @@ namespace AMD.Schola.Tests.Environment
             AssertPosition(ScholaEnvironmentTestFixture.PositionFromObservations(stepNext.Observations), afterDy,
                 "Next episode US1 observations must match the new pose");
             Assert.That(stepNext.Reward, Is.EqualTo(0.25f));
+            Assert.That(stepNext.Terminated, Is.False,
+                "Reset must notify the status hook; the caller must not clear Terminated manually");
         }
 
         static void AssertPosition(Vector3 actual, Vector3 expected, string message)

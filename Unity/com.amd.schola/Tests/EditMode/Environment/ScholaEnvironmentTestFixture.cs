@@ -26,6 +26,10 @@ namespace AMD.Schola.Tests.Environment
         {
             public float Reward;
 
+            public void OnEpisodeReset()
+            {
+            }
+
             public float ComputeReward()
             {
                 return Reward;
@@ -40,10 +44,38 @@ namespace AMD.Schola.Tests.Environment
             public bool Terminated;
             public bool Truncated;
 
+            public void OnEpisodeReset()
+            {
+                Terminated = false;
+                Truncated = false;
+            }
+
             public void GetStatus(out bool terminated, out bool truncated)
             {
                 terminated = Terminated;
                 truncated = Truncated;
+            }
+        }
+
+        /// <summary>
+        /// Test-only <see cref="IEpisodeStatus"/> that truncates after <see cref="MaxSteps"/>
+        /// steps in the current episode. Relies on <see cref="OnEpisodeReset"/> to clear its counter.
+        /// </summary>
+        public sealed class TruncateAfterNStepsStatus : MonoBehaviour, IEpisodeStatus
+        {
+            public int MaxSteps = 2;
+            int m_StepCount;
+
+            public void OnEpisodeReset()
+            {
+                m_StepCount = 0;
+            }
+
+            public void GetStatus(out bool terminated, out bool truncated)
+            {
+                m_StepCount++;
+                terminated = false;
+                truncated = m_StepCount >= MaxSteps;
             }
         }
 

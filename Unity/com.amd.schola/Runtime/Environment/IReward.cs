@@ -8,6 +8,12 @@ namespace AMD.Schola
     /// </summary>
     public interface IReward
     {
+        /// <summary>
+        /// Clears per-episode reward state. Called by <see cref="ScholaEnvironment.Reset"/>
+        /// after restoring snapshot poses and before collecting initial observations.
+        /// </summary>
+        void OnEpisodeReset();
+
         float ComputeReward();
     }
 }

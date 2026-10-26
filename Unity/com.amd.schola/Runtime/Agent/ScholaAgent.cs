@@ -1,23 +1,36 @@
 // Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 
+using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 namespace AMD.Schola
 {
     /// <summary>
-    /// Agent that defines observation space from sensors and aggregates Observe into a DictPoint.
+    /// Agent that defines observation/action spaces from sensors and actuators,
+    /// aggregates Observe into a DictPoint, and fans out Act to actuators.
     /// </summary>
-    public sealed class ScholaAgent : MonoBehaviour
+    public sealed class ScholaAgent : MonoBehaviour, IAgent
     {
         [SerializeField]
         List<PositionSensor> m_Sensors = new List<PositionSensor>();
 
+        [SerializeField]
+        List<TranslateActuator> m_Actuators = new List<TranslateActuator>();
+
         public IReadOnlyList<PositionSensor> Sensors => m_Sensors;
+
+        public IReadOnlyList<TranslateActuator> Actuators => m_Actuators;
 
         public void SetSensors(IEnumerable<PositionSensor> sensors)
         {
             m_Sensors = new List<PositionSensor>(sensors);
+        }
+
+        public void SetActuators(IEnumerable<TranslateActuator> actuators)
+        {
+            m_Actuators = new List<TranslateActuator>(actuators);
         }
 
         /// <summary>
@@ -40,6 +53,33 @@ namespace AMD.Schola
         }
 
         /// <summary>
+        /// Builds the published action space from attached actuators (DictSpace of actuator spaces).
+        /// Duplicate <see cref="TranslateActuator.ActionKey"/> values warn and last-write-wins.
+        /// </summary>
+        public Space DefineActionSpace()
+        {
+            var dictSpace = new DictSpace();
+            foreach (var actuator in m_Actuators)
+            {
+                if (actuator == null)
+                {
+                    continue;
+                }
+
+                if (dictSpace.Spaces.ContainsKey(actuator.ActionKey))
+                {
+                    Debug.LogWarning(
+                        $"Duplicate action key '{actuator.ActionKey}' on {nameof(ScholaAgent)} '{name}'; later actuator overwrites the earlier action space entry.",
+                        this);
+                }
+
+                dictSpace.Spaces[actuator.ActionKey] = actuator.GetActionSpace();
+            }
+
+            return dictSpace;
+        }
+
+        /// <summary>
         /// Collects current observations from attached sensors into a DictPoint.
         /// </summary>
         public Point Observe()
@@ -56,6 +96,71 @@ namespace AMD.Schola
             }
 
             return dictPoint;
+        }
+
+        /// <summary>
+        /// Applies a DictPoint action to attached actuators keyed by <see cref="TranslateActuator.ActionKey"/>.
+        /// All keys are checked before any actuator is applied so a missing key leaves the scene unchanged.
+        /// </summary>
+        public void Act(Point action)
+        {
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            if (!(action is DictPoint dictPoint))
+            {
+                throw new ArgumentException(
+                    $"Expected {nameof(DictPoint)}, got {action.GetType().Name}.",
+                    nameof(action));
+            }
+
+            foreach (var actuator in m_Actuators)
+            {
+                if (actuator == null)
+                {
+                    continue;
+                }
+
+                if (!dictPoint.Points.TryGetValue(actuator.ActionKey, out var nested) || nested == null)
+                {
+                    throw new ArgumentException(
+                        $"Missing action key '{actuator.ActionKey}'; expected keys: {FormatExpectedActionKeys()}.",
+                        nameof(action));
+                }
+            }
+
+            foreach (var actuator in m_Actuators)
+            {
+                if (actuator == null)
+                {
+                    continue;
+                }
+
+                actuator.TakeAction(dictPoint.Points[actuator.ActionKey]);
+            }
+        }
+
+        string FormatExpectedActionKeys()
+        {
+            var builder = new StringBuilder();
+            foreach (var actuator in m_Actuators)
+            {
+                if (actuator == null)
+                {
+                    continue;
+                }
+
+                if (builder.Length > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(actuator.ActionKey);
+            }
+
+            return builder.Length > 0 ? builder.ToString() : "(none)";
         }
     }
 }

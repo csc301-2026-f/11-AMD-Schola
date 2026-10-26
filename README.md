@@ -19,6 +19,10 @@ The Schola project is an effort to build a toolkit/plugin for controlling Object
 
 ## Getting Started
 
+### Unity integration (US6)
+
+The Unity package is in [`Unity/com.amd.schola`](Unity/com.amd.schola), separate from the Unreal plugin described below. Follow the [Unity setup and adaptation guide](Unity/com.amd.schola/Documentation~/setup.md) to install it and import the **Setup Demo**. The demo uses real Schola position observations and deterministic sample movement; it requires neither Python nor a trained model. Unity Editor validation is still required; the guide includes the checklist and current US3–5 limitations.
+
 ### Install Unreal Engine
 As Schola is an Unreal Engine Project, you will need to first install Unreal Engine. Refer to the below table to identify the correct version of Unreal Engine for each version of Schola. 
 

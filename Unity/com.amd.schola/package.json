@@ -2,7 +2,7 @@
   "name": "com.amd.schola",
   "version": "0.1.0",
   "displayName": "AMD Schola",
-  "description": "Reinforcement learning for Unity. Define agents, train them with Schola's Python tools (Gymnasium, Stable-Baselines3, RLlib), and run trained ONNX policies in your game.",
+  "description": "Schola's Unity integration. Define agent observations and import the Setup Demo to learn package installation and scene wiring. Training and inference availability depends on the integration branch.",
   "unity": "6000.3",
   "keywords": [
     "schola",
@@ -14,5 +14,12 @@
   "license": "MIT",
   "dependencies": {
     "com.unity.test-framework": "1.4.5"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Setup Demo",
+      "description": "Create a cube-to-target scene using Schola position observations and a deterministic demo controller. No Python or model required. See README.md in the imported sample.",
+      "path": "Samples~/SetupDemo"
+    }
+  ]
 }

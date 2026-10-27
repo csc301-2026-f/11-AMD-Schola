@@ -36,4 +36,8 @@ jobs:
           --ignore=Test/core/test_ubt.py
           --ignore=Test/sb3/test_async_env.py
           --ignore=Test/sb3/test_env.py
+      - name: Test Unity training adapter
+        run: >
+          python -m pytest Test/unity --confcutdir=Test/unity
+          --import-mode=importlib -n 0 --timeout=60
 

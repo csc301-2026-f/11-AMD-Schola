@@ -18,7 +18,7 @@
 
 The Schola project is a toolkit for controlling agents in game engines with reinforcement learning. Upstream Schola targets **Unreal Engine** and connects environments to Python RL frameworks (Gymnasium, RLlib, Stable-Baselines3). This repository is a course fork that also adds a **Unity** package under [`Unity/com.amd.schola`](Unity/com.amd.schola).
 
-**Unity status (this fork):** agents can observe, act, manage local episodes, and run ONNX policies with Unity Inference Engine (`SentisPolicy`). EditMode tests cover these paths. A full Unity↔Python training bridge (gRPC) and a Package Manager Setup Demo sample are still in progress (see `US4` / `US6-setup-integration` branches). Course planning lives under [`deliverables/`](deliverables/).
+**Unity status (this fork):** agents can observe, act, manage local episodes, and run ONNX policies with Unity Inference Engine (`SentisPolicy`). EditMode tests cover these paths. Unity agents can train through Schola's existing Python tools using the packaged training server and gRPC adapter (US4). The Package Manager Setup Demo remains on the `US6-setup-integration` branch. Course planning lives under [`deliverables/`](deliverables/).
 
 ## Unity package
 
@@ -46,13 +46,31 @@ Keep the repo checkout in place while the package is installed from disk.
 
 These tests exercise sensors/observations, actuators/actions, `ScholaEnvironment` episode hooks, `SentisPolicy` with a CartPole ONNX model, and the observe→think→act stepper. Some tests intentionally log errors to verify failure handling; green checks in Test Runner are what matter.
 
+### Train Unity agents (US4)
+
+Install the Python tools with `python -m pip install -e "./Resources/python[sb3]"`.
+Import **Training Demo** from Package Manager, select **Tools > Schola > Create
+Training Demo Scene**, enable Run In Background, and enter Play Mode. Then run:
+
+```powershell
+schola unity train --timesteps 10000 --checkpoint ckpt/unity_ppo
+```
+
+The packaged adapter connects Unity to Schola's existing Python environment
+wrappers; no user-written training connection is required. See the
+[Unity training guide](Unity/com.amd.schola/Documentation~/training.md) for setup,
+the separate `schola unity bridge` command, reset modes, tests, and limitations.
+This implementation supports one agent/environment per endpoint with synchronous
+Transform-based stepping; it does not advance physics by a fixed interval.
+
 ### What is / is not included yet
 
 | Available on `main` | Not finished yet |
 | --- | --- |
-| Runtime agents, sensors, actuators, spaces/points | Unity gRPC training server ↔ Schola Python (US4) |
+| Runtime agents, sensors, actuators, spaces/points | General multi-agent and physics-stepping training |
 | Local episode/env APIs (`ScholaEnvironment`) | Package Manager **Setup Demo** sample + setup guide (US6 branch) |
 | ONNX inference (`SentisPolicy`) and steppers | Headless smoke player project for CI build/run jobs |
+| Unity/Python training server, adapter, PPO CLI and Training Demo (US4) | Player/IL2CPP validation for the training connection |
 
 Training notes and codegen for Unity C# bindings: [`Unity/com.amd.schola/Training/README.md`](Unity/com.amd.schola/Training/README.md). CI workflows live under [`.github/workflows/`](.github/workflows/).
 

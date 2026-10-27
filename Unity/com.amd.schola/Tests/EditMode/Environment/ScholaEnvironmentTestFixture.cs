@@ -120,7 +120,8 @@ namespace AMD.Schola.Tests.Environment
         public InMemoryTrainingStateSink Sink { get; private set; }
 
         public static ScholaEnvironmentTestFixture Create(
-            ActuatorPlacement actuatorPlacement = ActuatorPlacement.OnAgent)
+            ActuatorPlacement actuatorPlacement = ActuatorPlacement.OnAgent
+        )
         {
             var fixture = new ScholaEnvironmentTestFixture();
 

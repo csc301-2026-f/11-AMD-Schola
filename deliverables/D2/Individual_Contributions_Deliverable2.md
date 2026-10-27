@@ -30,3 +30,15 @@
 - **Tests:** 12 EditMode tests in `SimpleStepperTests` (input validation, observe-before-act ordering, per-agent actions, policy failure, repeated steps, list changes, destroyed agents) and 3 in `ScholaAgentSteppingTests`, which run a real `ScholaAgent` with `PositionSensor` and `TranslateActuator` through the stepper.
 - **CI/CD:** implemented the Python regression-test subset workflow (Task 5, PR #7) and the release workflow with a tag and package-version check, with tests (Task 8, PR #14).
 - **Reviews:** reviewed and merged PRs #4, #6, #8, #9, #10 and #12 (CI/CD Tasks 3, 4, 6 and 7, the US5 Sentis policy, and US2).
+
+# **Yahyaa Yasin**
+
+**Role**: Training communication lead; built the CI entry point and the end-to-end smoke-test workflow so Unity and Python can be checked together later.
+
+- **CI entry point (Task 1, PR #1):** implemented `.github/workflows/ci.yml` with path-based change detection (`dorny/paths-filter`), so Unity, Python, and proto jobs only run when their areas change; added the `ci-ok` gate that fails if any required job failed or was cancelled. Manual `workflow_dispatch` runs every job.
+- **CI scaffolding:** set up the shared CI/CD work breakdown and placeholder workflows/scripts so teammates could own Tasks 2–8 without editing the same files.
+- **End-to-end smoke test (Task 7, PR #9):** implemented `smoke-test.yml` and `.github/scripts/unity_smoke_test.py`. The `mock` job always drives AMD’s CartPole mock gRPC server with Schola’s Python client (`GymVectorEnv` + insecure `GrpcProtocol`). `detect` / `build` / `run` stay skipped until `Unity/SmokeTestProject` exists, then turn on without workflow rewrites. Added a `smoke` path filter in `ci.yml` so script-only changes do not also trigger the Unity license job.
+- **Hand-off notes for training integration:** documented in `Unity/com.amd.schola/Training/README.md` and related CI comments that Unity must parse `-ScholaPort=<port>` (same as Unreal) and that `check_meta_files.py` must skip project `ProjectSettings/` / `Packages/` before committing a smoke-test project.
+- **US6 (in progress):** owning the rest of setup integration on `US6-setup-integration` — merged `main`; finishing Editor validation and the guide/sample train → trained-model path.
+- **Planning and partner process:** wrote team roles and meeting cadence (Q7 & Q8) in `deliverables/D1/planning.md`, and recorded partner/kickoff meeting minutes under `deliverables/team/minutes`.
+- **D2 demo support:** prepared and walked the EditMode test demo path (observe → act → ONNX policy → stepper) for partner review once the package was installed locally.

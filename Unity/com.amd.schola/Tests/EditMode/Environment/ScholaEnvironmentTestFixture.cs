@@ -9,7 +9,8 @@ namespace AMD.Schola.Tests.Environment
 {
     /// <summary>
     /// Shared EditMode harness: environment GameObject with a child agent that has
-    /// PositionSensor, TranslateActuator, scripted reward/status, and an in-memory sink.
+    /// PositionSensor, scripted reward/status, an in-memory sink, and a TranslateActuator
+    /// that may sit on the agent, a sibling, or a parent.
     /// Fakes are nested types so Unity can AddComponent them from this Editor test assembly.
     /// </summary>
     public sealed class ScholaEnvironmentTestFixture : IDisposable
@@ -18,6 +19,16 @@ namespace AMD.Schola.Tests.Environment
         public const string PositionKey = "position";
         public const string TranslateKey = "translate";
         public static readonly Vector3 StartPose = new Vector3(1f, 2f, 3f);
+
+        /// <summary>
+        /// Where the configured <see cref="TranslateActuator"/> lives relative to the agent.
+        /// </summary>
+        public enum ActuatorPlacement
+        {
+            OnAgent,
+            OnSibling,
+            OnParent,
+        }
 
         /// <summary>
         /// Test-only <see cref="IReward"/> that returns a scripted scalar.
@@ -99,6 +110,7 @@ namespace AMD.Schola.Tests.Environment
 
         public GameObject EnvGo { get; private set; }
         public GameObject AgentGo { get; private set; }
+        public GameObject ActuatorGo { get; private set; }
         public ScholaEnvironment Environment { get; private set; }
         public ScholaAgent Agent { get; private set; }
         public PositionSensor Sensor { get; private set; }
@@ -107,7 +119,8 @@ namespace AMD.Schola.Tests.Environment
         public ScriptedEpisodeStatus Status { get; private set; }
         public InMemoryTrainingStateSink Sink { get; private set; }
 
-        public static ScholaEnvironmentTestFixture Create()
+        public static ScholaEnvironmentTestFixture Create(
+            ActuatorPlacement actuatorPlacement = ActuatorPlacement.OnAgent)
         {
             var fixture = new ScholaEnvironmentTestFixture();
 
@@ -115,14 +128,34 @@ namespace AMD.Schola.Tests.Environment
             fixture.Environment = fixture.EnvGo.AddComponent<ScholaEnvironment>();
 
             fixture.AgentGo = new GameObject("ScholaAgent");
-            fixture.AgentGo.transform.SetParent(fixture.EnvGo.transform);
-            fixture.AgentGo.transform.localPosition = StartPose;
-            fixture.AgentGo.transform.localRotation = Quaternion.identity;
-            fixture.AgentGo.transform.localScale = Vector3.one;
+            fixture.ActuatorGo =
+                actuatorPlacement == ActuatorPlacement.OnAgent
+                    ? fixture.AgentGo
+                    : new GameObject("TranslateActuator");
+
+            switch (actuatorPlacement)
+            {
+                case ActuatorPlacement.OnParent:
+                    fixture.ActuatorGo.transform.SetParent(fixture.EnvGo.transform);
+                    SetLocalPose(fixture.ActuatorGo.transform, StartPose);
+                    fixture.AgentGo.transform.SetParent(fixture.ActuatorGo.transform);
+                    SetLocalPose(fixture.AgentGo.transform, Vector3.zero);
+                    break;
+                case ActuatorPlacement.OnSibling:
+                    fixture.AgentGo.transform.SetParent(fixture.EnvGo.transform);
+                    SetLocalPose(fixture.AgentGo.transform, StartPose);
+                    fixture.ActuatorGo.transform.SetParent(fixture.EnvGo.transform);
+                    SetLocalPose(fixture.ActuatorGo.transform, StartPose);
+                    break;
+                default:
+                    fixture.AgentGo.transform.SetParent(fixture.EnvGo.transform);
+                    SetLocalPose(fixture.AgentGo.transform, StartPose);
+                    break;
+            }
 
             fixture.Sensor = fixture.AgentGo.AddComponent<PositionSensor>();
             fixture.Sensor.ObservationKey = PositionKey;
-            fixture.Actuator = fixture.AgentGo.AddComponent<TranslateActuator>();
+            fixture.Actuator = fixture.ActuatorGo.AddComponent<TranslateActuator>();
             fixture.Actuator.ActionKey = TranslateKey;
             fixture.Reward = fixture.AgentGo.AddComponent<ScriptedReward>();
             fixture.Status = fixture.AgentGo.AddComponent<ScriptedEpisodeStatus>();
@@ -139,6 +172,13 @@ namespace AMD.Schola.Tests.Environment
 
             fixture.Environment.Initialize();
             return fixture;
+        }
+
+        static void SetLocalPose(Transform t, Vector3 localPosition)
+        {
+            t.localPosition = localPosition;
+            t.localRotation = Quaternion.identity;
+            t.localScale = Vector3.one;
         }
 
         public DictPoint TranslateAction(float dx, float dy = 0f, float dz = 0f)

@@ -181,10 +181,126 @@ namespace AMD.Schola.Tests.Environment
             );
         }
 
+        [Test]
+        public void Reset_AfterStep_RestoresSiblingActuatorOutsideAgentHierarchy()
+        {
+            m_Fixture.Dispose();
+            m_Fixture = ScholaEnvironmentTestFixture.Create(
+                ScholaEnvironmentTestFixture.ActuatorPlacement.OnSibling
+            );
+
+            var start = m_Fixture.ActuatorGo.transform.position;
+            m_Fixture.Environment.Step(m_Fixture.TranslateAction(DeltaX));
+
+            var terminal = start + new Vector3(DeltaX, 0f, 0f);
+            Assert.That(
+                m_Fixture.ActuatorGo.transform.position.x,
+                Is.EqualTo(terminal.x).Within(ScholaEnvironmentTestFixture.Tolerance),
+                "Step must move the sibling actuator so there is a terminal pose to restore from"
+            );
+            Assert.That(
+                m_Fixture.AgentGo.transform.position.x,
+                Is.EqualTo(ScholaEnvironmentTestFixture.StartPose.x)
+                    .Within(ScholaEnvironmentTestFixture.Tolerance),
+                "Sibling actuator must not move the agent itself"
+            );
+
+            m_Fixture.Environment.Reset();
+
+            AssertPosition(
+                m_Fixture.ActuatorGo.transform.position,
+                start,
+                "Reset must restore configured actuator transforms that sit outside the agent hierarchy"
+            );
+
+            const float nextDeltaX = 0.5f;
+            m_Fixture.Environment.Step(m_Fixture.TranslateAction(nextDeltaX));
+            AssertPosition(
+                m_Fixture.ActuatorGo.transform.position,
+                start + new Vector3(nextDeltaX, 0f, 0f),
+                "Next episode must apply US2 actions from the restored sibling pose, not the terminal pose"
+            );
+        }
+
+        [Test]
+        public void Reset_AfterStep_RestoresParentActuatorOutsideAgentHierarchy()
+        {
+            m_Fixture.Dispose();
+            m_Fixture = ScholaEnvironmentTestFixture.Create(
+                ScholaEnvironmentTestFixture.ActuatorPlacement.OnParent
+            );
+
+            var start = m_Fixture.ActuatorGo.transform.position;
+            m_Fixture.Environment.Step(m_Fixture.TranslateAction(DeltaX));
+
+            var terminal = start + new Vector3(DeltaX, 0f, 0f);
+            Assert.That(
+                m_Fixture.ActuatorGo.transform.position.x,
+                Is.EqualTo(terminal.x).Within(ScholaEnvironmentTestFixture.Tolerance),
+                "Step must move the parent actuator so there is a terminal pose to restore from"
+            );
+            Assert.That(
+                m_Fixture.AgentGo.transform.position.x,
+                Is.EqualTo(terminal.x).Within(ScholaEnvironmentTestFixture.Tolerance),
+                "Moving a parent actuator must also move the child agent in world space"
+            );
+
+            var initial = m_Fixture.Environment.Reset();
+
+            AssertPosition(
+                m_Fixture.ActuatorGo.transform.position,
+                start,
+                "Reset must restore a parent actuator; restoring only the child agent's local pose is not enough"
+            );
+            AssertPosition(
+                m_Fixture.AgentGo.transform.position,
+                start,
+                "Restoring the parent actuator must also restore the agent world pose"
+            );
+            AssertPosition(
+                ScholaEnvironmentTestFixture.PositionFromObservations(initial.Observations),
+                start,
+                "Reset observations must match the restored world pose, not the terminal pose"
+            );
+
+            const float nextDeltaX = 0.5f;
+            var next = m_Fixture.Environment.Step(m_Fixture.TranslateAction(nextDeltaX));
+            var expected = start + new Vector3(nextDeltaX, 0f, 0f);
+            AssertPosition(
+                m_Fixture.ActuatorGo.transform.position,
+                expected,
+                "Next episode must apply US2 actions from the restored parent pose, not the terminal pose"
+            );
+            AssertPosition(
+                ScholaEnvironmentTestFixture.PositionFromObservations(next.Observations),
+                expected,
+                "US1 observations after the next step must follow the restored parent pose"
+            );
+        }
+
         void StepToTerminalPose()
         {
             m_Fixture.Status.Terminated = true;
             m_Fixture.Environment.Step(m_Fixture.TranslateAction(DeltaX));
+        }
+
+        static void AssertPosition(Vector3 actual, Vector3 expected, string message)
+        {
+            Assert.That(
+                actual.x,
+                Is.EqualTo(expected.x).Within(ScholaEnvironmentTestFixture.Tolerance),
+                message
+            );
+            Assert.That(
+                actual.y,
+                Is.EqualTo(expected.y).Within(ScholaEnvironmentTestFixture.Tolerance),
+                message
+            );
+            Assert.That(
+                actual.z,
+                Is.EqualTo(expected.z).Within(ScholaEnvironmentTestFixture.Tolerance),
+                message
+            );
         }
     }
 }

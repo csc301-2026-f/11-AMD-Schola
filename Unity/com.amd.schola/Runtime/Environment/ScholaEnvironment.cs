@@ -56,7 +56,8 @@ namespace AMD.Schola
         }
 
         /// <summary>
-        /// Binds the agent, inits sensors/actuators, snapshots local poses, and returns obs/action spaces.
+        /// Binds the agent, inits sensors/actuators, snapshots local poses of the agent hierarchy
+        /// and configured actuator transforms, and returns obs/action spaces.
         /// </summary>
         public InteractionDefinition Initialize()
         {
@@ -199,19 +200,40 @@ namespace AMD.Schola
         void SnapshotPoses()
         {
             m_PoseSnapshot.Clear();
+            var seen = new HashSet<Transform>();
+
             var transforms = m_Agent.GetComponentsInChildren<Transform>(true);
             foreach (var t in transforms)
             {
-                m_PoseSnapshot.Add(
-                    new TransformSnapshot
-                    {
-                        Transform = t,
-                        LocalPosition = t.localPosition,
-                        LocalRotation = t.localRotation,
-                        LocalScale = t.localScale,
-                    }
-                );
+                CapturePose(t, seen);
             }
+
+            // Actuators may be bound to parent or sibling objects, not only descendants.
+            foreach (var actuator in m_Agent.Actuators)
+            {
+                if (actuator != null)
+                {
+                    CapturePose(actuator.transform, seen);
+                }
+            }
+        }
+
+        void CapturePose(Transform t, HashSet<Transform> seen)
+        {
+            if (t == null || !seen.Add(t))
+            {
+                return;
+            }
+
+            m_PoseSnapshot.Add(
+                new TransformSnapshot
+                {
+                    Transform = t,
+                    LocalPosition = t.localPosition,
+                    LocalRotation = t.localRotation,
+                    LocalScale = t.localScale,
+                }
+            );
         }
 
         void RestorePoses()

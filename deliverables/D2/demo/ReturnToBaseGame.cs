@@ -9,6 +9,7 @@ using UnityEngine;
 /// One trained ONNX model (SentisPolicy) decides every drone's move, and one SimpleStepper
 /// runs observe -> think -> act for all of them. Click a drone to knock it away or drag it; it flies back.
 /// Put this on an empty GameObject and assign Model (move_to_origin.onnx).
+/// AI usage: I used GPT-6 Astra to help generate this test scene.
 /// </summary>
 public class ReturnToBaseGame : MonoBehaviour
 {

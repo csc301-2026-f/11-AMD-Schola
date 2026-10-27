@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="../../com.amd.schola/Training/GymStartupServer.cs" Link="GymStartupServer.cs" />
+    <Compile Include="../../com.amd.schola/Training/Generated/*.cs" />
+    <Reference Include="Grpc.Core"><HintPath>../../com.amd.schola/Training/Plugins/Grpc.Core.dll</HintPath></Reference>
+    <Reference Include="Grpc.Core.Api"><HintPath>../../com.amd.schola/Training/Plugins/Grpc.Core.Api.dll</HintPath></Reference>
+    <Reference Include="Google.Protobuf"><HintPath>../../com.amd.schola/Training/Plugins/Google.Protobuf.dll</HintPath></Reference>
+    <None Include="../../com.amd.schola/Training/Plugins/grpc_csharp_ext.x64.dll" Link="grpc_csharp_ext.x64.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

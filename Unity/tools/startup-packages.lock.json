@@ -1,0 +1,10 @@
+{
+  "google.protobuf.3.31.1.nupkg": "504727e07f05fb32b40234a6cf5693cb2324b0bc4938635fd8844eb45f83c9d0",
+  "grpc.core.2.46.6.nupkg": "ffc1e3222ef60cc347f163021dc8a71263707475ae75995cdececade1115ded3",
+  "grpc.core.api.2.46.6.nupkg": "1e3a8c111632800de1ae43d5278f3da8cb003465d8c6e87fdb7c5b2de040b0b0",
+  "grpc.tools.2.72.0.nupkg": "21a37e3419f2c2c76321fcdcecea098240dcd527567866e9c479477b87126deb",
+  "system.buffers.4.5.1.nupkg": "c30b3dd2c7e2f4cee4b823d692fd42118309b42ab1f5007f923d329a5b0d6b12",
+  "system.memory.4.5.5.nupkg": "10f43da352a29fb2b3188e4edd4dcf5100194c8b526e4f61fe2e2b5623775a22",
+  "system.numerics.vectors.4.5.0.nupkg": "a9d49320581fda1b4f4be6212c68c01a22cdf228026099c20a8eabefcf90f9cf",
+  "system.runtime.compilerservices.unsafe.6.0.0.nupkg": "6c41b53e70e9eee298cff3a02ce5acdd15b04125589be0273f0566026720a762"
+}

@@ -1,0 +1,5 @@
+# Minimal dependencies for the existing Schola GrpcProtocol startup probe.
+grpcio>=1.80.0,<2
+protobuf>=6.31.1,<7
+gymnasium>=1.1.0
+numpy>=2.0,<3

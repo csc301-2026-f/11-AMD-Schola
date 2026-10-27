@@ -140,3 +140,10 @@ coverage_html_report/*
 *.log
 # Python virtual environment
 .venv/
+
+# Local Unity startup experiment dependencies and harness builds
+/Unity/.startup-cache/
+/Unity/tools/StartupHarness/bin/
+/Unity/tools/StartupHarness/obj/
+/Unity/com.amd.schola/Training/Plugins/*
+!/Unity/com.amd.schola/Training/Plugins/README.md

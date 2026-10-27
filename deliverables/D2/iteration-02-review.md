@@ -1,4 +1,4 @@
-# Team 11 Oscorp: AMD Schola for Unity
+# Team 11 Oscorp - AMD Schola for Unity
 
 ## Iteration 2 - Review & Retrospect
 

@@ -1,5 +1,0 @@
-{
-    "name": "AMD.Schola.Samples.TrainingDemo.Editor",
-    "references": ["AMD.Schola.Runtime", "AMD.Schola.Training", "AMD.Schola.Samples.TrainingDemo"],
-    "includePlatforms": ["Editor"]
-}

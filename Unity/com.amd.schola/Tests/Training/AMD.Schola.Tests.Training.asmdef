@@ -1,6 +1,0 @@
-{
-    "name": "AMD.Schola.Tests.Training",
-    "references": ["AMD.Schola.Runtime", "AMD.Schola.Training"],
-    "optionalUnityReferences": ["TestAssemblies"],
-    "includePlatforms": ["Editor"]
-}

@@ -67,10 +67,6 @@ from schola.scripts.env import env_utils_app
 
 app.command(env_utils_app, name="env")
 
-from schola.scripts.unity import app as unity_app
-
-app.command(unity_app, name="unity")
-
 # app["compile-proto"].group = "Utilities"
 app["--version"].group = "Utilities"
 app["--help"].group = "Utilities"

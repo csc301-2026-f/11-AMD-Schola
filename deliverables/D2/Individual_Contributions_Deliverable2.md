@@ -56,3 +56,16 @@
 - **Contributor workflow (Task 3, [PR #4](https://github.com/csc301-2026-f/11-AMD-Schola/pull/4); [PR #5](https://github.com/csc301-2026-f/11-AMD-Schola/pull/5)):** added the Unity testing checklist to the PR template and formatted six existing C# files to resolve CI failures blocking other contributions.
 - **Unity test automation (Task 4, [PR #6](https://github.com/csc301-2026-f/11-AMD-Schola/pull/6)):** implemented the GameCI EditMode workflow, pinned Unity `6000.3.24f1`, configured test-result checks and coverage reports, and added artifact uploads that run even when tests fail.
 - **CI/CD integration ([PR #16](https://github.com/csc301-2026-f/11-AMD-Schola/pull/16)):** brought all eight teammates’ CI/CD tasks together into `main`, including fast checks, Unity and Python tests, protobuf-generation verification, smoke tests, and versioned releases. Verified that every task branch was included and documented remaining prerequisites for licensed Unity runs, the smoke-test player, and release publishing.
+
+# **Mohammad Mahi Ali Mukati**
+
+**Role**: CI/CD code generation checks, UML diagrams, D2 demo, documentation, and led partner communication.
+
+- **CI/CD (Task 6, [PR #12](https://github.com/csc301-2026-f/11-AMD-Schola/pull/12)):** wrote a script that generates C# files from the project's protobuf definitions and added it to CI. Once the generated files are committed, CI checks that they stay up to date with those definitions.
+- **Tests and instructions:** added nine tests to check that the script catches missing or outdated files and handles failures without damaging existing files. Added instructions for running it locally to the Unity training README.
+- **Merge support:** merged [PR #5](https://github.com/csc301-2026-f/11-AMD-Schola/pull/5), which fixed Unity C# formatting issues.
+- **UML:** created component/class and episode-sequence diagrams explaining the Unity agent workflow for US1–US3.
+- **Demo:** created a [Return to Base](demo/ReturnToBaseGame.cs) demo scene, connecting agents, sensors, actuators, and the inference stepper to the ONNX model. Created a simple interactive scene with click, drag, and scatter controls to control drones returning to a base point.
+- **Setup and documentation:** set up the demo in Unity and wrote the [README](demo/README.md) with run instructions, troubleshooting, and three gameplay screenshots, with the help of GPT-6 Astra.
+- **Video:** recorded a [setup and gameplay walkthrough](https://youtu.be/utxF_vXdSw8) and linked it in the README.
+- **Partner communication:** coordinated all communication with Alex on the AMD team.

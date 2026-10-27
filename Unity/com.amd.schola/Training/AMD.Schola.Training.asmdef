@@ -1,0 +1,6 @@
+{
+    "name": "AMD.Schola.Training",
+    "rootNamespace": "AMD.Schola.Training",
+    "references": ["AMD.Schola.Runtime"],
+    "autoReferenced": true
+}

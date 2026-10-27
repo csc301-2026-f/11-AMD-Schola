@@ -1,9 +1,17 @@
-# Unity Training (gRPC)
+# Unity Training (US4)
 
-This folder will hold the Unity-side training connection to Schola's Python client
-(gRPC `GymService` from `Proto/`).
+This folder contains the Unity-side training connection. `TrainingServer` runs a
+loopback TCP endpoint and dispatches requests to `TrainingSession` on Unity's main
+thread. The packaged Python adapter exposes Schola's existing gRPC `GymService`
+and translates messages using `TrainingWire`'s versioned JSON format.
 
-## Generate C# protocol sources
+See [the training guide](../Documentation~/training.md) for setup and supported
+behavior. `schola unity train` starts the adapter and trains with existing Schola
+SB3 wrappers. `schola unity bridge` exposes the adapter for a separate trainer.
+Unity listens on port 8001 by default; the separate gRPC adapter defaults to 8000.
+Native gRPC and generated C# messages are not required by this implementation.
+
+## Optional direct-gRPC code generation tooling
 
 From the repository root, run:
 
@@ -34,9 +42,9 @@ diff and the regeneration command. `.meta` files are checked separately by
 `--check` itself always fails when the baseline is missing. For isolated local
 generation or comparison, use `--output /path/to/directory`.
 
-## AGENT TODO: command-line port (`-ScholaPort`)
+## Existing player smoke-test contract (future direct-gRPC integration)
 
-Smoke-test CI starts the headless player with:
+The reserved player smoke-test CI expects to start a future direct-gRPC player with:
 
 ```text
 SmokeTest.x86_64 -batchmode -nographics -ScholaPort=50051 -logFile ...
@@ -45,7 +53,13 @@ SmokeTest.x86_64 -batchmode -nographics -ScholaPort=50051 -logFile ...
 See `.github/workflows/smoke-test.yml` (`SMOKE_PORT` / `run` job) and
 `.github/scripts/unity_smoke_test.py`.
 
-**Required behavior (match Unreal):**
+This direct-gRPC player contract is separate from the shipped TCP-plus-adapter
+implementation. The player smoke project is not provided here. Its existing CI
+jobs remain gated on that project, and must be adapted to start the Python bridge
+before they can test this implementation. The implemented adapter is exercised
+by Python adapter tests and the real-Editor tests in `Test/unity`.
+
+**Original direct-gRPC contract (match Unreal):**
 
 1. When the Unity gRPC gym connector / training server starts, parse the player
    command line for `-ScholaPort=<int>` (same spelling and `=` form as Unreal).

@@ -9,18 +9,57 @@
 [![Codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FGPUOpen-LibrariesAndSDKs%2FSchola%2Frefs%2Fheads%2FAlex%2FBeautify-Readme%2FResources%2Fpython%2Fpyproject.toml)](https://www.python.org/downloads/)
 [![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine%20-%205.5%20%7C%205.6%20%7C%205.7%20-%20white?style=flat&logo=unrealengine&color=F26522)](https://www.unrealengine.com/download)
+[![Unity](https://img.shields.io/badge/Unity-6000.3-black?style=flat&logo=unity)](https://unity.com/download)
 
 
 </div>
 
 ---
 
-The Schola project is an effort to build a toolkit/plugin for controlling Objects in Unreal with Reinforcement Learning. It provides tools to help the user create Environments, define Agents, connect to python based RL Frameworks (e.g. Gym, RLlib or Stable Baselines 3), and power NPCs with RL during games.
+The Schola project is a toolkit for controlling agents in game engines with reinforcement learning. Upstream Schola targets **Unreal Engine** and connects environments to Python RL frameworks (Gymnasium, RLlib, Stable-Baselines3). This repository is a course fork that also adds a **Unity** package under [`Unity/com.amd.schola`](Unity/com.amd.schola).
 
-## Getting Started
+**Unity status (this fork):** agents can observe, act, manage local episodes, and run ONNX policies with Unity Inference Engine (`SentisPolicy`). EditMode tests cover these paths. A full Unity↔Python training bridge (gRPC) and a Package Manager Setup Demo sample are still in progress (see `US4` / `US6-setup-integration` branches). Course planning lives under [`deliverables/`](deliverables/).
+
+## Unity package
+
+Package path: [`Unity/com.amd.schola`](Unity/com.amd.schola) (`com.amd.schola`, Unity **6000.3**). Depends on `com.unity.ai.inference` and `com.unity.test-framework`.
+
+### Install into a Unity project
+
+1. Install **Unity 6000.3** (team CI uses **6000.3.24f1**; other 6000.3.x patches usually work for local work).
+2. Create an empty 3D project in Unity Hub.
+3. **Window → Package Management → Package Manager** → **+** → **Install package from disk…** → select `Unity/com.amd.schola/package.json` from this checkout.
+4. Wait for import/compile to finish. **AMD Schola** should appear under Package Manager → **In Project**.
+
+Keep the repo checkout in place while the package is installed from disk.
+
+### Run EditMode tests
+
+1. In the consumer project’s `Packages/manifest.json`, add (alongside `dependencies`):
+
+```json
+"testables": [ "com.amd.schola" ]
+```
+
+2. **Window → Analysis → Test Runner** (or search “Test Runner”) → **EditMode**.
+3. Expand **AMD.Schola.Tests.EditMode** and **Run All**.
+
+These tests exercise sensors/observations, actuators/actions, `ScholaEnvironment` episode hooks, `SentisPolicy` with a CartPole ONNX model, and the observe→think→act stepper. Some tests intentionally log errors to verify failure handling; green checks in Test Runner are what matter.
+
+### What is / is not included yet
+
+| Available on `main` | Not finished yet |
+| --- | --- |
+| Runtime agents, sensors, actuators, spaces/points | Unity gRPC training server ↔ Schola Python (US4) |
+| Local episode/env APIs (`ScholaEnvironment`) | Package Manager **Setup Demo** sample + setup guide (US6 branch) |
+| ONNX inference (`SentisPolicy`) and steppers | Headless smoke player project for CI build/run jobs |
+
+Training notes and codegen for Unity C# bindings: [`Unity/com.amd.schola/Training/README.md`](Unity/com.amd.schola/Training/README.md). CI workflows live under [`.github/workflows/`](.github/workflows/).
+
+## Getting Started (Unreal)
 
 ### Install Unreal Engine
-As Schola is an Unreal Engine Project, you will need to first install Unreal Engine. Refer to the below table to identify the correct version of Unreal Engine for each version of Schola. 
+As the upstream Schola plugin is an Unreal Engine project, you will need to first install Unreal Engine. Refer to the below table to identify the correct version of Unreal Engine for each version of Schola. 
 
 >[!NOTE]
 > Each Schola release may be compatible with other versions of Unreal Engine beyond the ones listed here, however these are the version(s) tested for each release.
@@ -35,8 +74,8 @@ As Schola is an Unreal Engine Project, you will need to first install Unreal Eng
 | 1.0 | 5.4 |
 
 
-### Installing Schola Into Your Project
-To use Schola in an existing Unreal Engine Project copy this repository to the `/Plugins` folder of your project, and pip install the Schola python package in `/Resources/python` using `pip install -e <path-to-plugin>/Resources/python[all]` (the folder that contains `pyproject.toml`).
+### Installing Schola Into Your Unreal Project
+To use the Unreal plugin in an existing Unreal Engine project, copy this repository to the `/Plugins` folder of your project, and pip install the Schola python package in `/Resources/python` using `pip install -e <path-to-plugin>/Resources/python[all]` (the folder that contains `pyproject.toml`). For Unity, see [Unity package](#unity-package) above.
 
 > [!IMPORTANT]
 > Since Schola is provided as C++ source you must recompile your project after adding it. Otherwise, you will receive a warning about Schola being built for another version of Unreal Engine regardless of what version you are using.

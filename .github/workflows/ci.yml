@@ -8,9 +8,6 @@
 # `ci-ok` must list every job in `needs`, so it fails if any job that ran failed.
 # Manual runs (workflow_dispatch) skip change detection and run every job.
 
-# Note: If Task 6 decides the generated C# code lives somewhere other than a Generated/ folder, 
-# update the proto filter to match.
-
 name: CI
 
 on:
@@ -37,6 +34,7 @@ jobs:
       unity: ${{ steps.filter.outputs.unity == 'true' || github.event_name == 'workflow_dispatch' }}
       python: ${{ steps.filter.outputs.python == 'true' || github.event_name == 'workflow_dispatch' }}
       proto: ${{ steps.filter.outputs.proto == 'true' || github.event_name == 'workflow_dispatch' }}
+      smoke: ${{ steps.filter.outputs.smoke == 'true' || github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v4
         if: github.event_name != 'workflow_dispatch'
@@ -53,9 +51,18 @@ jobs:
               - 'Test/**'
               - 'Proto/**'
               - 'pytest.ini'
+              - '.github/workflows/python.yml'
             proto:
               - 'Proto/**'
               - 'Unity/**/Generated/**'
+              - '.github/scripts/generate_csharp.py'
+              - '.github/workflows/codegen-check.yml'
+              - '.github/workflows/ci.yml'
+            smoke:
+              - 'Unity/**'
+              - '.github/workflows/smoke-test.yml'
+              - '.github/scripts/unity_smoke_test.py'
+              - 'docker/cluster-sim/mock_ue_server.py'
 
   checks:
     uses: ./.github/workflows/checks.yml
@@ -84,7 +91,7 @@ jobs:
 
   smoke-test:
     needs: changes
-    if: needs.changes.outputs.unity == 'true'
+    if: needs.changes.outputs.smoke == 'true'
     uses: ./.github/workflows/smoke-test.yml
     secrets: inherit
 

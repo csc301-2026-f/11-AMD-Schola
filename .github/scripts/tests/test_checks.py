@@ -1,5 +1,15 @@
 # Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
-"""Regression tests for the fast CI validators; no Unity installation required."""
+"""Regression tests for the fast CI validators; no Unity installation required.
+
+AGENT TODO (with check_meta_files.py): when Unity project folders are supported,
+add a test that builds a fake Unity/SmokeTestProject with:
+  - ProjectSettings/ProjectVersion.txt (no .meta)
+  - Packages/manifest.json (no .meta)
+  - Assets/Foo.cs + Assets/Foo.cs.meta
+and asserts meta.validate(root) == []. Today validate() would flag ProjectSettings
+and Packages as missing .meta; do not commit a real SmokeTestProject until that
+passes.
+"""
 
 import contextlib
 import io
@@ -13,6 +23,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import check_meta_files as meta
 import check_package_json as package
+import check_release_version as release
 
 
 class MetaTests(unittest.TestCase):
@@ -121,6 +132,69 @@ class PackageTests(unittest.TestCase):
             123,
         ):
             self.assertFalse(package.version_string(version), version)
+
+
+class ReleaseVersionTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.path = Path(self.temporary.name) / "package.json"
+        self.path.write_text(json.dumps({"version": "0.1.0"}), encoding="utf-8")
+
+    def run_main(self, args):
+        output = io.StringIO()
+        with patch.object(release, "MANIFEST", self.path), contextlib.redirect_stdout(
+            output
+        ):
+            return release.main(args), output.getvalue()
+
+    def test_matching_tag_passes(self):
+        self.assertEqual(release.validate("unity-v0.1.0", self.path), [])
+        status, output = self.run_main(["unity-v0.1.0"])
+        self.assertEqual(status, 0)
+        self.assertIn("matches", output)
+
+    def test_matching_prerelease_tag_passes(self):
+        self.path.write_text(json.dumps({"version": "1.0.0-rc.1"}), encoding="utf-8")
+        self.assertEqual(release.validate("unity-v1.0.0-rc.1", self.path), [])
+
+    def test_mismatched_version_fails_with_clear_message(self):
+        problems = release.validate("unity-v0.2.0", self.path)
+        self.assertEqual(
+            problems, ["tag unity-v0.2.0 does not match package.json version 0.1.0"]
+        )
+        self.assertEqual(self.run_main(["unity-v0.2.0"])[0], 1)
+
+    def test_wrong_prefix_fails(self):
+        for tag in ("v0.1.0", "0.1.0", "release-0.1.0", ""):
+            with self.subTest(tag=tag):
+                self.assertEqual(len(release.validate(tag, self.path)), 1)
+
+    def test_invalid_version_in_tag_fails(self):
+        for tag in ("unity-v", "unity-v1.2", "unity-v01.2.3", "unity-vabc"):
+            with self.subTest(tag=tag):
+                self.assertEqual(len(release.validate(tag, self.path)), 1)
+
+    def test_missing_argument_prints_usage_and_fails(self):
+        for args in ([], [""], ["unity-v0.1.0", "extra"]):
+            with self.subTest(args=args):
+                status, output = self.run_main(args)
+                self.assertEqual(status, 1)
+                self.assertIn("usage", output)
+
+    def test_unreadable_manifest_fails(self):
+        self.path.write_text("{", encoding="utf-8")
+        self.assertEqual(len(release.validate("unity-v0.1.0", self.path)), 1)
+        self.path.write_text("[]", encoding="utf-8")
+        self.assertEqual(len(release.validate("unity-v0.1.0", self.path)), 1)
+        self.path.unlink()
+        self.assertEqual(len(release.validate("unity-v0.1.0", self.path)), 1)
+
+    def test_manifest_without_version_fails(self):
+        self.path.write_text(json.dumps({}), encoding="utf-8")
+        problems = release.validate("unity-v0.1.0", self.path)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("None", problems[0])
 
 
 if __name__ == "__main__":

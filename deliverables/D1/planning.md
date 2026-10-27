@@ -30,7 +30,7 @@ Partners agreed on user stories in earlier meetings.
 
 The following user stories outline the requirments for the MVP. These will allow a Unity developer to create a RL environment, train through Schola's Python ecosystems, export the trained model in an ONNX policy, then run it in Unity without Python. 
 
-##### US1. Define agent inputs (Completed. Waiting review. Github branch: feature/us-1-define-agent-inputs)
+##### US1. Define agent inputs (Completed. Merged feature/us-1-define-agent-inputs into main)
 
 **Story:** As a Unity game developer, I want to configure what an agent observes so that it can make decisions using relevant game information.
 
@@ -39,7 +39,7 @@ The following user stories outline the requirments for the MVP. These will allow
 - Observation values update with the scene.
 - Observation values keep a consistent format.
 
-##### US2. Apply agent actions
+##### US2. Apply agent actions (Completed. Merged feature/us2-apply-agent-actions into main)
 
 **Story:** As a Unity game developer, I want to connect policy outputs to game actions so that the trained agent can control a game object.
 
@@ -48,7 +48,7 @@ The following user stories outline the requirments for the MVP. These will allow
 - Valid actions change the object’s behaviour.
 - Invalid actions produce a clear error.
 
-##### US3. Control training episodes
+##### US3. Control training episodes (Completed. Waiting review. Github branch: feature/us-3-control-training-episodes)
 
 **Story:** As an RL engineer, I want to define rewards, episode endings, and resets so that the agent can learn from repeated attempts.
 

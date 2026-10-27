@@ -11,7 +11,7 @@ namespace AMD.Schola
     /// Agent that defines observation/action spaces from sensors and actuators,
     /// aggregates Observe into a DictPoint, and fans out Act to actuators.
     /// </summary>
-    public sealed class ScholaAgent : MonoBehaviour
+    public sealed class ScholaAgent : MonoBehaviour, IAgent
     {
         [SerializeField]
         List<PositionSensor> m_Sensors = new List<PositionSensor>();

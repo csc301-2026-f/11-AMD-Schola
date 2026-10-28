@@ -46,6 +46,6 @@ We split into sub-teams by user story (US1, US2, US3, US5) plus one for CI/CD. E
 #### Q4. How was your product demo?
 
 We developed the demo by integrating completed user stories (US1, US2, US3) with our mock UI and hard-coding incomplete functionality to mimic anticipated functionality. 
-We showcased the functioanlity of US1, US2, US3 and a high level overview of our codebase through an interactive html page. It highlighted completed progress and how each user story relates to each other.
+We showcased the functionality of US1, US2, US3 and a high level overview of our codebase through an interactive html page. It highlighted completed progress and how each user story relates to each other.
 The partner was satisfied with the features showcased in the demo, however requested an organized UML diagram featuring our current interfaces and design decisions.
-We learned that visual demo's are valuable in conveying information intuitivly. 
+We learned that visual demo's are valuable in conveying information intuitively. 

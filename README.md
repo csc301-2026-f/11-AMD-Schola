@@ -212,3 +212,7 @@ For questions about Schola, contact the team at [Schola@amd.com](mailto:Schola@a
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for issue and pull request guidelines, coding standards, and testing expectations.
+
+## AI Usage
+
+Claude Opus 5.5  was used to co-develop Unity Sentis Policy

@@ -15,6 +15,21 @@ namespace AMD.Schola
         [SerializeField]
         string m_ActionKey = "translate";
 
+        [SerializeField, Min(0f)]
+        float m_MaxDisplacement;
+
+        /// <summary>Per-axis action bound. Zero preserves the original unbounded space.</summary>
+        public float MaxDisplacement
+        {
+            get => m_MaxDisplacement;
+            set
+            {
+                if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f)
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                m_MaxDisplacement = value;
+            }
+        }
+
         /// <summary>
         /// Stable dict key used when an agent aggregates this actuator.
         /// </summary>
@@ -40,7 +55,11 @@ namespace AMD.Schola
             var space = new BoxSpace();
             for (var i = 0; i < DimensionCount; i++)
             {
-                space.Dimensions.Add(new BoxSpaceDimension());
+                space.Dimensions.Add(
+                    m_MaxDisplacement > 0f
+                        ? new BoxSpaceDimension(-m_MaxDisplacement, m_MaxDisplacement)
+                        : new BoxSpaceDimension()
+                );
             }
 
             return space;
@@ -68,6 +87,19 @@ namespace AMD.Schola
                     $"Action '{m_ActionKey}' expected {nameof(BoxPoint)} with {DimensionCount} values, got {actualCount}.",
                     nameof(action)
                 );
+            }
+
+            foreach (var value in boxPoint.Values)
+            {
+                if (
+                    float.IsNaN(value)
+                    || float.IsInfinity(value)
+                    || (m_MaxDisplacement > 0f && Mathf.Abs(value) > m_MaxDisplacement)
+                )
+                    throw new ArgumentException(
+                        "Translation is outside the configured action bounds.",
+                        nameof(action)
+                    );
             }
 
             transform.position += new Vector3(

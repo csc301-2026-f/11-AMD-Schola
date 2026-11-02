@@ -8,10 +8,10 @@ Every class, component, and dashed edge uses one of these markers.
 | Marker | Mermaid cue | Meaning |
 | --- | --- | --- |
 | implemented | Solid box, no extra stereotype | Type on `main` with a Runtime or Inference class |
-| placeholder | `<<placeholder>>`, dashed | Contract on `main`, no Runtime implementation (`IReward`, `IEpisodeStatus`, `ITrainingStateSink`) |
+| placeholder | `<<placeholder>>` | Contract on `main`, no Runtime implementation (`IReward`, `IEpisodeStatus`, `ITrainingStateSink`) |
 | adjacent | `<<US5>>` | Inference loop. |
 | Unreal | `<<Unreal>>` | Comparison type. Not a Unity type |
-| not on main | `<<notOnMain>>`, dashed | `GymService` host, reverted JSON bridge, `origin/US4` gRPC spike |
+| not on main | `<<notOnMain>>` | `GymService` host, reverted JSON bridge, `origin/US4` gRPC spike |
 
 Dashed associations mean optional, missing, or not implemented on `main`.
 
@@ -266,11 +266,6 @@ classDiagram
   ScholaEnvironment ..> IReward : optional
   ScholaEnvironment ..> IEpisodeStatus : optional
   ScholaEnvironment ..> ITrainingStateSink : optional US4 hook
-
-  class IReward:::placeholder
-  class IEpisodeStatus:::placeholder
-  class ITrainingStateSink:::placeholder
-  classDef placeholder stroke-dasharray:5 5
 ```
 
 `IEnvironment` mirrors Unreal `ISingleAgentScholaEnvironment` with C# return values instead of out-params.
@@ -577,13 +572,6 @@ classDiagram
   UnityITrainingStateSink ..> UnityGymService : intended US4
   UnityIEnvironment ..> UnityIReward
   UnityIEnvironment ..> UnityIEpisodeStatus
-
-  class UnityGymService:::notOnMain
-  class UnityIReward:::placeholder
-  class UnityIEpisodeStatus:::placeholder
-  class UnityITrainingStateSink:::placeholder
-  classDef placeholder stroke-dasharray:5 5
-  classDef notOnMain stroke-dasharray:5 5
 
   note for UnrealISingleAgent "Unreal has no IReward or IEpisodeStatus. Reward and done flags are filled inside Step."
   note for UnityIAgent "Unity IAgent is Observe/Act only. Define is a ScholaAgent method not on the interface."

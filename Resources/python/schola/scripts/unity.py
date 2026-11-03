@@ -29,11 +29,16 @@ def train(
     checkpoint: Path = Path("ckpt/unity_ppo"),
     seed: int = 0,
     timeout: float = 30,
+    export_onnx: bool = False,
+    onnx_path: Path | None = None,
 ):
     """Train PPO using Schola's existing SB3 environment and save a checkpoint.
 
     Start Unity Play Mode with a TrainingServer first. Continuous action spaces
     must have finite bounds (set TranslateActuator.MaxDisplacement above zero).
+
+    With --export-onnx (or --onnx-path), the final policy is also exported with
+    Schola's ONNX exporter so Unity's SentisPolicy can run it.
     """
     if timesteps < 1:
         raise ValueError("timesteps must be positive")
@@ -50,9 +55,11 @@ def train(
 
     with UnityBridgeServer(unity_port, port=0, timeout=timeout) as adapter:
         env = VecEnv(ExternalSimulator(), GrpcProtocol("127.0.0.1", adapter.port))
+        merge_wrapper = None
         try:
             if isinstance(env.action_space, gym.spaces.Dict):
-                env = VecMergeDictActionWrapper(env)
+                merge_wrapper = VecMergeDictActionWrapper(env)
+                env = merge_wrapper
             if isinstance(env.action_space, gym.spaces.Box) and (
                 not np.isfinite(env.action_space.low).all()
                 or not np.isfinite(env.action_space.high).all()
@@ -68,9 +75,25 @@ def train(
             )
             model = PPO(policy, env, n_steps=128, batch_size=64, seed=seed, verbose=1)
             model.learn(total_timesteps=timesteps)
+
+            if merge_wrapper is not None:
+                action_space = merge_wrapper.unmerged_action_space
+                setattr(model, "__unmerged_action_space", action_space)
+            else:
+                action_space = model.action_space
+
             checkpoint.parent.mkdir(parents=True, exist_ok=True)
             model.save(checkpoint)
             print(f"Saved Unity policy to {checkpoint}", flush=True)
+
+            if export_onnx or onnx_path is not None:
+                from schola.sb3.export import save_model_as_onnx
+
+                if onnx_path is None:
+                    onnx_path = checkpoint.with_suffix(".onnx")
+                onnx_path.parent.mkdir(parents=True, exist_ok=True)
+                save_model_as_onnx(model, str(onnx_path), action_space=action_space)
+                print(f"Exported ONNX policy to {onnx_path}", flush=True)
         finally:
             env.close()
 

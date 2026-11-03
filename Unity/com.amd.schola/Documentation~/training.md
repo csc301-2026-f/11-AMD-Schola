@@ -19,7 +19,7 @@ Background** in Player settings so the Editor continues processing requests when
 another window has focus. In the installed Python environment, run:
 
 ```powershell
-schola unity train --timesteps 10000 --checkpoint ckpt/unity_ppo
+schola unity train --timesteps 10000 --checkpoint ckpt/unity_ppo --export-onnx
 ```
 
 This starts the packaged adapter automatically, trains PPO using Schola's existing
@@ -43,7 +43,8 @@ inference asset; model export and loading belong to US5.
 5. Disable any deterministic sample controller or inference stepper that also
    controls this agent. Enable Run In Background and enter Play Mode.
 6. Run `schola unity train --unity-port 8001`, optionally setting `--seed`,
-   `--timesteps`, `--checkpoint`, and `--timeout` (seconds per Unity exchange).
+   `--timesteps`, `--checkpoint`, `--timeout` (seconds per Unity exchange),
+   `--export-onnx` and `--onnx-path`.
 
 Scene changes happen only on Unity's main thread. Each network step calls the
 existing synchronous `ScholaEnvironment.Step` exactly once, applying the action

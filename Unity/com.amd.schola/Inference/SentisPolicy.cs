@@ -15,7 +15,8 @@ namespace AMD.Schola
     /// Schola's exporter names each model input after an observation key and each model output
     /// after an action key, so both spaces must be <see cref="DictSpace"/> and their keys must
     /// match the model's input and output names. Supports <see cref="BoxSpace"/> observations
-    /// or <see cref="DiscreteSpace"/> actions, one agent per call.
+    /// or <see cref="DiscreteSpace"/> actions, one agent per call. Box actions are clamped to the
+    /// action space's bounds, matching how they were clipped during training.
     /// Claude Opus 5.5 was used to help create this class
     /// </remarks>
     public sealed class SentisPolicy : IPolicy, IDisposable
@@ -208,11 +209,10 @@ namespace AMD.Schola
                         return false;
                     }
 
-                    action = new BoxPoint
-                    {
-                        Values = new List<float>(output.DownloadToArray()),
-                        Shape = new List<int>(box.Shape),
-                    };
+                    var values = new List<float>(output.DownloadToArray());
+                    ClampToBounds(values, box);
+
+                    action = new BoxPoint { Values = values, Shape = new List<int>(box.Shape) };
                     return true;
                 }
                 default:
@@ -289,6 +289,33 @@ namespace AMD.Schola
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Clamps each value to its dimension's Low/High, the way Stable-Baselines3 clips actions
+        /// to the action space during training.
+        /// </summary>
+        static void ClampToBounds(List<float> values, BoxSpace space)
+        {
+            var count = Math.Min(values.Count, space.Dimensions.Count);
+            for (var i = 0; i < count; i++)
+            {
+                var dimension = space.Dimensions[i];
+                if (dimension == null)
+                {
+                    continue;
+                }
+
+                if (dimension.Low.HasValue && values[i] < dimension.Low.Value)
+                {
+                    values[i] = dimension.Low.Value;
+                }
+
+                if (dimension.High.HasValue && values[i] > dimension.High.Value)
+                {
+                    values[i] = dimension.High.Value;
+                }
+            }
         }
 
         /// <summary>

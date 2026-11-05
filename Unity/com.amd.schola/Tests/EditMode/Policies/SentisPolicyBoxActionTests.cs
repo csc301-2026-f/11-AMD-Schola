@@ -123,11 +123,7 @@ namespace AMD.Schola.Tests.Policies
             return new InteractionDefinition(
                 new DictSpace
                 {
-                    Spaces =
-                    {
-                        ["agent_position"] = Position(),
-                        ["target_position"] = Position(),
-                    },
+                    Spaces = { ["agent_position"] = Position(), ["target_position"] = Position() },
                 },
                 new DictSpace { Spaces = { ["translate"] = action } }
             );

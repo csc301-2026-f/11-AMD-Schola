@@ -276,7 +276,7 @@ Behavior on `main`:
 - `Step(action)` does `Act` → `ComputeReward` (or `0`) → `GetStatus` (or both flags false) → `Observe` → optional `SubmitState`. It does **not** auto-reset; the caller must `Reset()`.
 - `Reset()` calls `Initialize()` if not yet initialized, then restores the initialize snapshot, calls `OnEpisodeReset` on reward/status, observes, and returns `InitialAgentState` (obs + info only). No reward or done flags on reset.
 - `Seed` and `SetOptions` are no-ops. `AgentState.Info` is allocated empty and never populated.
-- `DefaultAgentId = "SingleAgent"` is declared and unused. Reserved for a future Gym connector wrap that keys proto maps the way Unreal's single-agent adapter does.
+- `DefaultAgentId = "SingleAgent"` is the key `SingleAgentEnvironmentAdapter` injects when a single-agent environment is viewed as a multi-agent map. `ScholaEnvironment` itself still steps one agent and does not implement `IMultiAgentEnvironment`.
 - Reward and status may be assigned in the inspector (`GetComponentInChildren`) or via setters. The sink is **not** auto-resolved; it must be `SetTrainingStateSink`.
 
 Sources: `Runtime/Environment/`, `Runtime/TrainingDataTypes/`, `Runtime/Common/InteractionDefinition.cs`.
@@ -388,7 +388,7 @@ Sources: `Runtime/Environment/ScholaEnvironment.cs`, `Runtime/Steppers/SimpleSte
 
 ## 5. Protocol nesting vs Unity cardinality (US3–US4)
 
-Proto and Unreal nest `env_id` → `agent_id` → payload. Unity `IEnvironment` is one env, one agent. Python `GymEnv` also assumes 1 env, 1 agent. `GymVectorEnv` / SB3 flatten `(env, agent)` slots; `RayEnv` uses true multi-agent dicts. Unity has no `IMultiAgentEnvironment` and no `map<string, AgentState>`.
+Proto and Unreal nest `env_id` → `agent_id` → payload. Unity `IEnvironment` is still one env, one agent. `IMultiAgentEnvironment` returns `map<string, AgentState>` (and the matching definition and initial-state maps), implemented by `ScholaMultiAgentEnvironment`. `SingleAgentEnvironmentAdapter` injects the key `SingleAgent`, the same key Unreal's single-agent adapter uses. Python `GymEnv` also assumes 1 env, 1 agent. `GymVectorEnv` / SB3 flatten `(env, agent)` slots; `RayEnv` uses true multi-agent dicts.
 
 ```mermaid
 classDiagram
@@ -455,7 +455,7 @@ classDiagram
   UnityScholaEnvironment ..|> UnityIEnvironment
   UnityIEnvironment ..> UnityAgentState : one state, no agent-id
 
-  note for UnityScholaEnvironment "DefaultAgentId unused on main.\nUnreal single-agent adapter injects key SingleAgent.\nGym connector would wrap here for US4."
+  note for UnityScholaEnvironment "IEnvironment stays one agent.\nSingleAgentEnvironmentAdapter injects key SingleAgent."
 ```
 
 | Layer | Environments | Agents per env | How identity is keyed |
@@ -463,7 +463,9 @@ classDiagram
 | Proto `TrainingState` / `TrainingDefinition` | Many (`repeated`) | Many (`map<string, …>`) | env index, then `agent_id` |
 | Unreal `IScholaEnvironment` | Connector holds `TArray` of envs | Many (`TMap<FString, …>`) | `agent_id` string |
 | Unreal `ISingleAgentScholaEnvironment` | One | One, adapter injects `"SingleAgent"` | injected key |
-| Unity `ScholaEnvironment` | One | One | none; `DefaultAgentId` unused |
+| Unity `ScholaEnvironment` | One | One | none on `IEnvironment`; adapter injects `SingleAgent` |
+| Unity `ScholaMultiAgentEnvironment` | One | Many | `agent_id` string |
+| Unity `SingleAgentEnvironmentAdapter` | One | One | injected key `SingleAgent` |
 | Python `GymEnv` | One | One | 1:1 wrap |
 | Python `GymVectorEnv` / `sb3.VecEnv` | Many slots | Flattened `(env, agent)`; agents in one env finish together | slot index |
 | Python `RayEnv` | Many | True multi-agent dicts | `agent_id` |
@@ -581,7 +583,7 @@ Unreal differences that matter for a Unity Gym connector:
 
 - Unreal `IAgent` also has `Define`, `GetStatus`, `SetStatus`. Unity `IAgent` is Observe/Act only; `ScholaAgent.Define` is concrete.
 - Unreal environments fill `FAgentState.Reward` / `bTerminated` / `bTruncated` inside `Step`. They have no `IReward` / `IEpisodeStatus`.
-- Unreal `IMultiAgentScholaEnvironment` has **no Unity equivalent**.
+- Unity `IMultiAgentEnvironment` matches Unreal `IMultiAgentScholaEnvironment`: maps keyed by agent id, with reward and episode flags filled per agent inside `Step`.
 - Unreal hosts `GymService` via `URPCGymConnector` / `UCommunicationManager`. Unity does not.
 
 ### Reverted and spike US4
@@ -615,9 +617,12 @@ Sources: `Proto/GymConnector.proto`, `Unity/com.amd.schola/Training/README.md`, 
 | `IEpisodeStatus` | US3 | placeholder | Independent terminated / truncated; test fakes only |
 | `AgentState` / `InitialAgentState` | US3 | implemented | Hand-written proto mirrors; no agent-id field |
 | `InteractionDefinition` | US3 | implemented | ObservationSpace + ActionSpace |
-| `ITrainingStateSink` | US4 | placeholder | `SubmitState` / `SubmitInitialState`; US4 hook |
+| `ITrainingStateSink` | US4 | placeholder | Singular submit for one agent; `SubmitStates` / `SubmitInitialStates` for agent-id maps |
 | `IPolicy` / `SentisPolicy` | US5 | adjacent | Local ONNX; one agent per `Think` |
 | `IStepper` / `SimpleStepper` / `StepperRunner` | US5 | adjacent | Observe-think-act; no reward or reset |
 | `GymService` | US4 | not on main | `StartGymConnector`, `RequestTrainingDefinition`, `UpdateState` |
 | TrainingServer JSON bridge | US4 | not on main | PR #17 reverted; do not treat as implemented |
-| `IMultiAgentScholaEnvironment` | Unreal | Unreal | No Unity equivalent |
+| `IMultiAgentEnvironment` | multi-agent | implemented | Mirrors Unreal `IMultiAgentScholaEnvironment`; `Step` returns `Dictionary<string, AgentState>` |
+| `ScholaMultiAgentEnvironment` | multi-agent | implemented | One environment, many `ScholaAgent`s keyed by id. Reward and status resolve per agent |
+| `SingleAgentEnvironmentAdapter` | multi-agent | implemented | Wraps `IEnvironment` under the key `SingleAgent` |
+| `IMultiAgentScholaEnvironment` | Unreal | Unreal | Comparison type. Unity equivalent is `IMultiAgentEnvironment` |

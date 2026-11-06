@@ -7,3 +7,7 @@
 > - **Documentation.** Rewrote `README.md` for D3 (what's new, train-and-run guide, configuration table, deployment justification, non-functional requirements and D2 feedback table) and wrote `deliverables/D3/product-evolution.md`.
 > - **Reviews.** Reviewed and approved PR [#20](https://github.com/csc301-2026-f/11-AMD-Schola/pull/20), which restores the US4 training connection, after checking that its code was identical to the reverted PR #17 and that CI was green, and then merged it.
 > - **Presentation.** Presented the training-connection slide in the deliverable presentation.
+
+**Fahad Moinuddin**, Architecture UML (US1–US4)
+> - **Architecture.** Authored `Unity/com.amd.schola/Documentation~/architecture/us1-us4-uml.md`, a Mermaid UML architecture doc covering system context, agent composition (US1–US2), the episode environment (US3), dual-loop sequences for training vs inference (US3 vs US5), protocol nesting vs Unity cardinality (US3–US4), the US4 `GymService` target and Unreal delta (including reverted/spike paths), and a type inventory that marks each type as implemented, placeholder, adjacent, Unreal, or not on `main`.
+> - **Planning.** Created 5 tasks on the team Trello from the partner team meeting with AMD and assigned them to teammates.

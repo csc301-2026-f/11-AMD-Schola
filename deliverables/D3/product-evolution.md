@@ -2,7 +2,7 @@
 
 ## 1. What Needed to Improve
 
-After D2, Schola for Unity could observe a scene, act on it and run a model, but it could not do the thing that makes Schola useful, which is **training an agent from Unity**. Our own D2 retrospective put it plainly when it said that "the training connection (US4) has not started", and at that point the `Training/` folder held only code-generation setup. Without training, a developer had no way to get from "an agent in my scene" to "a trained agent in my game". The only model we could run, in the Return to Base demo, was made by hand outside the product. 
+After D2, Schola for Unity could observe a scene, act on it and run a model, but it could not do the thing that makes Schola useful, which is **training an agent from Unity**. Our own D2 retrospective put it plainly when it said that "the training connection (US4) has not started", and at that point the `Training/` folder held only code-generation setup. Without training, a developer had no way to get from "an agent in my scene" to "a trained agent in my game". The only model we could run, in the Return to Base demo, was made by hand outside the product.
 
 We identified the gap in three ways. First, the D2 review listed US4 as the main thing that went wrong and made it our main focus for the next iteration. Second, AMD had described the MVP as a sample environment that trains in Unity, and our D2 demo had to hard-code part of that flow, which made the missing piece obvious. Third, at the 3 November meeting many of AMD's questions were about training, such as how resets and episode endings reach the Python trainer ([minutes](../team/minutes/26-11-03-minutes.md)).
 
@@ -14,7 +14,7 @@ We built the full loop, so that a developer can **train in Python, export the re
 
 **Export and run (US5).** With `--export-onnx`, the same command also saves the trained policy as an ONNX file. A new `PolicyRunner` component runs that file on the chosen agents without Python, so the developer only adds the component, assigns the agents and the model, and presses Play. Anwar built this in [#21](https://github.com/csc301-2026-f/11-AMD-Schola/pull/21).
 
-**Process and documentation.** Every GitHub Actions job now has a time limit ([#22](https://github.com/csc301-2026-f/11-AMD-Schola/pull/22)), and most jobs, including the Unity tests, now stop after 5 minutes. The README also gained a full "train and run your own agent" guide.
+**Process and documentation.** Every GitHub Actions job now has a time limit ([#22](https://github.com/csc301-2026-f/11-AMD-Schola/pull/22)), and we later tightened the limits to match real run times, so the Unity tests now stop after 8 minutes. The README also gained a full "train and run your own agent" guide.
 
 **Key design decisions**
 - *Why JSON over a local socket instead of gRPC inside Unity?* Running gRPC inside Unity would mean shipping native libraries with the package. Keeping the Unity side in plain C# lets the package install cleanly, while the Python side still reuses Schola's existing gRPC clients unchanged.
@@ -37,7 +37,7 @@ We built the full loop, so that a developer can **train in Python, export the re
 | Bad model or bad action | A model with the wrong shape was rejected, but outputs past the limits crashed the first step | Mismatches log a clear reason, outputs past the limits are clamped, and invalid actions from Python are rejected before the scene changes |
 | Failure during training | Not applicable | Unity replies with a short error that Python maps to a gRPC status, and the environment must be reset before the next step |
 | Automated tests | Tests for sensors, actuators, episodes, the Sentis policy and the stepper | 76 Unity tests, now also covering the training server, the training session and `PolicyRunner`, plus 10 Python test functions for the adapter and export, all run in CI |
-| CI time limits | Four jobs had no limit, and Unity tests could run for 30 minutes | Every job has a limit, and most jobs, including the Unity tests, stop after 5 minutes |
+| CI time limits | Four jobs had no limit, and Unity tests could run for 30 minutes | Every job has a limit, and the Unity tests stop after 8 minutes |
 
 **Demo video.** Anwar recorded a [start-to-finish walkthrough on YouTube](https://www.youtube.com/watch?v=TPu1wXgE_mE) that trains for 2,000 steps and then runs the result in Unity.
 

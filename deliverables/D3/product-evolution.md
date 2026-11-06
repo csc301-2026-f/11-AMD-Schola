@@ -14,7 +14,7 @@ We built the full loop, so that a developer can **train in Python, export the re
 
 **Export and run (US5).** With `--export-onnx`, the same command also saves the trained policy as an ONNX file. A new `PolicyRunner` component runs that file on the chosen agents without Python, so the developer only adds the component, assigns the agents and the model, and presses Play. Anwar built this in [#21](https://github.com/csc301-2026-f/11-AMD-Schola/pull/21).
 
-**Process and documentation.** Every GitHub Actions job now has a time limit, and the Unity test limit dropped from 30 to 10 minutes ([#22](https://github.com/csc301-2026-f/11-AMD-Schola/pull/22)). The README also gained a full "train and run your own agent" guide.
+**Process and documentation.** Every GitHub Actions job now has a time limit ([#22](https://github.com/csc301-2026-f/11-AMD-Schola/pull/22)), and most jobs, including the Unity tests, now stop after 5 minutes. The README also gained a full "train and run your own agent" guide.
 
 **Key design decisions**
 - *Why JSON over a local socket instead of gRPC inside Unity?* Running gRPC inside Unity would mean shipping native libraries with the package. Keeping the Unity side in plain C# lets the package install cleanly, while the Python side still reuses Schola's existing gRPC clients unchanged.
@@ -37,7 +37,7 @@ We built the full loop, so that a developer can **train in Python, export the re
 | Bad model or bad action | A model with the wrong shape was rejected, but outputs past the limits crashed the first step | Mismatches log a clear reason, outputs past the limits are clamped, and invalid actions from Python are rejected before the scene changes |
 | Failure during training | Not applicable | Unity replies with a short error that Python maps to a gRPC status, and the environment must be reset before the next step |
 | Automated tests | Tests for sensors, actuators, episodes, the Sentis policy and the stepper | 76 Unity tests, now also covering the training server, the training session and `PolicyRunner`, plus 10 Python test functions for the adapter and export, all run in CI |
-| CI time limits | Four jobs had no limit, and Unity tests could run for 30 minutes | Every job has a limit, and Unity tests stop after 10 minutes |
+| CI time limits | Four jobs had no limit, and Unity tests could run for 30 minutes | Every job has a limit, and most jobs, including the Unity tests, stop after 5 minutes |
 
 **Demo video.** Anwar recorded a [start-to-finish walkthrough on YouTube](https://www.youtube.com/watch?v=TPu1wXgE_mE) that trains for 2,000 steps and then runs the result in Unity.
 

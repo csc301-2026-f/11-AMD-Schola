@@ -27,3 +27,10 @@
 > - **Training restoration (PR [#20](https://github.com/csc301-2026-f/11-AMD-Schola/pull/20)).** Restored the US4 implementation after PR #17 was reverted, bringing the Unity training server, Python gRPC adapter, training commands, Training Demo and associated tests back into `main`.
 > - **Documentation.** Adapted `README.md` to the current branch, added the Training Demo setup and `schola unity train` instructions, and updated the US3/US4 status table to reflect the restored training connection.
 > - **Training scope.** Documented the current support for one agent/environment per endpoint and synchronous Transform-based stepping, with multi-agent training, physics stepping and player/IL2CPP validation remaining future work.
+
+**Muzzammil Siddiqui**, Auto-reset investigation and compatability fix
+- Investigation. Investigated the “Auto Reset Episode” action item by comparing the UML, Unity code and Unreal implementation. Confirmed that TrainingSession already handles automatic resets, although the UML describes the environment’s manual-reset interface.
+- Bug fix (Auto_Reset_Episode branch). Discovered and fixed the Python bridge rejecting empty action maps during next-step reset. The bridge now forwards these requests to Unity’s training session, which resets completed episodes while rejecting missing actions during active episodes.
+- Tests and documentation. Added regression coverage for empty-action requests, repeated resets, termination and truncation; extended the live Unity test and updated the training guide. Verified 15 Python bridge tests and nine checks against production C# session code. Full Unity Editor tests remain unverified.
+- Status. The fix is on Auto_Reset_Episode and is planned for merge after submission; it is not part of the submitted main branch.
+

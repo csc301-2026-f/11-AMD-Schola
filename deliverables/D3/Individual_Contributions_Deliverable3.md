@@ -47,4 +47,4 @@
 > - **Tests.** Added bridge and Unity session regression coverage for empty actions, repeated resets, termination and truncation. Extended the live Unity integration test. Verified 15 Python bridge tests and nine checks against production C# session code; full Unity Editor tests remain unverified.
 > - **Docs.** Updated `Unity/com.amd.schola/Documentation~/training.md` to explain empty-action handling during next-step reset.
 > - **Status.** Work lives on `Auto_Reset_Episode` and is not yet merged to `main`. The fix is planned for merge after submission.
-
+> - **Presentation.** Presented and walked through the UML diagram in the deliverable presentation

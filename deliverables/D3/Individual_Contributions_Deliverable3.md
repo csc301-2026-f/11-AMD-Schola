@@ -20,3 +20,10 @@
 > - **ONNX export.** Added `--export-onnx` and `--onnx-path` to `schola unity train`, and made sure the exported model uses the same input and output names as the agent's sensors and actuators so Unity can load it.
 > - **Tests.** 11 Unity tests (clamping and `PolicyRunner`, including a trained model reaching its target) and 2 Python tests for the export.
 > - **Demo.** Recorded the [D3 walkthrough video](https://www.youtube.com/watch?v=TPu1wXgE_mE) and made the D3 slides.
+>
+
+**Talha Asif**, Unity-to-Python training integration (US4)
+
+> - **Training restoration (PR [#20](https://github.com/csc301-2026-f/11-AMD-Schola/pull/20)).** Restored the US4 implementation after PR #17 was reverted, bringing the Unity training server, Python gRPC adapter, training commands, Training Demo and associated tests back into `main`.
+> - **Documentation.** Adapted `README.md` to the current branch, added the Training Demo setup and `schola unity train` instructions, and updated the US3/US4 status table to reflect the restored training connection.
+> - **Training scope.** Documented the current support for one agent/environment per endpoint and synchronous Transform-based stepping, with multi-agent training, physics stepping and player/IL2CPP validation remaining future work.

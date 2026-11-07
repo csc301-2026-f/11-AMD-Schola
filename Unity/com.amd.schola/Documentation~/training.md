@@ -101,6 +101,8 @@ This adapter is part of Schola; environment authors do not implement it.
 - **SAME_STEP** (SB3 default): return final observations/reward/flags and separate
   reset observations in the same response. **NEXT_STEP**: the next step ignores
   its action and returns the reset state with zero reward and cleared flags.
+  An empty agent-action map is accepted for that pending NEXT_STEP reset; during
+  an active episode it is rejected and an explicit reset is required to recover.
   **DISABLED**: reject further steps after episode end until explicit reset.
 - Reset seeds/options are forwarded to `IEnvironment.Seed`/`SetOptions`. The
   current `ScholaEnvironment` implements those as no-ops; randomized seeded resets

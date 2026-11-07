@@ -285,13 +285,16 @@ class UnityGymService(services.GymServiceServicer):
         elif kind == "step":
             if len(request.step.environments) != 1 or set(
                 request.step.environments[0].updates
-            ) != {AGENT_ID}:
+            ) not in (set(), {AGENT_ID}):
                 context.abort(
                     grpc.StatusCode.INVALID_ARGUMENT,
                     "Expected environment 0 / SingleAgent",
                 )
             try:
-                action = _encode_point(request.step.environments[0].updates[AGENT_ID])
+                actions = request.step.environments[0].updates
+                # The session owns episode state. An empty map can mean NEXT_STEP
+                # reset; active episodes still reject the empty action tree there.
+                action = _encode_point(actions[AGENT_ID]) if actions else []
             except ValueError as error:
                 context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(error))
             response = self._request(context, "step", action=action)

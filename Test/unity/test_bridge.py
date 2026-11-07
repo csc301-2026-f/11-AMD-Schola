@@ -193,6 +193,54 @@ def test_real_grpc_adapter_maps_reset_step_and_same_step_initial_state(endpoint)
     assert commands[2]["options"] == [dict(key="difficulty", value="easy")]
 
 
+@pytest.mark.parametrize("reset_pending", [True, False])
+def test_real_grpc_adapter_delegates_empty_actions_to_session(endpoint, reset_pending):
+    listener, pool = endpoint
+    requests = []
+
+    def unity_peer():
+        with listener.accept()[0] as peer:
+            peer.settimeout(5)
+            size = struct.unpack("!I", UnityConnection._read_exact(peer, 4))[0]
+            requests.append(json.loads(UnityConnection._read_exact(peer, size)))
+            response = dict(version=1, ok=reset_pending)
+            if reset_pending:
+                response.update(
+                    observations=box(),
+                    reward=0,
+                    terminated=False,
+                    truncated=False,
+                    info=[],
+                )
+            else:
+                response["error"] = "Invalid action tree."
+            data = json.dumps(response).encode()
+            peer.sendall(struct.pack("!I", len(data)) + data)
+
+    future = pool.submit(unity_peer)
+    with UnityBridgeServer(listener.getsockname()[1], port=0) as adapter:
+        with grpc.secure_channel(
+            f"127.0.0.1:{adapter.port}", grpc.local_channel_credentials()
+        ) as channel:
+            stub = services.GymServiceStub(channel)
+            step = updates.StateUpdate(step=updates.Step())
+            step.step.environments.add()  # Environment present, no agent action.
+            if reset_pending:
+                state = stub.UpdateState(step, timeout=5)
+                agent = state.training_state.environment_states[0].agent_states[
+                    "SingleAgent"
+                ]
+                assert agent.observations.box_point.values[0] == 0
+                assert agent.reward == 0
+                assert not agent.terminated and not agent.truncated
+            else:
+                with pytest.raises(grpc.RpcError) as error:
+                    stub.UpdateState(step, timeout=5)
+                assert error.value.code() == grpc.StatusCode.FAILED_PRECONDITION
+    future.result(timeout=5)
+    assert requests == [dict(version=1, command="step", action=[])]
+
+
 @pytest.mark.parametrize("failure", ["length", "version", "unity", "timeout"])
 def test_transport_failures_are_bounded_and_reported(endpoint, failure):
     listener, pool = endpoint

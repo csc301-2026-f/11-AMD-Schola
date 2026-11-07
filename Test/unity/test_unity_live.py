@@ -55,8 +55,15 @@ def test_real_unity_discovery_actions_terminal_observation_and_reset(adapter):
         env.close()
 
 
-@pytest.mark.parametrize("mode", [AutoResetType.NEXT_STEP, AutoResetType.DISABLED])
-def test_real_unity_other_reset_modes(adapter, mode):
+@pytest.mark.parametrize(
+    "mode,empty_action",
+    [
+        (AutoResetType.NEXT_STEP, False),
+        (AutoResetType.NEXT_STEP, True),
+        (AutoResetType.DISABLED, False),
+    ],
+)
+def test_real_unity_other_reset_modes(adapter, mode, empty_action):
     protocol = GrpcProtocol("127.0.0.1", adapter.port)
     protocol.start()
     try:
@@ -71,10 +78,18 @@ def test_real_unity_other_reset_modes(adapter, mode):
         final = protocol.send_action_msg(action, action_spaces)
         assert final[2][0]["SingleAgent"]
         if mode == AutoResetType.NEXT_STEP:
-            reset = protocol.send_action_msg(action, action_spaces)
+            reset = protocol.send_action_msg(
+                {0: {}} if empty_action else action, action_spaces
+            )
             assert not reset[2][0]["SingleAgent"]
+            assert not reset[3][0]["SingleAgent"]
+            assert reset[1][0]["SingleAgent"] == 0
             np.testing.assert_array_equal(
                 reset[0][0]["SingleAgent"]["position"], [0, 0, 0]
+            )
+            next_step = protocol.send_action_msg(action, action_spaces)
+            np.testing.assert_allclose(
+                next_step[0][0]["SingleAgent"]["position"], [0.1, 0, 0]
             )
         else:
             import grpc

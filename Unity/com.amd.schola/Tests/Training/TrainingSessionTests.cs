@@ -143,6 +143,70 @@ namespace AMD.Schola.Tests.Training
             }
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void NextStepReset_WithoutAction_ResetsOnceAndContinues(bool truncate)
+        {
+            var env = new Environment();
+            var session = new TrainingSession(env);
+            session.Handle(new TrainingRequest { command = "start", autoreset = 1 });
+            session.Handle(Request("reset"));
+
+            for (var episode = 0; episode < 3; episode++)
+            {
+                env.Terminate = !truncate;
+                env.Truncate = truncate;
+                var final = session.Handle(Step());
+                Assert.That(final.ok, Is.True, final.error);
+                Assert.That(final.terminated, Is.EqualTo(!truncate));
+                Assert.That(final.truncated, Is.EqualTo(truncate));
+                Assert.That(env.Resets, Is.EqualTo(episode + 1));
+
+                // The bridge forwards an empty agent-action map as an empty tree.
+                var reset = session.Handle(
+                    new TrainingRequest { command = "step", action = Array.Empty<TrainingNode>() }
+                );
+                Assert.That(reset.ok, Is.True, reset.error);
+                Assert.That(reset.reward, Is.Zero);
+                Assert.That(reset.terminated, Is.False);
+                Assert.That(reset.truncated, Is.False);
+                Assert.That(
+                    ((BoxPoint)TrainingWire.DecodePoint(reset.observations)).Values[0],
+                    Is.Zero
+                );
+                Assert.That(env.Resets, Is.EqualTo(episode + 2));
+                Assert.That(env.Steps, Is.EqualTo(episode * 2 + 1));
+
+                env.Terminate = false;
+                env.Truncate = false;
+                var next = session.Handle(Step());
+                Assert.That(next.ok, Is.True, next.error);
+                Assert.That(env.Position, Is.EqualTo(0.5f));
+                Assert.That(env.Resets, Is.EqualTo(episode + 2));
+            }
+        }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        public void EmptyAction_WhileActive_DoesNotStepOrReset(int mode)
+        {
+            var env = new Environment();
+            var session = new TrainingSession(env);
+            session.Handle(new TrainingRequest { command = "start", autoreset = mode });
+            session.Handle(Request("reset"));
+            var response = session.Handle(
+                new TrainingRequest { command = "step", action = Array.Empty<TrainingNode>() }
+            );
+            Assert.That(response.ok, Is.False);
+            Assert.That(env.Steps, Is.Zero);
+            Assert.That(env.Resets, Is.EqualTo(1));
+            Assert.That(env.Position, Is.Zero);
+            Assert.That(session.Handle(Step()).ok, Is.False);
+            session.Handle(Request("reset"));
+            Assert.That(session.Handle(Step()).ok, Is.True);
+        }
+
         [Test]
         public void InvalidAction_DoesNotAdvanceEnvironment_AndRequiresReset()
         {

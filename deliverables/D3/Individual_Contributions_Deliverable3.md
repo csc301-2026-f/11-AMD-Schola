@@ -34,3 +34,11 @@
 - Tests and documentation. Added regression coverage for empty-action requests, repeated resets, termination and truncation; extended the live Unity test and updated the training guide. Verified 15 Python bridge tests and nine checks against production C# session code. Full Unity Editor tests remain unverified.
 - Status. The fix is on Auto_Reset_Episode and is planned for merge after submission; it is not part of the submitted main branch.
 
+**Yahyaa Yasin**, Multi-agent environment (`feature/multi-agent`)
+
+> - **Multi-agent contract.** Added `IMultiAgentEnvironment`, mirroring Unreal `IMultiAgentScholaEnvironment` with C# return values. `Initialize`, `Reset`, and `Step` use `map<string, …>` keyed by agent id. `AgentState` still has no agent-id field; identity is the dictionary key.
+> - **Runtime.** Implemented `ScholaMultiAgentEnvironment` for multiple `ScholaAgent`s with per-agent reward and episode status, pose snapshots, and action-map validation before any `Act`. Added `SingleAgentEnvironmentAdapter` so an existing `IEnvironment` is presented under the key `SingleAgent`, matching Unreal’s single-agent adapter. Extended `ITrainingStateSink` with `SubmitStates` / `SubmitInitialStates`.
+> - **Tests.** Added EditMode coverage in `ScholaMultiAgentEnvironmentTests` and `SingleAgentEnvironmentAdapterTests` for two-agent step/reset, independent rewards and terminated/truncated flags, rejection of missing/unknown/null actions without moving agents, duplicate and empty ids, and the `SingleAgent` adapter round-trip.
+> - **Docs.** Updated `Unity/com.amd.schola/Documentation~/architecture/us1-us4-uml.md` so the multi-agent gap is marked implemented in the protocol-cardinality section and type inventory.
+> - **Status.** Work lives on `feature/multi-agent` and is not yet merged to `main`. Left `IEnvironment`, `TrainingSession`, and the training wire unchanged so single-agent US4 stays as-is.
+

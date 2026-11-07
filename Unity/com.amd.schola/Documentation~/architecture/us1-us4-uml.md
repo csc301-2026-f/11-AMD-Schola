@@ -24,9 +24,9 @@ Unity Runtime on `main` can observe, act, and run a local episode. Inference (US
 ```mermaid
 flowchart LR
   subgraph unityRuntime ["Unity Runtime — implemented on main"]
-    sensors["ISensor / PositionSensor"]
+    sensors["ISensor"]
     agent["ScholaAgent"]
-    actuators["IActuator / TranslateActuator"]
+    actuators["IActuator"]
     env["ScholaEnvironment"]
     reward["IReward\n<<placeholder>>"]
     status["IEpisodeStatus\n<<placeholder>>"]
@@ -75,12 +75,13 @@ Sources: `Unity/com.amd.schola/Runtime/`, `Unity/com.amd.schola/Inference/`, `Un
 
 ## 2. Agent composition (US1–US2)
 
-`ScholaAgent` implements `IAgent` and stores **concrete** `List<PositionSensor>` / `List<TranslateActuator>` (exposed as `IReadOnlyList`), not `ISensor` / `IActuator`. A new sensor or actuator type needs a code change on the agent.
+`ScholaAgent` implements `IAgent` and works through `ISensor` and `IActuator`. `PositionSensor` and `TranslateActuator` implement those contracts; custom Unity components can implement them without changing the agent.
 
 ```mermaid
 classDiagram
   class ISensor {
     <<interface>>
+    +ObservationKey string
     +InitSensor()
     +GetObservationSpace() Space
     +CollectObservations() Point
@@ -95,6 +96,7 @@ classDiagram
 
   class IActuator {
     <<interface>>
+    +ActionKey string
     +InitActuator()
     +GetActionSpace() Space
     +TakeAction(Point)
@@ -114,8 +116,10 @@ classDiagram
   }
 
   class ScholaAgent {
-    +Sensors IReadOnlyList~PositionSensor~
-    +Actuators IReadOnlyList~TranslateActuator~
+    +Sensors IReadOnlyList~ISensor~
+    +Actuators IReadOnlyList~IActuator~
+    +SetSensors(IEnumerable~ISensor~)
+    +SetActuators(IEnumerable~IActuator~)
     +Define() Space
     +DefineActionSpace() Space
     +Observe() Point
@@ -157,8 +161,8 @@ classDiagram
   PositionSensor ..|> ISensor
   TranslateActuator ..|> IActuator
   ScholaAgent ..|> IAgent
-  ScholaAgent "1" *-- "*" PositionSensor : Sensors
-  ScholaAgent "1" *-- "*" TranslateActuator : Actuators
+  ScholaAgent "1" o-- "*" ISensor : Sensors
+  ScholaAgent "1" o-- "*" IActuator : Actuators
   Point <|-- BoxPoint
   Point <|-- DictPoint
   Point <|-- DiscretePoint
@@ -176,14 +180,23 @@ classDiagram
   ScholaAgent ..> DictPoint : Observe / Act
 ```
 
-Notes, from the types on `main`:
+Contract and routing:
 
-- `Define()` builds a `DictSpace` keyed by `PositionSensor.ObservationKey` (default `"position"`).
-- `Observe()` builds a matching `DictPoint` of 3-float world `BoxPoint`s.
-- `DefineActionSpace()` builds a `DictSpace` keyed by `TranslateActuator.ActionKey` (default `"translate"`). Duplicate keys warn and last-write-wins.
-- `Act(Point)` requires a `DictPoint`, checks **every** actuator key before any `TakeAction`, then applies 3-float `BoxPoint` deltas to `transform.position`. Wrong type or arity throws.
-- Unity Point/Space omit proto `MultiDiscrete`, `MultiBinary`, and `Text`. There is no `Space.Contains` / bound enforcement on `main`.
+- `ISensor.ObservationKey` and `IActuator.ActionKey` are read-only properties on the interfaces. The existing concrete components retain their writable key properties.
+- `Define()` builds a `DictSpace` keyed by each sensor's `ObservationKey`; `Observe()` builds the matching `DictPoint`. Duplicate observation keys keep the last value.
+- `DefineActionSpace()` builds a `DictSpace` keyed by each actuator's `ActionKey`. Duplicate keys warn and keep the last space; `Act()` still dispatches to every configured actuator with that key.
+- `Act(Point)` requires a `DictPoint` and checks every actuator's key has a non-null action before any `TakeAction` call. Each actuator validates its own payload.
+- `PositionSensor` returns a 3-float world-position `BoxPoint` (default key `"position"`). `TranslateActuator` accepts a 3-float `BoxPoint` (default key `"translate"`) and adds it to `transform.position`, checking type, arity, finite values, and configured displacement bounds.
+- Unity Point/Space omit proto `MultiDiscrete`, `MultiBinary`, and `Text`. There is no general `Space.Contains` check or agent-level bound enforcement.
 - Unity `IAgent` is Observe/Act only. It has no `Define` / `GetStatus` / `SetStatus` (those exist on Unreal `IAgent`; see diagram 6). `ScholaAgent.Define` is a concrete method, not part of `IAgent`.
+
+### Adding a custom sensor or actuator
+
+1. Create a `MonoBehaviour` that implements `ISensor` or `IActuator`, including the key, initialization, space, and observation/action members shown above.
+2. Add the component to a GameObject. Drag it into the agent's **Sensors** or **Actuators** list in the Inspector, or pass component references to `agent.SetSensors(new ISensor[] { mySensor })` / `agent.SetActuators(new IActuator[] { myActuator })`. Each setter replaces its list.
+3. Use distinct, stable keys and make each component's payload match the space it declares. `ScholaEnvironment.Initialize()` initializes the assigned components before stepping.
+
+Inspector storage remains `List<MonoBehaviour>` in the existing `m_Sensors` and `m_Actuators` fields, preserving saved component references. Public collections are live, read-only interface views. Null or destroyed components are skipped; incompatible Inspector assignments are reported. Setters validate all inputs before replacing the list and reject interface implementations that are not `MonoBehaviour` components.
 
 Sources: `Runtime/Sensors/`, `Runtime/Actuators/`, `Runtime/Agent/`, `Runtime/Points/`, `Runtime/Spaces/`.
 
@@ -272,7 +285,7 @@ classDiagram
 
 Behavior on `main`:
 
-- `Initialize()` inits sensors/actuators, snapshots local poses of the agent hierarchy plus configured actuator transforms, and returns `InteractionDefinition(agent.Define(), agent.DefineActionSpace())`.
+- `Initialize()` inits sensors/actuators through their interfaces, snapshots local poses of the agent hierarchy plus configured actuator components (including those outside the hierarchy), and returns `InteractionDefinition(agent.Define(), agent.DefineActionSpace())`. The environment gets transforms from Unity components; `IActuator` does not expose a transform.
 - `Step(action)` does `Act` → `ComputeReward` (or `0`) → `GetStatus` (or both flags false) → `Observe` → optional `SubmitState`. It does **not** auto-reset; the caller must `Reset()`.
 - `Reset()` calls `Initialize()` if not yet initialized, then restores the initialize snapshot, calls `OnEpisodeReset` on reward/status, observes, and returns `InitialAgentState` (obs + info only). No reward or done flags on reset.
 - `Seed` and `SetOptions` are no-ops. `AgentState.Info` is allocated empty and never populated.
@@ -294,17 +307,16 @@ sequenceDiagram
   actor Caller
   participant Env as ScholaEnvironment
   participant Agent as ScholaAgent
-  participant Actuator as TranslateActuator
+  participant Actuator as IActuator
   participant Reward as IReward placeholder
   participant Status as IEpisodeStatus placeholder
-  participant Sensor as PositionSensor
+  participant Sensor as ISensor
   participant Sink as ITrainingStateSink placeholder
 
   Caller ->> Env: Step(action DictPoint)
   Env ->> Agent: Act(action)
   Agent ->> Agent: require every ActionKey
-  Agent ->> Actuator: TakeAction(BoxPoint)
-  Actuator ->> Actuator: transform.position += delta
+  Agent ->> Actuator: TakeAction(Point for ActionKey)
 
   alt IReward bound
     Env ->> Reward: ComputeReward()
@@ -320,7 +332,7 @@ sequenceDiagram
 
   Env ->> Agent: Observe()
   Agent ->> Sensor: CollectObservations()
-  Sensor -->> Agent: BoxPoint x,y,z
+  Sensor -->> Agent: Point for ObservationKey
   Agent -->> Env: DictPoint
 
   opt ITrainingStateSink bound
@@ -601,12 +613,12 @@ Sources: `Proto/GymConnector.proto`, `Unity/com.amd.schola/Training/README.md`, 
 
 | Type | Story | Status | Notes |
 | --- | --- | --- | --- |
-| `ISensor` | US1 | implemented | `InitSensor`, `GetObservationSpace`, `CollectObservations` |
+| `ISensor` | US1 | implemented | Read-only `ObservationKey`, `InitSensor`, `GetObservationSpace`, `CollectObservations` |
 | `PositionSensor` | US1 | implemented | 3-float world `BoxPoint`, key `"position"` |
-| `IActuator` | US2 | implemented | `InitActuator`, `GetActionSpace`, `TakeAction` |
+| `IActuator` | US2 | implemented | Read-only `ActionKey`, `InitActuator`, `GetActionSpace`, `TakeAction` |
 | `TranslateActuator` | US2 | implemented | 3-float `BoxPoint` delta to `transform.position` |
 | `IAgent` | US1–US2 | implemented | Observe / Act only |
-| `ScholaAgent` | US1–US2 | implemented | Concrete sensor/actuator lists (public `IReadOnlyList`) |
+| `ScholaAgent` | US1–US2 | implemented | Public `IReadOnlyList<ISensor>` / `IReadOnlyList<IActuator>`; serialized component references |
 | `Point` / `BoxPoint` / `DictPoint` / `DiscretePoint` | US1–US2 | implemented | No MultiDiscrete, MultiBinary, Text |
 | `Space` / `BoxSpace` / `DictSpace` / `DiscreteSpace` | US1–US2 | implemented | No `Contains` / bound enforcement |
 | `IEnvironment` | US3 | implemented | Mirrors Unreal `ISingleAgentScholaEnvironment` |

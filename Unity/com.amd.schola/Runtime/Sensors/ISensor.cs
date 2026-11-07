@@ -8,6 +8,9 @@ namespace AMD.Schola
     /// </summary>
     public interface ISensor
     {
+        /// <summary>Stable dictionary key used when an agent aggregates this sensor.</summary>
+        string ObservationKey { get; }
+
         void InitSensor();
 
         Space GetObservationSpace();

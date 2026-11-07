@@ -211,9 +211,9 @@ namespace AMD.Schola
             // Actuators may be bound to parent or sibling objects, not only descendants.
             foreach (var actuator in m_Agent.Actuators)
             {
-                if (actuator != null)
+                if (actuator is Component component && component != null)
                 {
-                    CapturePose(actuator.transform, seen);
+                    CapturePose(component.transform, seen);
                 }
             }
         }

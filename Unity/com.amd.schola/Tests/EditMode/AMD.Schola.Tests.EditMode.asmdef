@@ -3,6 +3,7 @@
     "rootNamespace": "AMD.Schola.Tests",
     "references": [
         "AMD.Schola.Runtime",
+        "AMD.Schola.Tests.Runtime",
         "AMD.Schola.Inference",
         "Unity.InferenceEngine"
     ],

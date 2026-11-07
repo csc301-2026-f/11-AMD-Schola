@@ -8,6 +8,9 @@ namespace AMD.Schola
     /// </summary>
     public interface IActuator
     {
+        /// <summary>Stable dictionary key used when an agent dispatches actions.</summary>
+        string ActionKey { get; }
+
         void InitActuator();
 
         Space GetActionSpace();

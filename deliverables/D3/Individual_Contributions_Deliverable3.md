@@ -48,3 +48,12 @@
 > - **Docs.** Updated `Unity/com.amd.schola/Documentation~/training.md` to explain empty-action handling during next-step reset.
 > - **Status.** Work lives on `Auto_Reset_Episode` and is not yet merged to `main`. The fix is planned for merge after submission.
 > - **Presentation.** Presented and walked through the UML diagram in the deliverable presentation
+
+**Mohammad Mahi Ali Mukati**, Sensor/actuator interfaces (US1–US2) and AMD meeting documentation
+
+> - **Interface changes.** Changed `ScholaAgent` to use `ISensor` and `IActuator`, so developers can add custom components without changing the agent. Preserved existing Inspector assignments, added assignment validation, and updated environment resets to support custom actuators outside the agent's hierarchy.
+> - **NOTE** The interface changes are pushed to `fix/sensor-actuator-interface-dependencies` and have not yet merged into `main', as some further modification and a rebase is needed due to recent additions by the team. We decided not to merge yet, to not risk D3 submission breaking.
+> - **Tests.** Added 15 EditMode test cases covering creating and assigning custom components, action routing, invalid assignments, missing/duplicate keys, resets, and scene save/reload. All 91 of the package EditMode tests passed, along with formatting and metadata checks.
+> - **UML and documentation.** Updated the UML ScholaAgent diagram to connect directly to the interfaces and documented how to assign custom sensors and actuators.
+> - **AMD meeting.** Presented the existing Return to Base demo to Alex on November 3 and wrote the [meeting minutes](../team/minutes/26-11-03-minutes.md).
+> - **CI/CD merge.** Merged PR [#22](https://github.com/csc301-2026-f/11-AMD-Schola/pull/22), which added missing CI job timeouts.

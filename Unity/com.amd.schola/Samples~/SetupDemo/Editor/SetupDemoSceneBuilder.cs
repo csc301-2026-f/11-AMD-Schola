@@ -53,6 +53,10 @@ namespace AMD.Schola.Samples.Editor
             {
                 var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 cube.name = "Schola Cube";
+                cube.GetComponent<Renderer>().sharedMaterial = Material(
+                    "Agent",
+                    new Color(0.1f, 0.45f, 0.9f)
+                );
                 cube.transform.position = new Vector3(-3f, 0.5f, 0f);
                 var cubeSensor = cube.AddComponent<PositionSensor>();
                 cubeSensor.ObservationKey = SetupDemoController.AgentPositionKey;
@@ -63,6 +67,10 @@ namespace AMD.Schola.Samples.Editor
 
                 var target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 target.name = "Target";
+                target.GetComponent<Renderer>().sharedMaterial = Material(
+                    "Target",
+                    new Color(1f, 0.5f, 0.05f)
+                );
                 target.transform.position = new Vector3(3f, 0.5f, 0f);
                 target.transform.localScale = Vector3.one * 0.4f;
                 var targetSensor = target.AddComponent<PositionSensor>();
@@ -74,6 +82,12 @@ namespace AMD.Schola.Samples.Editor
 
                 var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 ground.name = "Ground";
+                ground.GetComponent<Renderer>().sharedMaterial = Material(
+                    "Ground",
+                    new Color(0.16f, 0.2f, 0.26f)
+                );
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight = Color.gray * 0.6f;
                 ground.transform.localScale = Vector3.one * 1.5f;
 
                 var cameraObject = new GameObject("Main Camera");
@@ -98,6 +112,27 @@ namespace AMD.Schola.Samples.Editor
             {
                 SceneManager.SetActiveScene(previous);
             }
+        }
+
+        static Material Material(string name, Color color)
+        {
+            var script = AssetDatabase.FindAssets("SetupDemoSceneBuilder t:MonoScript")[0];
+            var sample = System
+                .IO.Path.GetDirectoryName(
+                    System.IO.Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(script))
+                )
+                .Replace('\\', '/');
+            var folder = sample + "/Materials";
+            if (!AssetDatabase.IsValidFolder(folder))
+                AssetDatabase.CreateFolder(sample, "Materials");
+            var path = folder + "/" + name + ".mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(Shader.Find("Standard")) { color = color };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            return material;
         }
     }
 }

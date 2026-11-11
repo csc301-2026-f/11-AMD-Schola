@@ -331,3 +331,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for issue and pull request guidelines, co
 ## AI Usage
 
 Claude Opus 5.5  was used to co-develop the Unity Sentis Policy
+
+## Unity setup and adaptation (US6)
+
+Follow the [complete setup guide](Unity/com.amd.schola/Documentation~/setup.md) to install the package, open the supplied scenes, train a policy, export ONNX, run inference without Python, and adapt the sample to your project. Import both **Setup Demo** and **Training Demo** from Package Manager.

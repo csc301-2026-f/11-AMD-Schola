@@ -18,7 +18,7 @@ namespace AMD.Schola.Samples.Tests
         [SetUp]
         public void SetUp()
         {
-            m_Scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            m_Scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             m_Controller = SetupDemoSceneBuilder.Populate(m_Scene);
         }
 
@@ -120,7 +120,7 @@ namespace AMD.Schola.Samples.Tests
             {
                 Assert.That(EditorSceneManager.SaveScene(m_Scene, path), Is.True);
                 EditorSceneManager.CloseScene(m_Scene, true);
-                m_Scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+                m_Scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
                 SetupDemoController loaded = null;
                 foreach (var root in m_Scene.GetRootGameObjects())
                 {

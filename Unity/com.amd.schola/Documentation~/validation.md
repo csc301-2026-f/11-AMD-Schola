@@ -61,3 +61,15 @@ Rendered images of all three scenes were inspected. The initial white-on-white s
 The first test run exposed unsaved-scene assumptions in legacy Setup Demo tests and a frame-rate-dependent inference wait. Both were corrected and the full suite rerun successfully. The Python bridge/export suite passes **15 tests** with **4 live-host tests skipped** when no `SCHOLA_TEST_UNITY_PORT` host is configured. The real sample training run above independently exercises the actual connection and export path.
 
 The verified baseline is Built-In rendering, one agent, Transform movement, and CPU inference. URP/HDRP, Rigidbody simulation, GPU backends, players/IL2CPP, and arbitrary new tasks are not claimed as tested. The Windows computer-use helper was unavailable; rendered camera images and automated Play Mode checks were used instead of interactive UI automation.
+
+## Published Git installation
+
+Pushed the completed branch through **`1b4e1e2053f9986eef7b44fbe825eeff1fa59a99`** and changed the consumer project's dependency from disk to:
+
+```text
+https://github.com/csc301-2026-f/11-AMD-Schola.git?path=/Unity/com.amd.schola#1b4e1e2053f9986eef7b44fbe825eeff1fa59a99
+```
+
+Unity Package Manager resolved source **git** and that exact hash in `packages-lock.json`; Editor compilation and a batch verification method passed. The verifier checks the resolved package source and the presence of all three scene files plus the ONNX model inside the Git package cache. Log: `enc_temp_folder/us6-git-install.log`, success marker `SCHOLA_US6_GIT_INSTALL_VERIFIED`. This reused the already-tested consumer project and imported samples; it was not a second from-empty project run. The ONNX model has an explicit exception to the repository's general model ignore rule so it is included in Git installs.
+
+The latest fetched `main` remained `10fbe84` and is an ancestor of the completed US6 branch. The final documentation-only commit adds these results without changing the tested source/assets.

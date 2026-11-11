@@ -19,7 +19,7 @@ Alternatively, use **Install package from git URL**:
 https://github.com/csc301-2026-f/11-AMD-Schola.git?path=/Unity/com.amd.schola#US6-setup-integration
 ```
 
-This branch URL contains the completed sample only after its commit is pushed. For repeatable installations, replace the branch revision with a published commit SHA containing US6. The `?path=` must precede `#revision`; the repository root is not a UPM package.
+The completed sample is published on this branch. For repeatable installations, replace the branch revision with the tested commit `1b4e1e2053f9986eef7b44fbe825eeff1fa59a99`. The `?path=` must precede `#revision`; the repository root is not a UPM package.
 
 Select **AMD Schola 0.1.0**, expand **Samples**, and import **Setup Demo** and **Training Demo**. They appear under `Assets/Samples/AMD Schola/0.1.0/`. Wait for compilation. Imported samples are editable copies; back up customizations before reimporting.
 

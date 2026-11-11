@@ -1,0 +1,4 @@
+{
+    "name": "AMD.Schola.Samples.TrainingDemo",
+    "references": ["AMD.Schola.Runtime", "AMD.Schola.Training"]
+}

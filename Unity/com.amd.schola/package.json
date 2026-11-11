@@ -1,26 +1,31 @@
 {
-  "name": "com.amd.schola",
-  "version": "0.1.0",
-  "displayName": "AMD Schola",
-  "description": "Schola's Unity integration. Define agent observations and actions, and import the Setup Demo to learn package installation and scene wiring. Training and inference availability depends on the integration branch.",
-  "unity": "6000.3",
-  "keywords": [
-    "schola",
-    "reinforcement-learning",
-    "machine-learning",
-    "onnx",
-    "inference"
-  ],
-  "license": "MIT",
-  "dependencies": {
-    "com.unity.ai.inference": "2.6.1",
-    "com.unity.test-framework": "1.4.5"
-  },
-  "samples": [
-    {
-      "displayName": "Setup Demo",
-      "description": "Create a cube-to-target scene using Schola observations, Act and TranslateActuator with a deterministic controller. No Python or model required. See README.md in the imported sample.",
-      "path": "Samples~/SetupDemo"
-    }
-  ]
+    "name":  "com.amd.schola",
+    "version":  "0.1.0",
+    "displayName":  "AMD Schola",
+    "description":  "Reinforcement learning for Unity. Define agents, train them with Schola\u0027s Python tools (Gymnasium, Stable-Baselines3, RLlib), and run trained ONNX policies in your game.",
+    "unity":  "6000.3",
+    "keywords":  [
+                     "schola",
+                     "reinforcement-learning",
+                     "machine-learning",
+                     "onnx",
+                     "inference"
+                 ],
+    "license":  "MIT",
+    "dependencies":  {
+                         "com.unity.ai.inference":  "2.6.1",
+                         "com.unity.test-framework":  "1.4.5"
+                     },
+    "samples":  [
+                    {
+                        "displayName":  "Setup Demo",
+                        "description":  "Create a cube-to-target scene using Schola observations, Act and TranslateActuator with a deterministic controller. No Python or model required. See README.md in the imported sample.",
+                        "path":  "Samples~/SetupDemo"
+                    },
+                    {
+                        "displayName":  "Training Demo",
+                        "description":  "Train a cube to reach a target using Schola\u0027s Python PPO trainer, rewards, episode resets and the Unity training connection. See README.md in the imported sample.",
+                        "path":  "Samples~/TrainingDemo"
+                    }
+                ]
 }

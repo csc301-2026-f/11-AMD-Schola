@@ -49,7 +49,7 @@ env:
 jobs:
   mock:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -82,6 +82,7 @@ jobs:
 
   detect:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       enabled: ${{ steps.project.outputs.enabled }}
     steps:
@@ -101,7 +102,7 @@ jobs:
     needs: detect
     if: needs.detect.outputs.enabled == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -134,7 +135,7 @@ jobs:
   run:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Download player

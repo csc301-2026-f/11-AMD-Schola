@@ -10,7 +10,7 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,4 +36,8 @@ jobs:
           --ignore=Test/core/test_ubt.py
           --ignore=Test/sb3/test_async_env.py
           --ignore=Test/sb3/test_env.py
+      - name: Test Unity training adapter
+        run: >
+          python -m pytest Test/unity --confcutdir=Test/unity
+          --import-mode=importlib -n 0 --timeout=60
 

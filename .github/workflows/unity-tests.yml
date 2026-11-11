@@ -25,7 +25,7 @@ on:
 jobs:
   unity-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 8
     env:
       # D1/planning.md does not pin an editor version. Use the exact version in
       # deliverables/D1/Unity-UI-Mockup/HOW-TO-VIEW-MOCKUP.md.

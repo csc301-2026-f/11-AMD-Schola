@@ -247,8 +247,8 @@ classDiagram
 ### 2.3 Behavior and limits
 
 - `ISensor.ObservationKey` and `IActuator.ActionKey` are read-only properties on the interfaces. The existing concrete components retain their writable key properties.
-- `Define()` builds a `DictSpace` keyed by each sensor's `ObservationKey`; `Observe()` builds the matching `DictPoint`. Duplicate observation keys keep the last value.
-- `DefineActionSpace()` builds a `DictSpace` keyed by each actuator's `ActionKey`. Duplicate keys warn and keep the last space; `Act()` still dispatches to every configured actuator with that key.
+- `Define()` builds a `DictSpace` keyed by each sensor's `ObservationKey`; `Observe()` builds the matching `DictPoint`. Blank or duplicate observation keys are rejected before calling sensors.
+- `DefineActionSpace()` builds a `DictSpace` keyed by each actuator's `ActionKey`. Blank or duplicate action keys are rejected before calling actuators.
 - `Act(Point)` requires a `DictPoint` and checks every actuator's key has a non-null action before any `TakeAction` call. Each actuator validates its own payload.
 - `PositionSensor` returns a 3-float world-position `BoxPoint` (default key `"position"`). `TranslateActuator` accepts a 3-float `BoxPoint` (default key `"translate"`) and adds it to `transform.position`, checking type, arity, finite values, and configured displacement bounds.
 - `MultiBinarySpace` / `MultiBinaryPoint` mirror Gymnasium `MultiBinary(n)` (`Shape`, `List<bool> Values`). They nest under Dict and round-trip on the training wire (`shape: [n]`, `boolValues`). There is no dedicated MultiBinary sensor or actuator; default agents stay Box-only. `SentisPolicy` does not support MultiBinary.
@@ -260,9 +260,13 @@ classDiagram
 
 1. Create a `MonoBehaviour` that implements `ISensor` or `IActuator`, including the key, initialization, space, and observation/action members shown above.
 2. Add the component to a GameObject. Drag it into the agent's **Sensors** or **Actuators** list in the Inspector, or pass component references to `agent.SetSensors(new ISensor[] { mySensor })` / `agent.SetActuators(new IActuator[] { myActuator })`. Each setter replaces its list.
-3. Use distinct, stable keys and make each component's payload match the space it declares. `ScholaEnvironment.Initialize()` initializes the assigned components before stepping.
+3. Use nonblank, stable keys that are unique within each list, and make each component's payload match the space it declares. Keys use ordinal, case-sensitive comparison; a sensor and actuator may share a key because their dictionaries are separate. `ScholaEnvironment.Initialize()` initializes the assigned components before stepping.
 
-Inspector storage remains `List<MonoBehaviour>` in the existing `m_Sensors` and `m_Actuators` fields to retain saved component references. Public collections are live, read-only interface views. Null or destroyed components are skipped; incompatible Inspector assignments are reported. Setters validate all inputs before replacing the list and reject interface implementations that are not `MonoBehaviour` components.
+Inspector storage remains `List<MonoBehaviour>` in the existing `m_Sensors` and `m_Actuators` fields to retain saved component references. Public collections are live, read-only interface views. Null or destroyed components are allowed and skipped. The agent Inspector displays the first configuration error with the component, list index, and offending key/type; it also explains the empty-slot policy. Inspector assignments remain ordinary serialized component references, preserving Undo, prefab overrides, and multi-object editing.
+
+`SetSensors` and `SetActuators` validate the entire replacement before changing bindings. Wrong implementation types, non-component implementations, blank keys, and duplicate keys fail clearly; invalid setter inputs throw `ArgumentException` and leave existing bindings intact. `TryValidateConfiguration(out error)` checks both lists without calling initialization, space, observation, or action methods. `Define` / `Observe` revalidate sensors and `DefineActionSpace` / `Act` revalidate actuators, throwing `InvalidOperationException` for invalid configuration introduced through Inspector edits or later key changes.
+
+**Compatibility change:** duplicate keys no longer silently overwrite observations or warn and broadcast actions. Rename colliding keys before using the agent. Empty/destroyed references still retain their slots and are skipped.
 
 Sources: `Runtime/Sensors/`, `Runtime/Actuators/`, `Runtime/Agent/`, `Runtime/Points/`, `Runtime/Spaces/`, `Training/TrainingWire.cs`.
 

@@ -17,7 +17,9 @@ namespace AMD.Schola.Tests.Agent
         }
 
         public int Value = 2;
+        public int ObservationCount { get; private set; }
         public int InitializationCount { get; private set; }
+        public int SpaceRequestCount { get; private set; }
 
         public void InitSensor()
         {
@@ -26,11 +28,13 @@ namespace AMD.Schola.Tests.Agent
 
         public Space GetObservationSpace()
         {
+            SpaceRequestCount++;
             return new DiscreteSpace(8);
         }
 
         public Point CollectObservations()
         {
+            ObservationCount++;
             return new DiscretePoint { Value = Value };
         }
     }

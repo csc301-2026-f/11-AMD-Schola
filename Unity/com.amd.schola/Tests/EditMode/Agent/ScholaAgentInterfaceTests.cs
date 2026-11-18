@@ -2,11 +2,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace AMD.Schola.Tests.Agent
@@ -174,6 +172,7 @@ namespace AMD.Schola.Tests.Agent
             Assert.That(m_Agent.Sensors[1], Is.Null);
             Assert.That(m_Agent.Actuators[0], Is.Null);
             Assert.That(m_Agent.Actuators[1], Is.Null);
+            Assert.That(m_Agent.TryValidateConfiguration(out var error), Is.True, error);
 
             var environment = m_Root.AddComponent<ScholaEnvironment>();
             environment.SetAgent(m_Agent);
@@ -212,6 +211,19 @@ namespace AMD.Schola.Tests.Agent
             });
             Assert.That(error.Message, Does.Contain(sensor ? "ISensor" : "IActuator"));
             Assert.That(error.Message, Does.Contain("0"));
+            Assert.That(m_Agent.TryValidateConfiguration(out var diagnostic), Is.False);
+            Assert.That(diagnostic, Does.Contain(sensor ? "ISensor" : "IActuator"));
+            if (sensor)
+            {
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Define());
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Observe());
+            }
+            else
+            {
+                Assert.Throws<InvalidOperationException>(() => m_Agent.DefineActionSpace());
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Act(RotationAction()));
+            }
+            AssertNoCallbacks();
         }
 
         [Test]
@@ -231,34 +243,177 @@ namespace AMD.Schola.Tests.Agent
         }
 
         [Test]
-        public void DuplicateSensorKey_KeepsLastImplementationForSpaceAndObservation()
+        public void DuplicateSensorKey_RejectsReplacementAndKeepsExistingBindings()
         {
+            BindCustomComponents();
             var position = m_Root.AddComponent<PositionSensor>();
-            m_Sensor.ObservationKey = position.ObservationKey;
-            m_Agent.SetSensors(new ISensor[] { position, m_Sensor });
-            var spaces = (DictSpace)m_Agent.Define();
-            var observations = (DictPoint)m_Agent.Observe();
-            Assert.That(spaces.Spaces, Has.Count.EqualTo(1));
-            Assert.That(spaces.Spaces["position"], Is.TypeOf<DiscreteSpace>());
-            Assert.That(observations.Points["position"], Is.TypeOf<DiscretePoint>());
+            position.ObservationKey = m_Sensor.ObservationKey;
+            var error = Assert.Throws<ArgumentException>(() =>
+                m_Agent.SetSensors(new ISensor[] { position, m_Sensor })
+            );
+            Assert.That(error.Message, Does.Contain("duplicate ObservationKey"));
+            Assert.That(error.Message, Does.Contain("m_Sensors[0]"));
+            Assert.That(error.Message, Does.Contain("m_Sensors[1]"));
+            Assert.That(m_Agent.Sensors, Has.Count.EqualTo(1));
+            Assert.That(m_Agent.Sensors[0], Is.SameAs(m_Sensor));
         }
 
         [Test]
-        public void DuplicateActuatorKey_WarnsKeepsLastSpaceAndDispatchesToBoth()
+        public void DuplicateActuatorKey_RejectsReplacementAndKeepsExistingBindings()
         {
-            var secondObject = new GameObject("SecondCustomActuator");
-            secondObject.transform.SetParent(m_Root.transform);
-            var second = secondObject.AddComponent<InterfaceTestActuator>();
-            second.ChoiceCount = 7;
-            m_Agent.SetActuators(new IActuator[] { m_Actuator, second });
-            LogAssert.Expect(LogType.Warning, new Regex("Duplicate action key 'rotate'"));
-            var space = (DictSpace)m_Agent.DefineActionSpace();
-            Assert.That(space.Spaces, Has.Count.EqualTo(1));
-            Assert.That(((DiscreteSpace)space.Spaces["rotate"]).High, Is.EqualTo(7));
-            var action = RotationAction();
-            m_Agent.Act(action);
-            Assert.That(m_Actuator.LastAction, Is.SameAs(action.Points["rotate"]));
-            Assert.That(second.LastAction, Is.SameAs(action.Points["rotate"]));
+            BindCustomComponents();
+            var second = m_Root.AddComponent<InterfaceTestActuator>();
+            var error = Assert.Throws<ArgumentException>(() =>
+                m_Agent.SetActuators(new IActuator[] { second, m_Actuator })
+            );
+            Assert.That(error.Message, Does.Contain("duplicate ActionKey"));
+            Assert.That(error.Message, Does.Contain("m_Actuators[0]"));
+            Assert.That(error.Message, Does.Contain("m_Actuators[1]"));
+            Assert.That(m_Agent.Actuators, Has.Count.EqualTo(1));
+            Assert.That(m_Agent.Actuators[0], Is.SameAs(m_Actuator));
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(" \t\n")]
+        public void BlankKeys_RejectReplacementWithoutChangingEitherCollection(string key)
+        {
+            BindCustomComponents();
+            var sensor = m_Root.AddComponent<InterfaceTestSensor>();
+            var actuator = m_Root.AddComponent<InterfaceTestActuator>();
+            sensor.ObservationKey = key;
+            actuator.ActionKey = key;
+            Assert.Throws<ArgumentException>(() => m_Agent.SetSensors(new ISensor[] { sensor }));
+            Assert.Throws<ArgumentException>(() =>
+                m_Agent.SetActuators(new IActuator[] { actuator })
+            );
+            Assert.That(m_Agent.Sensors[0], Is.SameAs(m_Sensor));
+            Assert.That(m_Agent.Actuators[0], Is.SameAs(m_Actuator));
+            Assert.That(m_Agent.TryValidateConfiguration(out _), Is.True);
+        }
+
+        [TestCase(true, null)]
+        [TestCase(true, "")]
+        [TestCase(true, " \t\n")]
+        [TestCase(false, null)]
+        [TestCase(false, "")]
+        [TestCase(false, " \t\n")]
+        public void KeyChangedAfterBinding_IsRejectedByInspectorValidationAndRuntime(
+            bool sensor,
+            string key
+        )
+        {
+            BindCustomComponents();
+            if (sensor)
+                m_Sensor.ObservationKey = key;
+            else
+                m_Actuator.ActionKey = key;
+            Assert.That(m_Agent.TryValidateConfiguration(out var error), Is.False);
+            Assert.That(error, Does.Contain(sensor ? "ObservationKey" : "ActionKey"));
+            Assert.That(error, Does.Contain("InterfaceCompositionTests"));
+            Assert.That(error, Does.Contain("[0]"));
+            if (sensor)
+            {
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Define());
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Observe());
+            }
+            else
+            {
+                Assert.Throws<InvalidOperationException>(() => m_Agent.DefineActionSpace());
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Act(RotationAction()));
+            }
+            AssertNoCallbacks();
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void InspectorDuplicateKeys_AreRejectedBeforeComponentCallbacks(bool sensor)
+        {
+            BindCustomComponents();
+            if (sensor)
+            {
+                var second = m_Root.AddComponent<InterfaceTestSensor>();
+                SetSerializedReference("m_Sensors", m_Sensor, second);
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Define());
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Observe());
+                Assert.That(second.ObservationCount, Is.Zero);
+                Assert.That(second.SpaceRequestCount, Is.Zero);
+            }
+            else
+            {
+                var second = m_Root.AddComponent<InterfaceTestActuator>();
+                SetSerializedReference("m_Actuators", m_Actuator, second);
+                Assert.Throws<InvalidOperationException>(() => m_Agent.DefineActionSpace());
+                Assert.Throws<InvalidOperationException>(() => m_Agent.Act(RotationAction()));
+                Assert.That(second.ActionCount, Is.Zero);
+                Assert.That(second.SpaceRequestCount, Is.Zero);
+            }
+            Assert.That(m_Agent.TryValidateConfiguration(out var error), Is.False);
+            Assert.That(error, Does.Contain("duplicate"));
+            AssertNoCallbacks();
+        }
+
+        [Test]
+        public void KeyUniqueness_IsOrdinalAndIndependentAcrossCollections()
+        {
+            var second = m_Root.AddComponent<InterfaceTestSensor>();
+            second.ObservationKey = "Category";
+            m_Actuator.ActionKey = m_Sensor.ObservationKey;
+            m_Agent.SetSensors(new ISensor[] { m_Sensor, second });
+            m_Agent.SetActuators(new IActuator[] { m_Actuator });
+            Assert.That(m_Agent.TryValidateConfiguration(out var error), Is.True, error);
+            Assert.That(
+                ((DictSpace)m_Agent.Define()).Spaces.Keys,
+                Is.EquivalentTo(new[] { "category", "Category" })
+            );
+            Assert.That(
+                ((DictSpace)m_Agent.DefineActionSpace()).Spaces.Keys,
+                Is.EquivalentTo(new[] { "category" })
+            );
+        }
+
+        [Test]
+        public void RepeatedComponentReference_IsRejectedAsDuplicateKey()
+        {
+            BindCustomComponents();
+            Assert.Throws<ArgumentException>(() =>
+                m_Agent.SetSensors(new ISensor[] { m_Sensor, m_Sensor })
+            );
+            Assert.Throws<ArgumentException>(() =>
+                m_Agent.SetActuators(new IActuator[] { m_Actuator, m_Actuator })
+            );
+            Assert.That(m_Agent.Sensors, Has.Count.EqualTo(1));
+            Assert.That(m_Agent.Actuators, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void InspectorUsesAgentEditor_AndValidationDoesNotInvokeCallbacks()
+        {
+            BindCustomComponents();
+            var editor = UnityEditor.Editor.CreateEditor(m_Agent);
+            try
+            {
+                Assert.That(
+                    editor.GetType().FullName,
+                    Is.EqualTo("AMD.Schola.Editor.ScholaAgentEditor")
+                );
+                Assert.That(m_Agent.TryValidateConfiguration(out var error), Is.True, error);
+                AssertNoCallbacks();
+            }
+            finally
+            {
+                Object.DestroyImmediate(editor);
+            }
+        }
+
+        void AssertNoCallbacks()
+        {
+            Assert.That(m_Sensor.InitializationCount, Is.Zero);
+            Assert.That(m_Actuator.InitializationCount, Is.Zero);
+            Assert.That(m_Sensor.SpaceRequestCount, Is.Zero);
+            Assert.That(m_Actuator.SpaceRequestCount, Is.Zero);
+            Assert.That(m_Sensor.ObservationCount, Is.Zero);
+            Assert.That(m_Actuator.ActionCount, Is.Zero);
         }
 
         [TestCase(true)]
@@ -305,14 +460,15 @@ namespace AMD.Schola.Tests.Agent
             m_Agent.SetActuators(new IActuator[] { m_Actuator });
         }
 
-        void SetSerializedReference(string field, MonoBehaviour component)
+        void SetSerializedReference(string field, params MonoBehaviour[] components)
         {
             using (var serialized = new SerializedObject(m_Agent))
             {
                 var property = serialized.FindProperty(field);
                 Assert.That(property, Is.Not.Null);
-                property.arraySize = 1;
-                property.GetArrayElementAtIndex(0).objectReferenceValue = component;
+                property.arraySize = components.Length;
+                for (var i = 0; i < components.Length; i++)
+                    property.GetArrayElementAtIndex(i).objectReferenceValue = components[i];
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
         }

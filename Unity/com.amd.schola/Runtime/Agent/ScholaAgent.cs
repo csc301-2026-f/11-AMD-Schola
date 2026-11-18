@@ -11,6 +11,8 @@ namespace AMD.Schola
     /// <summary>
     /// Agent that defines observation/action spaces from sensors and actuators,
     /// aggregates Observe into a DictPoint, and fans out Act to actuators.
+    /// Assigned ISensor/IActuator implementations must be MonoBehaviour components.
+    /// Keys are nonblank and unique within each collection (ordinal, case-sensitive).
     /// </summary>
     public sealed class ScholaAgent : MonoBehaviour, IAgent
     {
@@ -39,13 +41,97 @@ namespace AMD.Schola
         /// <summary>Assigns sensor components after validating the entire collection.</summary>
         public void SetSensors(IEnumerable<ISensor> sensors)
         {
-            m_Sensors = ToComponents(sensors, nameof(sensors));
+            var components = ToComponents(sensors, nameof(sensors));
+            var error = FindBindingError<ISensor>(
+                components,
+                sensor => sensor.ObservationKey,
+                nameof(m_Sensors),
+                nameof(ISensor.ObservationKey)
+            );
+            if (error != null)
+                throw new ArgumentException(error, nameof(sensors));
+            m_Sensors = components;
         }
 
         /// <summary>Assigns actuator components after validating the entire collection.</summary>
         public void SetActuators(IEnumerable<IActuator> actuators)
         {
-            m_Actuators = ToComponents(actuators, nameof(actuators));
+            var components = ToComponents(actuators, nameof(actuators));
+            var error = FindBindingError<IActuator>(
+                components,
+                actuator => actuator.ActionKey,
+                nameof(m_Actuators),
+                nameof(IActuator.ActionKey)
+            );
+            if (error != null)
+                throw new ArgumentException(error, nameof(actuators));
+            m_Actuators = components;
+        }
+
+        /// <summary>
+        /// Checks component types and keys without invoking initialization, observation, or action callbacks.
+        /// Empty/destroyed references are allowed and skipped. Reports the first configuration error.
+        /// </summary>
+        public bool TryValidateConfiguration(out string error)
+        {
+            error = SensorBindingError() ?? ActuatorBindingError();
+            return error == null;
+        }
+
+        string SensorBindingError() =>
+            FindBindingError<ISensor>(
+                m_Sensors,
+                sensor => sensor.ObservationKey,
+                nameof(m_Sensors),
+                nameof(ISensor.ObservationKey)
+            );
+
+        string ActuatorBindingError() =>
+            FindBindingError<IActuator>(
+                m_Actuators,
+                actuator => actuator.ActionKey,
+                nameof(m_Actuators),
+                nameof(IActuator.ActionKey)
+            );
+
+        string FindBindingError<T>(
+            IReadOnlyList<MonoBehaviour> components,
+            Func<T, string> keyOf,
+            string field,
+            string keyName
+        )
+            where T : class
+        {
+            var keys = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (var i = 0; i < components.Count; i++)
+            {
+                var component = components[i];
+                // Test Unity's destroyed-object null before converting to an interface.
+                if (component == null)
+                    continue;
+
+                var location =
+                    $"{nameof(ScholaAgent)} '{name}'.{field}[{i}] ('{component.name}', {component.GetType().Name})";
+                if (!(component is T binding))
+                    return $"{location} must implement {typeof(T).Name}.";
+
+                var key = keyOf(binding);
+                if (string.IsNullOrWhiteSpace(key))
+                    return $"{location} has a null, empty, or whitespace-only {keyName}; assign a nonblank key.";
+
+                if (keys.TryGetValue(key, out var previous))
+                    return $"{location} has duplicate {keyName} '{key}', already used by {field}[{previous}] ('{components[previous].name}', {components[previous].GetType().Name}); keys must be unique within this collection.";
+
+                keys.Add(key, i);
+            }
+
+            return null;
+        }
+
+        static void RequireValidBindings(string error)
+        {
+            if (error != null)
+                throw new InvalidOperationException(error);
         }
 
         static List<MonoBehaviour> ToComponents<T>(IEnumerable<T> values, string parameter)
@@ -132,6 +218,7 @@ namespace AMD.Schola
         /// </summary>
         public Space Define()
         {
+            RequireValidBindings(SensorBindingError());
             var dictSpace = new DictSpace();
             foreach (var sensor in Sensors)
             {
@@ -148,24 +235,17 @@ namespace AMD.Schola
 
         /// <summary>
         /// Builds the published action space from attached actuators (DictSpace of actuator spaces).
-        /// Duplicate <see cref="IActuator.ActionKey"/> values warn and last-write-wins.
+        /// Invalid component bindings, blank keys, and duplicate keys are rejected.
         /// </summary>
         public Space DefineActionSpace()
         {
+            RequireValidBindings(ActuatorBindingError());
             var dictSpace = new DictSpace();
             foreach (var actuator in Actuators)
             {
                 if (actuator == null)
                 {
                     continue;
-                }
-
-                if (dictSpace.Spaces.ContainsKey(actuator.ActionKey))
-                {
-                    Debug.LogWarning(
-                        $"Duplicate action key '{actuator.ActionKey}' on {nameof(ScholaAgent)} '{name}'; later actuator overwrites the earlier action space entry.",
-                        this
-                    );
                 }
 
                 dictSpace.Spaces[actuator.ActionKey] = actuator.GetActionSpace();
@@ -179,6 +259,7 @@ namespace AMD.Schola
         /// </summary>
         public Point Observe()
         {
+            RequireValidBindings(SensorBindingError());
             var dictPoint = new DictPoint();
             foreach (var sensor in Sensors)
             {
@@ -211,6 +292,8 @@ namespace AMD.Schola
                     nameof(action)
                 );
             }
+
+            RequireValidBindings(ActuatorBindingError());
 
             foreach (var actuator in Actuators)
             {

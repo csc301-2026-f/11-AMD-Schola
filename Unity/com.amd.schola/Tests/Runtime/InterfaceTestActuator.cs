@@ -17,6 +17,7 @@ namespace AMD.Schola.Tests.Agent
         }
 
         public int InitializationCount { get; private set; }
+        public int SpaceRequestCount { get; private set; }
         public int ActionCount { get; private set; }
         public Point LastAction { get; private set; }
         public int ChoiceCount = 4;
@@ -28,6 +29,7 @@ namespace AMD.Schola.Tests.Agent
 
         public Space GetActionSpace()
         {
+            SpaceRequestCount++;
             return new DiscreteSpace(ChoiceCount);
         }
 

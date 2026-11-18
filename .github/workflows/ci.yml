@@ -27,6 +27,7 @@ permissions:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
       pull-requests: read
@@ -99,6 +100,7 @@ jobs:
     if: always()
     needs: [changes, checks, unity-tests, python, codegen-check, smoke-test]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Fail if any required job failed or was cancelled
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

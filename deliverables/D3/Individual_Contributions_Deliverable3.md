@@ -1,18 +1,59 @@
-# YOUR PRODUCT/TEAM NAME - Individual Contributions (D3)
+# Schola for Unity (Team 11, Oscorp) - Individual Contributions (D3)
 
 > For each team member: name, role, and specific contributions. Be precise about what you did, not how much you wrote.
 
-**[Name]**, [Role]
-> [Specific contributions: features built, PRs reviewed, infrastructure set up, etc.]
+**Raahim Chaghtai**, Inference stepper (US5) and CI/CD
 
-**[Name]**, [Role]
-> [Specific contributions]
+> - **CI/CD.** Added `timeout-minutes` to every GitHub Actions job that had none (`checks`, `changes`, `ci-ok`, `detect`) in PR [#22](https://github.com/csc301-2026-f/11-AMD-Schola/pull/22). I then tightened the limits to fit real run times, so the Unity tests now stop after 8 minutes (down from 30), the Python tests, checks and mock smoke test after 5, and the Unity smoke-test build and run jobs after 20 and 10 (down from 45 and 20).
+> - **Documentation.** Rewrote `README.md` for D3 (what's new, train-and-run guide, configuration table, deployment justification, non-functional requirements and D2 feedback table) and wrote `deliverables/D3/product-evolution.md`.
+> - **Reviews.** Reviewed and approved PR [#20](https://github.com/csc301-2026-f/11-AMD-Schola/pull/20), which restores the US4 training connection, after checking that its code was identical to the reverted PR #17 and that CI was green, and then merged it.
+> - **Presentation.** Presented the training-connection slide in the deliverable presentation.
 
-**[Name]**, [Role]
-> [Specific contributions]
+**Fahad Moinuddin**, Architecture UML (US1–US4)
+> - **Architecture.** Authored `Unity/com.amd.schola/Documentation~/architecture/us1-us4-uml.md`, a Mermaid UML architecture doc covering system context, agent composition (US1–US2), the episode environment (US3), dual-loop sequences for training vs inference (US3 vs US5), protocol nesting vs Unity cardinality (US3–US4), the US4 `GymService` target and Unreal delta (including reverted/spike paths), and a type inventory that marks each type as implemented, placeholder, adjacent, Unreal, or not on `main`.
+> - **Planning.** Created 5 tasks on the team Trello from the partner team meeting with AMD and assigned them to teammates.
 
-**[Name]**, [Role]
-> [Specific contributions]
+**Anwar Khan**, Running trained policies in Unity (US5)
 
-**[Name]**, [Role]
-> [Specific contributions]
+> - **PolicyRunner (PR [#21](https://github.com/csc301-2026-f/11-AMD-Schola/pull/21)).** Added a component that runs a trained ONNX model on agents without Python. You assign the agents and the model and press Play. If the model is missing or doesn't fit the agent, it logs a clear error.
+> - **Action clamping.** Exported models output values around ±2 while the actuator allows ±0.1, so `SentisPolicy` now clamps actions to their bounds, like Stable-Baselines3 does in training.
+> - **ONNX export.** Added `--export-onnx` and `--onnx-path` to `schola unity train`, and made sure the exported model uses the same input and output names as the agent's sensors and actuators so Unity can load it.
+> - **Tests.** 11 Unity tests (clamping and `PolicyRunner`, including a trained model reaching its target) and 2 Python tests for the export.
+> - **Demo.** Recorded the [D3 walkthrough video](https://www.youtube.com/watch?v=TPu1wXgE_mE) and made the D3 slides.
+>
+
+**Talha Asif**, Unity-to-Python training integration (US4)
+
+> - **Training restoration (PR [#20](https://github.com/csc301-2026-f/11-AMD-Schola/pull/20)).** Restored the US4 implementation after PR #17 was reverted, bringing the Unity training server, Python gRPC adapter, training commands, Training Demo and associated tests back into `main`.
+> - **Documentation.** Adapted `README.md` to the current branch, added the Training Demo setup and `schola unity train` instructions, and updated the US3/US4 status table to reflect the restored training connection.
+> - **Training scope.** Documented the current support for one agent/environment per endpoint and synchronous Transform-based stepping, with multi-agent training, physics stepping and player/IL2CPP validation remaining future work.
+
+
+**Yahyaa Yasin**, Training communication lead; multi-agent environment, Unity README, and PR merges
+
+> - **Multi-agent contract (`feature/multi-agent`).** Added `IMultiAgentEnvironment`, mirroring Unreal `IMultiAgentScholaEnvironment` with C# return values. `Initialize`, `Reset`, and `Step` use `map<string, …>` keyed by agent id. `AgentState` still has no agent-id field; identity is the dictionary key.
+> - **Runtime.** Implemented `ScholaMultiAgentEnvironment` for multiple `ScholaAgent`s with per-agent reward and episode status, pose snapshots, and action-map validation before any `Act`. Added `SingleAgentEnvironmentAdapter` so an existing `IEnvironment` is presented under the key `SingleAgent`, matching Unreal’s single-agent adapter. Extended `ITrainingStateSink` with `SubmitStates` / `SubmitInitialStates`.
+> - **Tests.** Added EditMode coverage in `ScholaMultiAgentEnvironmentTests` and `SingleAgentEnvironmentAdapterTests` for two-agent step/reset, independent rewards and terminated/truncated flags, rejection of missing/unknown/null actions without moving agents, duplicate and empty ids, and the `SingleAgent` adapter round-trip.
+> - **Architecture docs.** Updated `Unity/com.amd.schola/Documentation~/architecture/us1-us4-uml.md` so the multi-agent gap is marked implemented in the protocol-cardinality section and type inventory. Multi-agent work is on `feature/multi-agent` and is not yet merged to `main`; `IEnvironment`, `TrainingSession`, and the training wire stay single-agent.
+> - **Unity README.** Updated `README.md` after D2 so the fork documents the Unity package path, Unity **6000.3** install-from-disk steps, EditMode `testables` setup, and a status table of what is / is not on `main` (agents, episodes, ONNX inference vs US4 training and US6 sample).
+> - **US6 branch.** Kept `US6-setup-integration` synced with `main` after D2. Setup Demo sample, `setup.md`, and `validation.md` remain on that branch and are not on `main` yet.
+> - **Reviews / merges.** Merged PR [#15](https://github.com/csc301-2026-f/11-AMD-Schola/pull/15) (US3 episode control). Merged PR [#17](https://github.com/csc301-2026-f/11-AMD-Schola/pull/17) (US4 training), then opened and merged the revert PR [#18](https://github.com/csc301-2026-f/11-AMD-Schola/pull/18) when that landing needed to come out of `main`. Merged PR [#23](https://github.com/csc301-2026-f/11-AMD-Schola/pull/23) (D3 README and product-evolution report).
+> - **Partner process.** Attended the 3 Nov 2026 AMD check-in (architecture/UML review, training and inference progress, demo feedback); minutes in `deliverables/team/minutes/26-11-03-minutes.md`.
+
+**Muzzammil Siddiqui**, Auto-reset compatibility (`Auto_Reset_Episode`)
+
+> - **Investigation.** Compared the UML, Unity code and Unreal implementation for the “Auto Reset Episode” action item. Confirmed that `TrainingSession` already implements same-step and next-step automatic resets, while `ScholaEnvironment` exposes separate `Step` and `Reset` operations.
+> - **Bug fix.** Fixed the Python bridge rejecting empty action maps during next-step reset. Empty requests now reach `TrainingSession`, which resets completed episodes while rejecting missing actions during active episodes. Kept the existing reset logic unchanged.
+> - **Tests.** Added bridge and Unity session regression coverage for empty actions, repeated resets, termination and truncation. Extended the live Unity integration test. Verified 15 Python bridge tests and nine checks against production C# session code; full Unity Editor tests remain unverified.
+> - **Docs.** Updated `Unity/com.amd.schola/Documentation~/training.md` to explain empty-action handling during next-step reset.
+> - **Status.** Work lives on `Auto_Reset_Episode` and is not yet merged to `main`. The fix is planned for merge after submission.
+> - **Presentation.** Presented and walked through the UML diagram in the deliverable presentation
+
+**Mohammad Mahi Ali Mukati**, Sensor/actuator interfaces (US1–US2) and AMD meeting documentation
+
+> - **Interface changes.** Changed `ScholaAgent` to use `ISensor` and `IActuator`, so developers can add custom components without changing the agent. Preserved existing Inspector assignments, added assignment validation, and updated environment resets to support custom actuators outside the agent's hierarchy.
+> - **NOTE** The interface changes are pushed to `fix/sensor-actuator-interface-dependencies` and have not yet merged into `main', as some further modification and a rebase is needed due to recent additions by the team. We decided not to merge yet, to not risk D3 submission breaking.
+> - **Tests.** Added 15 EditMode test cases covering creating and assigning custom components, action routing, invalid assignments, missing/duplicate keys, resets, and scene save/reload. All 91 of the package EditMode tests passed, along with formatting and metadata checks.
+> - **UML and documentation.** Updated the UML ScholaAgent diagram to connect directly to the interfaces and documented how to assign custom sensors and actuators.
+> - **AMD meeting.** Presented the existing Return to Base demo to Alex on November 3 and wrote the [meeting minutes](../team/minutes/26-11-03-minutes.md).
+> - **CI/CD merge.** Merged PR [#22](https://github.com/csc301-2026-f/11-AMD-Schola/pull/22), which added missing CI job timeouts.

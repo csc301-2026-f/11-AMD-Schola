@@ -1,0 +1,13 @@
+{
+    "name": "AMD.Schola.Tests.Runtime",
+    "rootNamespace": "AMD.Schola.Tests",
+    "references": [
+        "AMD.Schola.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "autoReferenced": false
+}

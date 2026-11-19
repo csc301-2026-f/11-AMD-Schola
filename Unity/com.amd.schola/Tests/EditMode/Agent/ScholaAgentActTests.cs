@@ -1,11 +1,9 @@
 // Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 
 using System;
-using System.Text.RegularExpressions;
 using AMD.Schola;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace AMD.Schola.Tests.Agent
 {
@@ -243,7 +241,7 @@ namespace AMD.Schola.Tests.Agent
         }
 
         [Test]
-        public void DefineActionSpace_DuplicateActionKey_WarnsAndKeepsLast()
+        public void DefineActionSpace_KeyChangedToDuplicate_RejectsConfiguration()
         {
             var agentGo = new GameObject("ScholaAgent_DuplicateActionKey");
             var actuatorAGo = new GameObject("ActuatorA");
@@ -256,25 +254,18 @@ namespace AMD.Schola.Tests.Agent
                 var actuatorA = actuatorAGo.AddComponent<TranslateActuator>();
                 actuatorA.ActionKey = TranslateKey;
                 var actuatorB = actuatorBGo.AddComponent<TranslateActuator>();
-                actuatorB.ActionKey = TranslateKey;
+                actuatorB.ActionKey = "other";
 
                 var agent = agentGo.AddComponent<ScholaAgent>();
                 agent.SetActuators(new[] { actuatorA, actuatorB });
                 actuatorA.InitActuator();
                 actuatorB.InitActuator();
 
-                LogAssert.Expect(
-                    LogType.Warning,
-                    new Regex($"Duplicate action key '{TranslateKey}'")
+                actuatorB.ActionKey = TranslateKey;
+                var error = Assert.Throws<InvalidOperationException>(() =>
+                    agent.DefineActionSpace()
                 );
-
-                var defined = agent.DefineActionSpace() as DictSpace;
-                Assert.That(defined, Is.Not.Null, "DefineActionSpace must return a DictSpace");
-                Assert.That(
-                    defined.Spaces.Keys,
-                    Is.EquivalentTo(new[] { TranslateKey }),
-                    "Duplicate ActionKeys still publish a single last-write-wins space entry"
-                );
+                Assert.That(error.Message, Does.Contain("duplicate ActionKey"));
             }
             finally
             {

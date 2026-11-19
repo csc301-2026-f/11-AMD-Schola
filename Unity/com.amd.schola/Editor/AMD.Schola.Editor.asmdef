@@ -1,0 +1,10 @@
+{
+    "name": "AMD.Schola.Editor",
+    "rootNamespace": "AMD.Schola.Editor",
+    "references": [
+        "AMD.Schola.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

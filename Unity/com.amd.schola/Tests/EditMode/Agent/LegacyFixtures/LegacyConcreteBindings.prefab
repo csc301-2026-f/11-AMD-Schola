@@ -1,0 +1,144 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6226882577663521173
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 955060275279042701}
+  - component: {fileID: 1968952904285963674}
+  - component: {fileID: 163932959026824349}
+  - component: {fileID: 6851485596226719540}
+  m_Layer: 0
+  m_Name: LegacyConcreteBindings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &955060275279042701
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6226882577663521173}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 2, z: 3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7919024563909660997}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1968952904285963674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6226882577663521173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c068b82c46824ac7a0eba49ae79e530d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AMD.Schola.Runtime::AMD.Schola.ScholaAgent
+  m_Sensors:
+  - {fileID: 163932959026824349}
+  - {fileID: 0}
+  - {fileID: 7886640254455423736}
+  m_Actuators:
+  - {fileID: 6851485596226719540}
+  - {fileID: 0}
+  - {fileID: 7750822295161548865}
+--- !u!114 &163932959026824349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6226882577663521173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f56103b12c994170ab0035fafa44dedb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AMD.Schola.Runtime::AMD.Schola.PositionSensor
+  m_ObservationKey: legacy_position
+--- !u!114 &6851485596226719540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6226882577663521173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0a7e3f591b24d8e9f6a2c4b8d0e1f73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AMD.Schola.Runtime::AMD.Schola.TranslateActuator
+  m_ActionKey: legacy_translate
+  m_MaxDisplacement: 0
+--- !u!1 &7780719791285234595
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7919024563909660997}
+  - component: {fileID: 7886640254455423736}
+  - component: {fileID: 7750822295161548865}
+  m_Layer: 0
+  m_Name: ChildBindings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7919024563909660997
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7780719791285234595}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4, y: 5, z: 6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 955060275279042701}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7886640254455423736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7780719791285234595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f56103b12c994170ab0035fafa44dedb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AMD.Schola.Runtime::AMD.Schola.PositionSensor
+  m_ObservationKey: child_position
+--- !u!114 &7750822295161548865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7780719791285234595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0a7e3f591b24d8e9f6a2c4b8d0e1f73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AMD.Schola.Runtime::AMD.Schola.TranslateActuator
+  m_ActionKey: child_translate
+  m_MaxDisplacement: 0

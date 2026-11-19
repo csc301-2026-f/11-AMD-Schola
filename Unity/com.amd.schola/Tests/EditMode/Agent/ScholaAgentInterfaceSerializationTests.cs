@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 
 using System;
+using System.IO;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -95,6 +96,114 @@ namespace AMD.Schola.Tests.Agent
             Assert.That(prefab, Is.Not.Null);
             m_Root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             AssertRestoredBindings(m_Root);
+        }
+
+        [Test]
+        public void LegacyConcreteListScene_LoadsBindingsWithoutResaving()
+        {
+            Object.DestroyImmediate(m_Root);
+            var originalScene = SceneManager.GetActiveScene();
+            var scene = EditorSceneManager.OpenScene(
+                CopyLegacyFixture("unity"),
+                OpenSceneMode.Additive
+            );
+            try
+            {
+                var roots = scene.GetRootGameObjects();
+                Assert.That(roots, Has.Length.EqualTo(1));
+                m_Root = roots[0];
+                AssertLegacyBindings(m_Root);
+            }
+            finally
+            {
+                if (scene.IsValid() && scene.isLoaded)
+                    EditorSceneManager.CloseScene(scene, true);
+                if (originalScene.IsValid() && originalScene.isLoaded)
+                    SceneManager.SetActiveScene(originalScene);
+            }
+        }
+
+        [Test]
+        public void LegacyConcreteListPrefab_LoadsBindingsWithoutResaving()
+        {
+            Object.DestroyImmediate(m_Root);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CopyLegacyFixture("prefab"));
+            Assert.That(prefab, Is.Not.Null);
+            m_Root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            AssertLegacyBindings(m_Root);
+        }
+
+        string CopyLegacyFixture(string extension)
+        {
+            var fileName = "LegacyConcreteBindings." + extension;
+            var source = "Packages/com.amd.schola/Tests/EditMode/Agent/LegacyFixtures/" + fileName;
+            // Resolve the physical package location; Packages/ can be a virtual UPM path.
+            var package = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(source);
+            Assert.That(package, Is.Not.Null);
+            var sourcePath = Path.Combine(
+                package.resolvedPath,
+                "Tests/EditMode/Agent/LegacyFixtures/" + fileName
+            );
+            var destination = m_AssetFolder + "/" + fileName;
+            // Copy saved legacy bytes, never create/resave these fixtures with the new agent.
+            File.Copy(sourcePath, destination);
+            AssetDatabase.ImportAsset(destination, ImportAssetOptions.ForceSynchronousImport);
+            return destination;
+        }
+
+        static void AssertLegacyBindings(GameObject root)
+        {
+            var agent = root.GetComponent<ScholaAgent>();
+            var child = root.transform.Find("ChildBindings");
+            Assert.That(agent, Is.Not.Null);
+            Assert.That(child, Is.Not.Null);
+            Assert.That(agent.Sensors, Has.Count.EqualTo(3));
+            Assert.That(agent.Actuators, Has.Count.EqualTo(3));
+            Assert.That(agent.Sensors[0], Is.SameAs(root.GetComponent<PositionSensor>()));
+            Assert.That(agent.Actuators[0], Is.SameAs(root.GetComponent<TranslateActuator>()));
+            Assert.That(agent.Sensors[1], Is.Null);
+            Assert.That(agent.Actuators[1], Is.Null);
+            Assert.That(agent.Sensors[2], Is.SameAs(child.GetComponent<PositionSensor>()));
+            Assert.That(agent.Actuators[2], Is.SameAs(child.GetComponent<TranslateActuator>()));
+            Assert.That(agent.TryValidateConfiguration(out var error), Is.True, error);
+            Assert.That(
+                ((DictSpace)agent.Define()).Spaces.Keys,
+                Is.EquivalentTo(new[] { "legacy_position", "child_position" })
+            );
+            Assert.That(
+                ((DictSpace)agent.DefineActionSpace()).Spaces.Keys,
+                Is.EquivalentTo(new[] { "legacy_translate", "child_translate" })
+            );
+            Assert.That(root.transform.position, Is.EqualTo(new Vector3(1f, 2f, 3f)));
+            Assert.That(child.localPosition, Is.EqualTo(new Vector3(4f, 5f, 6f)));
+            var before = (DictPoint)agent.Observe();
+            Assert.That(
+                ((BoxPoint)before.Points["legacy_position"]).Values,
+                Is.EqualTo(new[] { 1f, 2f, 3f })
+            );
+            Assert.That(
+                ((BoxPoint)before.Points["child_position"]).Values,
+                Is.EqualTo(new[] { 5f, 7f, 9f })
+            );
+            agent.Act(
+                new DictPoint
+                {
+                    Points =
+                    {
+                        ["legacy_translate"] = new BoxPoint { Values = { 0.5f, 1f, -1f } },
+                        ["child_translate"] = new BoxPoint { Values = { -2f, 0f, 3f } },
+                    },
+                }
+            );
+            var after = (DictPoint)agent.Observe();
+            Assert.That(
+                ((BoxPoint)after.Points["legacy_position"]).Values,
+                Is.EqualTo(new[] { 1.5f, 3f, 2f })
+            );
+            Assert.That(
+                ((BoxPoint)after.Points["child_position"]).Values,
+                Is.EqualTo(new[] { 3.5f, 8f, 11f })
+            );
         }
 
         static void AssertRestoredBindings(GameObject root)

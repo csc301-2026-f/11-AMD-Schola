@@ -227,7 +227,12 @@ namespace AMD.Schola
                     continue;
                 }
 
-                dictSpace.Spaces[sensor.ObservationKey] = sensor.GetObservationSpace();
+                var space = sensor.GetObservationSpace();
+                if (space == null)
+                    throw new InvalidOperationException(
+                        $"{nameof(ScholaAgent)} '{name}' sensor '{sensor.ObservationKey}' ({sensor.GetType().Name}) returned a null observation space."
+                    );
+                dictSpace.Spaces.Add(sensor.ObservationKey, space);
             }
 
             return dictSpace;
@@ -248,7 +253,12 @@ namespace AMD.Schola
                     continue;
                 }
 
-                dictSpace.Spaces[actuator.ActionKey] = actuator.GetActionSpace();
+                var space = actuator.GetActionSpace();
+                if (space == null)
+                    throw new InvalidOperationException(
+                        $"{nameof(ScholaAgent)} '{name}' actuator '{actuator.ActionKey}' ({actuator.GetType().Name}) returned a null action space."
+                    );
+                dictSpace.Spaces.Add(actuator.ActionKey, space);
             }
 
             return dictSpace;

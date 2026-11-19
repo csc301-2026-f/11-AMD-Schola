@@ -38,6 +38,8 @@ namespace AMD.Schola
         public void SetAgent(ScholaAgent agent)
         {
             m_Agent = agent;
+            m_Initialized = false;
+            m_PoseSnapshot.Clear();
         }
 
         public void SetReward(IReward reward)
@@ -61,6 +63,8 @@ namespace AMD.Schola
         /// </summary>
         public InteractionDefinition Initialize()
         {
+            // A failed first initialization or reinitialization must be retried before use.
+            m_Initialized = false;
             ResolveBindings();
             if (m_Agent == null)
             {
@@ -69,6 +73,7 @@ namespace AMD.Schola
                 );
             }
 
+            ValidateAgentConfiguration();
             foreach (var sensor in m_Agent.Sensors)
             {
                 if (sensor != null)
@@ -85,9 +90,16 @@ namespace AMD.Schola
                 }
             }
 
+            // Init callbacks may change configuration. Validate both lists again before
+            // publishing either definition, and do not expose partial initialization.
+            ValidateAgentConfiguration();
+            var definition = new InteractionDefinition(
+                m_Agent.Define(),
+                m_Agent.DefineActionSpace()
+            );
             SnapshotPoses();
             m_Initialized = true;
-            return new InteractionDefinition(m_Agent.Define(), m_Agent.DefineActionSpace());
+            return definition;
         }
 
         public void Seed(int seed)
@@ -126,6 +138,7 @@ namespace AMD.Schola
                 Initialize();
             }
 
+            ValidateAgentConfiguration();
             RestorePoses();
             NotifyEpisodeReset();
             var initial = new InitialAgentState { Observations = m_Agent.Observe() };
@@ -135,16 +148,16 @@ namespace AMD.Schola
 
         /// <summary>
         /// Applies <paramref name="action"/>, then reports reward, episode flags, and a fresh observation.
+        /// Initializes first if needed, including after an earlier initialization failure.
         /// </summary>
         public AgentState Step(Point action)
         {
-            if (m_Agent == null)
+            if (!m_Initialized || m_Agent == null)
             {
-                throw new InvalidOperationException(
-                    $"{nameof(ScholaEnvironment)} requires a {nameof(ScholaAgent)}."
-                );
+                Initialize();
             }
 
+            ValidateAgentConfiguration();
             m_Agent.Act(action);
 
             var reward = m_Reward != null ? m_Reward.ComputeReward() : 0f;
@@ -164,6 +177,12 @@ namespace AMD.Schola
             };
             m_Sink?.SubmitState(state);
             return state;
+        }
+
+        void ValidateAgentConfiguration()
+        {
+            if (!m_Agent.TryValidateConfiguration(out var error))
+                throw new InvalidOperationException(error);
         }
 
         void NotifyEpisodeReset()

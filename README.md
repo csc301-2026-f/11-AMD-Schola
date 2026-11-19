@@ -160,7 +160,7 @@ Schola for Unity is a developer package rather than a web app, so we applied the
 | **Secure communication** | Both servers listen on `127.0.0.1` only, the gRPC server uses local credentials, one trainer connects at a time, and every exchange has a timeout. Nothing is sent over the internet. | `Training/TrainingServer.cs`, `bridge.py` |
 | **Secrets** | The repository contains no keys or passwords, and CI reads the Unity license from GitHub secrets rather than from workflow files. | [Configuration](#configuration), `.github/workflows/` |
 | **Reliability** | Scene changes run only on Unity's main thread. When an exchange fails, the Python side closes the connection so that a late reply is never mistaken for the next answer. Stopping Play Mode also releases all queued work. | `Training/TrainingServer.cs`, `bridge.py`, `Tests/Training/TrainingServerTests.cs` |
-| **Production-readiness** | Every GitHub Actions job has a time limit, and CI runs formatting, `.meta`-file, Unity, Python and codegen checks on every pull request. There are 76 Unity tests and 10 Python test functions for the training adapter. | `.github/workflows/`, [Run the tests](#run-the-tests) |
+| **Production-readiness** | Every GitHub Actions job has a time limit, and CI runs formatting, `.meta`-file, Unity, Python and codegen checks on every pull request. Tests cover the Unity runtime and Python training adapter. | `.github/workflows/`, [Run the tests](#run-the-tests) |
 | **Accessibility** | There is no end-user UI to audit with Lighthouse. The demo overlay is the only on-screen UI, and it never relies on colour alone, because a text counter shows how many drones are home as well as the green colour. README images have alt text. We have not yet tested with assistive tools. | `deliverables/D2/demo/ReturnToBaseGame.cs` |
 
 There are still known limits. Training handles about one step per Unity frame, it supports one agent per environment, and it has not been tested in a built player (IL2CPP).
@@ -178,9 +178,13 @@ The package lives in [`Unity/com.amd.schola`](Unity/com.amd.schola) as `com.amd.
 
 Keep the checkout in place while the package is installed from disk. Pushing a `unity-v<version>` tag publishes a GitHub Release with an installable tarball (see [Deployment](#deployment)), but no release has been published yet.
 
+### Add custom sensors and actuators
+
+Implement `ISensor` or `IActuator` on your own `MonoBehaviour` and assign that component to `ScholaAgent` in the Inspector or through its interface-based setters. The [custom component guide](Unity/com.amd.schola/Documentation~/custom-components.md) includes complete sensor and actuator examples, an observe/action/reset walkthrough, and the binding and initialization rules.
+
 ### Run the tests
 
-**Unity tests.** There are 76 tests, in the `AMD.Schola.Tests.EditMode` and `AMD.Schola.Tests.Training` assemblies.
+**Unity tests.** Tests are in the `AMD.Schola.Tests.EditMode` and `AMD.Schola.Tests.Training` assemblies.
 
 1. In the project's `Packages/manifest.json`, add the line below next to `dependencies`.
 

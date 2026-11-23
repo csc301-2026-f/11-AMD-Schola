@@ -10,9 +10,14 @@ namespace AMD.Schola
     /// under <see cref="ScholaEnvironment.DefaultAgentId"/>. Matches Unreal's single-agent
     /// adapter, which injects the key <c>SingleAgent</c> into the multi-agent maps.
     /// </summary>
+    /// <remarks>
+    /// Follows the <see cref="IMultiAgentEnvironment"/> finished-agent rule: omit the action
+    /// to keep the terminal state; send an action to step again.
+    /// </remarks>
     public sealed class SingleAgentEnvironmentAdapter : IMultiAgentEnvironment
     {
         readonly IEnvironment m_Environment;
+        AgentState m_Finished;
 
         public SingleAgentEnvironmentAdapter(IEnvironment environment)
         {
@@ -39,9 +44,11 @@ namespace AMD.Schola
 
         public IReadOnlyDictionary<string, InitialAgentState> Reset()
         {
+            var initial = m_Environment.Reset();
+            m_Finished = null;
             return new Dictionary<string, InitialAgentState>
             {
-                [ScholaEnvironment.DefaultAgentId] = m_Environment.Reset(),
+                [ScholaEnvironment.DefaultAgentId] = initial,
             };
         }
 
@@ -62,10 +69,19 @@ namespace AMD.Schola
                 }
             }
 
-            if (
-                !actions.TryGetValue(ScholaEnvironment.DefaultAgentId, out var action)
-                || action == null
-            )
+            var hasAction =
+                actions.TryGetValue(ScholaEnvironment.DefaultAgentId, out var action)
+                && action != null;
+
+            if (m_Finished != null && !hasAction)
+            {
+                return new Dictionary<string, AgentState>
+                {
+                    [ScholaEnvironment.DefaultAgentId] = m_Finished.Copy(),
+                };
+            }
+
+            if (!hasAction)
             {
                 throw new ArgumentException(
                     $"Missing action for agent '{ScholaEnvironment.DefaultAgentId}'.",
@@ -73,9 +89,16 @@ namespace AMD.Schola
                 );
             }
 
+            m_Finished = null;
+            var state = m_Environment.Step(action);
+            if (state != null && (state.Terminated || state.Truncated))
+            {
+                m_Finished = state.Copy();
+            }
+
             return new Dictionary<string, AgentState>
             {
-                [ScholaEnvironment.DefaultAgentId] = m_Environment.Step(action),
+                [ScholaEnvironment.DefaultAgentId] = state,
             };
         }
     }

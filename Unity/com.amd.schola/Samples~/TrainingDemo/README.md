@@ -12,3 +12,7 @@ The environment rewards progress, terminates at the target, truncates after 128 
 Stop Play Mode and Python, open **Scenes/ScholaInferenceDemo.unity**, and press Play to run the bundled ONNX policy on CPU. The overlay announces arrival and stops the runner. To use your output, import `ckpt/unity_ppo.onnx` into Assets and assign it to **Policy Runner > Model**. Do not assign the `.zip` checkpoint. The inference scene has no Training Server.
 
 Builders: **Tools > Schola > Create Training Demo Scene** and **Create Inference Demo Scene**. Duplicate scenes before adapting; reimporting can overwrite sample assets. See **Models/README.md** for model provenance and `Documentation~/setup.md` in the package for the full installation/adaptation guide and troubleshooting.
+
+## Danger Zone demo
+
+Open **Scenes/ScholaDangerZoneTraining.unity** to train with randomized targets and a red danger zone. Run the exported policy with **Scenes/ScholaDangerZoneInference.unity**. Full Unity UI, Python setup, manual wiring, and inference instructions are in `Documentation~/danger-zone.md` in the package.

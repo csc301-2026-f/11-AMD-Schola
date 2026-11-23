@@ -1,5 +1,7 @@
 # US6 validation record
 
+The results below describe the original two-sample implementation. Setup Demo has since been removed from the Package Manager sample options. Training Demo supplies the current training and inference scenes. Historical test counts and Git revisions below apply to the earlier version.
+
 ## Environment and integration
 
 Validated on **2026-11-11**, Windows, Unity **6000.3.24f1**, Python **3.12.14**, CPU inference. This implementation builds on merge commit `c6d9b32`, which integrates `origin/main` at `10fbe84` into `US6-setup-integration`. Recovery branch: `backup/us6-before-main-integration`. Both Package Manager samples and main's training/inference runtime are retained. No package runtime API was replaced.
@@ -22,18 +24,18 @@ git diff --check
 
 Use a virtual environment with the repository's Python package, SB3, and test dependencies installed. On this host the executables were `.venv/Scripts/python.exe` and `C:/Program Files/dotnet/dotnet.exe`. The full tooling unittest suite has two pre-existing Windows code-generation failures (mocked platform detection and the Bash/Git deletion check); the 15 manifest/metadata validator tests pass.
 
-For Unity tests, create a dedicated consumer project, install the package, add `com.amd.schola` to the project manifest's `testables`, and import both samples. Run Test Runner's EditMode suite, including the imported sample assemblies. The inference UnityTest enters Play Mode itself. Package-mode CI alone does not import `Samples~` and therefore does not execute sample tests.
+For Unity tests, create a dedicated consumer project, install the package, add `com.amd.schola` to the project manifest's `testables`, and import Training Demo. Run Test Runner's EditMode suite, including the imported sample assemblies. The inference UnityTest enters Play Mode itself. Package-mode CI alone does not import `Samples~` and therefore does not execute sample tests.
 
 ```powershell
 $unityEditor = 'C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe'
-$demoProject = 'C:\Projects\ScholaSetupDemo'
+$demoProject = 'C:\Projects\ScholaTrainingDemo'
 & $unityEditor -batchmode -projectPath $demoProject -runTests -testPlatform EditMode `
     -testResults "$demoProject/editmode-results.xml" -logFile "$demoProject/editmode.log"
 ```
 
 Close any Editor already using that project. Wait for the XML result; the Windows Unity launcher can return before the Editor exits. Normal expected-error logs in negative tests are not failed tests; inspect the result XML.
 
-To regenerate the shipped assets, import both samples, use their scene creation menu commands, and save into each imported sample's Scenes folder. For training/inference maintainers, `AMD.Schola.Samples.TrainingDemo.Editor.SetupSceneAssets.Generate` generates both scenes in the imported Training Demo folder. Copy generated Scenes/Materials assets and metadata back to the package, retaining GUIDs. Do not hand-author scene YAML.
+To regenerate the shipped assets, import Training Demo, use its scene creation menu commands, and save into its Scenes folder. For training/inference maintainers, `AMD.Schola.Samples.TrainingDemo.Editor.SetupSceneAssets.Generate` generates both scenes in the imported Training Demo folder. Copy generated Scenes/Materials assets and metadata back to the package, retaining GUIDs. Do not hand-author scene YAML.
 
 ## Real training/export evidence
 
@@ -73,3 +75,15 @@ https://github.com/csc301-2026-f/11-AMD-Schola.git?path=/Unity/com.amd.schola#1b
 Unity Package Manager resolved source **git** and that exact hash in `packages-lock.json`; Editor compilation and a batch verification method passed. The verifier checks the resolved package source and the presence of all three scene files plus the ONNX model inside the Git package cache. Log: `enc_temp_folder/us6-git-install.log`, success marker `SCHOLA_US6_GIT_INSTALL_VERIFIED`. This reused the already-tested consumer project and imported samples; it was not a second from-empty project run. The ONNX model has an explicit exception to the repository's general model ignore rule so it is included in Git installs.
 
 The latest fetched `main` remained `10fbe84` and is an ancestor of the completed US6 branch. The final documentation-only commit adds these results without changing the tested source/assets.
+
+## Danger Zone demo, 2026-11-23
+
+Added training/inference scenes with randomized start/target positions, swept circular danger detection, bounds, planar action projection, and episode statistics. Uses the existing single-agent Schola environment, Python bridge, and SB3 PPO trainer. The source and assets were validated on Unity 6000.3.24f1 with Python 3.12.
+
+The four initial environment tests passed. The real batch Editor host served the sample scene on port 8023 with main-thread request pumping. Training used PPO seed 0, layout seed 7, and 100000 requested timesteps. It completed 100096 steps in 357 seconds of training-loop time, averaging 279 steps/s. Final rollout mean reward was 7.71 with mean episode length 42.4. This timing excludes Editor imports, Python startup and export and does not predict interactive Editor speed.
+
+The actual checkpoint and ONNX are `enc_temp_folder/danger-policy/danger_zone.zip` and `.onnx`. The exported model was copied to the sample's Models folder. SHA-256 is `3191d108d867022792ac93848312efe58601d76c29acd1fdd9fddf379d78a185`. ONNX checker passes, with inputs `agent_position`, `target_position`, `danger_position` and output `translate`.
+
+A separate 128-step automatic-launch check set RunScriptOnPlay and CustomPythonPath on the real TrainingServer and invoked its normal StartServer method. Unity launched the Python module, pumped the environment, forwarded output to the Console, and saved both checkpoint and ONNX. Log `enc_temp_folder/danger-ui.log` contains `DANGER_UI_LAUNCH_VERIFIED:True`. This verifies the Inspector's underlying launch path through code; no interactive UI clicks were automated.
+
+Final complete Unity run passed **128/128** checks, including six danger-zone tests, the existing package and imported-sample tests, and five temporary camera-render checks. The exported CPU ONNX policy succeeded on **80/100** episodes with evaluation layout seed 123, separate from training layout seed 7. This is the bundled model's measured result for that sample task, not guaranteed performance on other geometry or seeds. The Play Mode inference test ran an episode with no TrainingServer. The first suite run found a test-setup issue across the Play Mode domain reload; guarding Editor-only setup corrected it, and the complete suite was rerun successfully. Results are `enc_temp_folder/danger-final-tests.xml` and `.log`. Both rendered danger-zone scenes were inspected for geometry and color contrast. All 15 fast validator tests pass. CSharpier checks 74 files successfully. Sample metadata and all danger-scene GUID references resolve, and all 148 package GUIDs are unique. The Python training process needed localhost access outside the tool sandbox. Validation projects, launcher harnesses, logs, and checkpoints remain under the ignored `enc_temp_folder`.

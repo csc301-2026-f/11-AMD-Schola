@@ -255,7 +255,7 @@ Third-party dependencies such as Unity Inference Engine, gRPC and Protobuf keep 
 
 ### Unity integration (US6)
 
-The Unity package is in [`Unity/com.amd.schola`](Unity/com.amd.schola), separate from the Unreal plugin described below. Follow the [Unity setup and adaptation guide](Unity/com.amd.schola/Documentation~/setup.md) to install it and import the **Setup Demo**. The demo uses real Schola position observations and sends deterministic actions through `ScholaAgent.Act()` and `TranslateActuator`; it requires neither Python nor a trained model. Unity Editor validation is still required; the guide includes the checklist and current US3–5 limitations.
+The Unity package is in [`Unity/com.amd.schola`](Unity/com.amd.schola). Follow the [Unity setup and adaptation guide](Unity/com.amd.schola/Documentation~/setup.md) to install it and import **Training Demo**, which provides training and ONNX inference scenes.
 
 ### Install Unreal Engine
 As the upstream Schola plugin is an Unreal Engine project, you will need to first install Unreal Engine. Refer to the below table to identify the correct version of Unreal Engine for each version of Schola. 
@@ -330,4 +330,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for issue and pull request guidelines, co
 
 ## Unity setup and adaptation (US6)
 
-Follow the [complete setup guide](Unity/com.amd.schola/Documentation~/setup.md) to install the package, open the supplied scenes, train a policy, export ONNX, run inference without Python, and adapt the sample to your project. Import both **Setup Demo** and **Training Demo** from Package Manager.
+Follow the [complete setup guide](Unity/com.amd.schola/Documentation~/setup.md) to install the package, open the supplied scenes, train a policy, export ONNX, run inference without Python, and adapt the sample to your project. Import **Training Demo** from Package Manager.
+
+The [Danger Zone demo](Unity/com.amd.schola/Documentation~/danger-zone.md) adds randomized episodes, a red danger zone, episode statistics, and matching training/inference scenes to Training Demo.

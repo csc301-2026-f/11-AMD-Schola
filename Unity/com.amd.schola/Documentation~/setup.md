@@ -1,6 +1,6 @@
 # Install, train, export, and adapt Schola (US6)
 
-This walkthrough uses two Package Manager samples: **Setup Demo** checks installation without Python; **Training Demo** supplies separate training and ONNX inference scenes. All movement uses Schola observations and actions. The deterministic setup controller is a programmed rule, not a learned policy.
+Import **Training Demo** to use the training and ONNX inference scenes. Both scenes use Schola observations and actions. The training scene connects to Python PPO, and the inference scene runs an exported policy in Unity.
 
 ## Requirements
 
@@ -19,17 +19,13 @@ Alternatively, use **Install package from git URL**:
 https://github.com/csc301-2026-f/11-AMD-Schola.git?path=/Unity/com.amd.schola#US6-setup-integration
 ```
 
-The completed sample is published on this branch. For repeatable installations, replace the branch revision with the tested commit `1b4e1e2053f9986eef7b44fbe825eeff1fa59a99`. The `?path=` must precede `#revision`; the repository root is not a UPM package.
+For repeatable installations, replace the branch revision with a published commit containing the sample version you want. The `?path=` must precede `#revision`; the repository root is not a UPM package.
 
-Select **AMD Schola 0.1.0**, expand **Samples**, and import **Setup Demo** and **Training Demo**. They appear under `Assets/Samples/AMD Schola/0.1.0/`. Wait for compilation. Imported samples are editable copies; back up customizations before reimporting.
+Select **AMD Schola 0.1.0**, expand **Samples**, and import **Training Demo**. It appears under `Assets/Samples/AMD Schola/0.1.0/`. Wait for compilation. Imported samples are editable copies; back up customizations before reimporting.
 
-## 1. Check installation without Python
+## 1. Check installation with the bundled policy
 
-Open `Setup Demo/Scenes/ScholaSetupDemo.unity` and press Play. The cube moves toward the sphere and stops within 0.1 world units. The Game overlay shows `agent_position`, `target_position`, and **Target reached**. Move Target during Play Mode and the cube follows again. Stop Play Mode to restore the scene.
-
-To rebuild this scene choose **Tools > AMD Schola > Create Setup Demo Scene** and save under Assets. The builder uses Unity primitives and the same wiring as the shipped scene.
-
-The flow is `PositionSensor > ScholaAgent.Observe > SetupDemoController > ScholaAgent.Act > TranslateActuator`. The actuator consumes three world-space displacements per action, not velocity. The setup controller multiplies speed by delta time once; the actuator does not multiply again.
+Open `Training Demo/Scenes/ScholaInferenceDemo.unity` and press Play. The bundled ONNX policy moves the blue cube toward the orange sphere. The overlay announces arrival and stops the policy runner. Stop Play Mode before opening the training scene.
 
 ## 2. Train and export
 
@@ -43,7 +39,7 @@ python -m pip install -e "./Resources/python[sb3]"
 
 Use your installed Python 3.10?3.12 executable if the Windows `py` launcher is unavailable. If activation is restricted, invoke `.venv/Scripts/python.exe` and `.venv/Scripts/schola.exe` directly.
 
-Open `Training Demo/Scenes/ScholaTrainingDemo.unity`. Enable **Run In Background** in Player settings, wait for compilation to finish, then enter Play Mode. The scene waits for Python; no deterministic controller or inference runner is active. Run:
+Open `Training Demo/Scenes/ScholaTrainingDemo.unity`. Enable **Run In Background** in Player settings, wait for compilation to finish, then enter Play Mode. The scene waits for Python actions. Run:
 
 ```powershell
 schola unity train --unity-port 8001 --seed 0 --timesteps 10000 --checkpoint ckpt/unity_ppo --export-onnx
@@ -84,17 +80,16 @@ Duplicate the appropriate scene before editing. Replace Agent's visual or wire y
 | Training Server | Training scene only; environment on the same object; port `8001` |
 | Policy Runner | Inference scene only; agent list and matching ONNX model; CPU backend |
 
-For the deterministic scene, reconnect Setup Demo Controller's agent and target sensor; keep its expected two-sensor/one-actuator wiring. Its default unbounded translation is intentional. It does not assign rewards or manage episodes.
 
 Keep keys unique and preserve input/output shapes when reusing a model. Adding sensors, changing action dimensions, or changing the task requires a matching policy and usually retraining. The current agent lists accept PositionSensor and TranslateActuator specifically; arbitrary ISensor/IActuator implementations require extending those APIs.
 
-Only one controller may send actions to an agent. Disable the setup controller and Training Server when using Policy Runner. Transform movement does not provide collision response or advance Rigidbody physics. Use a physics-aware stepper/actuator for physics tasks. Changing only the render mesh preserves the observation/action contract; changing units, bounds, coordinate conventions, rewards, or reset logic changes the learning problem.
+Only one controller may send actions to an agent. Disable Training Server when using Policy Runner. Transform movement does not provide collision response or advance Rigidbody physics. Use a physics-aware stepper/actuator for physics tasks. Changing only the render mesh preserves the observation/action contract; changing units, bounds, coordinate conventions, rewards, or reset logic changes the learning problem.
 
 ## Troubleshooting
 
 | Symptom | Resolution |
 | --- | --- |
-| Sample missing | Import both entries under AMD Schola's Samples; refresh a cached Git package revision if necessary. |
+| Sample missing | Import Training Demo under AMD Schola's Samples; refresh a cached Git package revision if necessary. |
 | Scripts from an older sample | Back up customizations and reimport; package updates do not update Assets copies. |
 | Pink materials | Use Built-In for the baseline or assign pipeline-compatible materials. |
 | Connection timeout | Enter Play Mode first, enable Run In Background, match `--unity-port` to Training Server, and check Console. |
@@ -106,3 +101,5 @@ Only one controller may send actions to an agent. Disable the setup controller a
 | Changes disappear after Play | Expected Unity behavior; make persistent edits outside Play Mode. |
 
 For package/sample test execution, scene regeneration, and verification evidence see [validation.md](validation.md).
+
+For a more involved task with randomized episodes and a danger zone, follow the [Danger Zone guide](danger-zone.md).

@@ -3,6 +3,7 @@
   "references": [
     "AMD.Schola.Runtime",
     "AMD.Schola.Training",
-    "AMD.Schola.Inference"
+    "AMD.Schola.Inference",
+    "Unity.InferenceEngine"
   ]
 }

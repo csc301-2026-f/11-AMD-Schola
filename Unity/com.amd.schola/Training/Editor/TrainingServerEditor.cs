@@ -17,6 +17,8 @@ namespace AMD.Schola.Training.Editor
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Environment"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("m_MultiAgentEnvironment"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Environments"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Port"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("m_RequestTimeoutSeconds"));
 

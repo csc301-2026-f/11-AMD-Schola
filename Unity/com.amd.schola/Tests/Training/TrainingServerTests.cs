@@ -91,6 +91,130 @@ namespace AMD.Schola.Tests.Training
         }
 
         [Test]
+        public void Registration_SnapshotsInspectorOrderAndRejectsInvalidChanges()
+        {
+            var root = new GameObject("TrainingRegistration");
+            var first = new GameObject("First");
+            var second = new GameObject("Second");
+            first.transform.SetParent(root.transform);
+            second.transform.SetParent(root.transform);
+            var a = first.AddComponent<ScholaEnvironment>();
+            var b = second.AddComponent<ScholaMultiAgentEnvironment>();
+            var server = root.AddComponent<TrainingServer>();
+            var assigned = new MonoBehaviour[] { a, b };
+            SetSerializedField(server, "m_Environments", assigned);
+            try
+            {
+                server.RegisterConfiguredEnvironments();
+                var snapshot = server.RegisteredEnvironments;
+                Assert.That(snapshot, Has.Count.EqualTo(2));
+                Assert.That(snapshot[0], Is.TypeOf<SingleAgentEnvironmentAdapter>());
+                Assert.That(snapshot[1], Is.SameAs(b));
+                assigned[0] = b;
+                Assert.Throws<InvalidOperationException>(() =>
+                    server.RegisterConfiguredEnvironments()
+                );
+                Assert.That(server.RegisteredEnvironments, Is.SameAs(snapshot));
+                assigned[0] = null;
+                Assert.Throws<InvalidOperationException>(() =>
+                    server.RegisterConfiguredEnvironments()
+                );
+                Assert.That(server.RegisteredEnvironments, Is.SameAs(snapshot));
+                assigned[0] = server;
+                Assert.Throws<InvalidOperationException>(() =>
+                    server.RegisterConfiguredEnvironments()
+                );
+                assigned[0] = a;
+                SetSerializedField(server, "m_Environment", a);
+                Assert.Throws<InvalidOperationException>(() =>
+                    server.RegisterConfiguredEnvironments()
+                );
+                Assert.That(server.RegisteredEnvironments, Is.SameAs(snapshot));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Registration_ProgrammaticListKeepsStableIdsAndRejectsInvalidEntries()
+        {
+            var root = new GameObject("TrainingRegistrationApi");
+            var a = root.AddComponent<ScholaMultiAgentEnvironment>();
+            var child = new GameObject("SecondEnvironment");
+            child.transform.SetParent(root.transform);
+            var b = child.AddComponent<ScholaMultiAgentEnvironment>();
+            var server = root.AddComponent<TrainingServer>();
+            var assigned = new IMultiAgentEnvironment[] { a, b };
+            try
+            {
+                server.RegisterEnvironments(assigned);
+                var snapshot = server.RegisteredEnvironments;
+                assigned[0] = b;
+                Assert.That(snapshot[0], Is.SameAs(a));
+                Assert.That(snapshot[1], Is.SameAs(b));
+                Assert.Throws<NotSupportedException>(() =>
+                    ((IList<IMultiAgentEnvironment>)snapshot)[0] = b
+                );
+                Assert.Throws<ArgumentNullException>(() => server.RegisterEnvironments(null));
+                Assert.Throws<ArgumentException>(() =>
+                    server.RegisterEnvironments(Array.Empty<IMultiAgentEnvironment>())
+                );
+                Assert.Throws<ArgumentException>(() =>
+                    server.RegisterEnvironments(new IMultiAgentEnvironment[] { a, null })
+                );
+                Assert.Throws<ArgumentException>(() => server.RegisterEnvironments(assigned));
+                Assert.That(server.RegisteredEnvironments, Is.SameAs(snapshot));
+                // Registration is available before the batch transport is implemented.
+                Assert.Throws<InvalidOperationException>(() => server.StartRegisteredServer(0));
+                Assert.That(server.IsRunning, Is.False);
+                Assert.That(server.BoundPort, Is.Zero);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Registration_CannotChangeWhileServerRuns_AndCanChangeAfterStop()
+        {
+            var go = new GameObject("TrainingRegistrationLifecycle");
+            var agent = AddTranslateAgent(go, "Agent", "position");
+            var environment = go.AddComponent<ScholaEnvironment>();
+            environment.SetAgent(agent);
+            var server = go.AddComponent<TrainingServer>();
+            try
+            {
+                server.StartServer(environment, 0);
+                var snapshot = server.RegisteredEnvironments;
+                Assert.That(snapshot, Has.Count.EqualTo(1));
+                Assert.Throws<InvalidOperationException>(() =>
+                    server.RegisterEnvironments(snapshot)
+                );
+                var response = JsonUtility.FromJson<TrainingResponse>(
+                    Exchange(
+                        server,
+                        server.BoundPort,
+                        "{\"version\":" + TrainingWire.Version + ",\"command\":\"start\"}",
+                        "{\"version\":" + TrainingWire.Version + ",\"command\":\"definition\"}"
+                    )
+                );
+                Assert.That(response.ok, Is.True, response.error);
+                Assert.That(response.agents[0].id, Is.EqualTo("SingleAgent"));
+                Assert.That(server.RegisteredEnvironments, Is.SameAs(snapshot));
+                server.StopServer();
+                server.RegisterEnvironments(snapshot);
+                Assert.That(server.RegisteredEnvironments[0], Is.SameAs(snapshot[0]));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
         public void Stop_WithRequestWaitingForMainThread_ReleasesConnectionAndPort()
         {
             var go = new GameObject("TrainingShutdownTest");

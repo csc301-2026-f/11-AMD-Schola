@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -15,13 +17,13 @@ namespace AMD.Schola.Training
     /// <summary>
     /// Loopback TCP endpoint for the packaged Python gRPC adapter. Socket work runs on
     /// a background thread; all environment operations and JSON conversion run in Update.
-    /// One endpoint owns one environment and accepts one connection at a time.
+    /// Environment ids are indices in the registered list. Accepts one connection at a time.
     /// </summary>
     /// <remarks>
-    /// Serves either a single-agent <see cref="ScholaEnvironment"/> or a
-    /// <see cref="ScholaMultiAgentEnvironment"/>. Assign at most one of the two fields.
-    /// With neither assigned, a <see cref="ScholaMultiAgentEnvironment"/> on this
-    /// GameObject is used, then a <see cref="ScholaEnvironment"/>.
+    /// Use the ordered Environments list for independent environments. Existing scenes
+    /// may assign one single-agent or multi-agent field instead. With no assignments,
+    /// a local ScholaMultiAgentEnvironment is used, then a ScholaEnvironment.
+    /// Registration supports several environments; the current wire serves one.
     /// </remarks>
     [DisallowMultipleComponent]
     [AddComponentMenu("Schola/Training Server")]
@@ -36,6 +38,12 @@ namespace AMD.Schola.Training
 
         [SerializeField]
         ScholaMultiAgentEnvironment m_MultiAgentEnvironment;
+
+        [SerializeField]
+        MonoBehaviour[] m_Environments = Array.Empty<MonoBehaviour>();
+
+        IReadOnlyList<IMultiAgentEnvironment> m_RegisteredEnvironments =
+            new ReadOnlyCollection<IMultiAgentEnvironment>(Array.Empty<IMultiAgentEnvironment>());
 
         [SerializeField]
         int m_Port = 8001;
@@ -75,6 +83,108 @@ namespace AMD.Schola.Training
         public string LastConnectionError { get; private set; }
 
         /// <summary>
+        /// Snapshot of registration order. Each index is the environment's stable id until
+        /// the server stops and environments are registered again.
+        /// </summary>
+        public IReadOnlyList<IMultiAgentEnvironment> RegisteredEnvironments =>
+            m_RegisteredEnvironments;
+
+        /// <summary>
+        /// Registers independent environments without initializing or stepping them.
+        /// Single-agent callers can use <see cref="SingleAgentEnvironmentAdapter"/>.
+        /// </summary>
+        public void RegisterEnvironments(IReadOnlyList<IMultiAgentEnvironment> environments)
+        {
+            if (m_Running)
+                throw new InvalidOperationException(
+                    "Stop the server before changing environments."
+                );
+            if (environments == null)
+                throw new ArgumentNullException(nameof(environments));
+            if (environments.Count == 0)
+                throw new ArgumentException(
+                    "Register at least one environment.",
+                    nameof(environments)
+                );
+
+            var snapshot = new IMultiAgentEnvironment[environments.Count];
+            for (var i = 0; i < environments.Count; i++)
+            {
+                var environment = environments[i];
+                if (environment == null)
+                    throw new ArgumentException(
+                        $"Environment {i} is missing.",
+                        nameof(environments)
+                    );
+                for (var previous = 0; previous < i; previous++)
+                {
+                    if (ReferenceEquals(snapshot[previous], environment))
+                        throw new ArgumentException(
+                            $"Environment {i} duplicates environment {previous}.",
+                            nameof(environments)
+                        );
+                }
+                snapshot[i] = environment;
+            }
+            m_RegisteredEnvironments = Array.AsReadOnly(snapshot);
+        }
+
+        /// <summary>Registers Inspector assignments in their displayed order.</summary>
+        public void RegisterConfiguredEnvironments()
+        {
+            if (m_Environments != null && m_Environments.Length > 0)
+            {
+                if (m_Environment != null || m_MultiAgentEnvironment != null)
+                    throw new InvalidOperationException(
+                        "Use the Environments list or the individual environment fields."
+                    );
+                var environments = new IMultiAgentEnvironment[m_Environments.Length];
+                var seen = new HashSet<MonoBehaviour>();
+                for (var i = 0; i < m_Environments.Length; i++)
+                {
+                    var component = m_Environments[i];
+                    if (component == null || !seen.Add(component))
+                        throw new InvalidOperationException(
+                            $"Environment {i} is missing or registered more than once."
+                        );
+                    if (component is IMultiAgentEnvironment multi)
+                        environments[i] = multi;
+                    else if (component is IEnvironment single)
+                        environments[i] = new SingleAgentEnvironmentAdapter(single);
+                    else
+                        throw new InvalidOperationException(
+                            $"Environment {i} must implement IEnvironment or IMultiAgentEnvironment."
+                        );
+                }
+                RegisterEnvironments(environments);
+                return;
+            }
+
+            if (m_Environment != null && m_MultiAgentEnvironment != null)
+                throw new InvalidOperationException(
+                    "Assign either Environment or Multi Agent Environment to the training "
+                        + "server, not both."
+                );
+            if (m_Environment == null && m_MultiAgentEnvironment == null)
+            {
+                m_MultiAgentEnvironment = GetComponent<ScholaMultiAgentEnvironment>();
+                if (m_MultiAgentEnvironment == null)
+                    m_Environment = GetComponent<ScholaEnvironment>();
+            }
+            if (m_MultiAgentEnvironment != null)
+                RegisterEnvironments(new IMultiAgentEnvironment[] { m_MultiAgentEnvironment });
+            else if (m_Environment != null)
+                RegisterEnvironments(
+                    new IMultiAgentEnvironment[]
+                    {
+                        new SingleAgentEnvironmentAdapter(m_Environment),
+                    }
+                );
+            else
+                throw new InvalidOperationException("Assign at least one training environment.");
+        }
+
+        /// <summary>
         /// Launch the training script when the server starts.
         /// </summary>
         public bool RunScriptOnPlay
@@ -95,26 +205,10 @@ namespace AMD.Schola.Training
 
         public void StartServer()
         {
-            if (m_Environment != null && m_MultiAgentEnvironment != null)
-                throw new InvalidOperationException(
-                    "Assign either Environment or Multi Agent Environment to the training "
-                        + "server, not both."
-                );
-            if (m_Environment == null && m_MultiAgentEnvironment == null)
-            {
-                m_MultiAgentEnvironment = GetComponent<ScholaMultiAgentEnvironment>();
-                if (m_MultiAgentEnvironment == null)
-                    m_Environment = GetComponent<ScholaEnvironment>();
-            }
-            if (m_MultiAgentEnvironment != null)
-                StartServer(m_MultiAgentEnvironment, m_Port, m_RequestTimeoutSeconds);
-            else if (m_Environment != null)
-                StartServer(m_Environment, m_Port, m_RequestTimeoutSeconds);
-            else
-                throw new InvalidOperationException(
-                    "Assign a ScholaEnvironment or ScholaMultiAgentEnvironment to the "
-                        + "training server."
-                );
+            if (m_Running)
+                return;
+            RegisterConfiguredEnvironments();
+            StartRegisteredServer(m_Port, m_RequestTimeoutSeconds);
 
             // Passing -ScholaDisableScript on the command line overrides the setting
             if (m_RunScriptOnPlay && !IsScriptDisabledOnCommandLine() && !IsScriptRunning)
@@ -139,8 +233,10 @@ namespace AMD.Schola.Training
         {
             if (m_Running)
                 return;
-            ValidateEndpoint(port, requestTimeoutSeconds);
-            Listen(new TrainingSession(environment), port, requestTimeoutSeconds);
+            RegisterEnvironments(
+                new IMultiAgentEnvironment[] { new SingleAgentEnvironmentAdapter(environment) }
+            );
+            StartRegisteredServer(port, requestTimeoutSeconds);
         }
 
         /// <summary>
@@ -155,8 +251,24 @@ namespace AMD.Schola.Training
         {
             if (m_Running)
                 return;
+            RegisterEnvironments(new[] { environment });
+            StartRegisteredServer(port, requestTimeoutSeconds);
+        }
+
+        /// <summary>Starts the endpoint with the registered environment configuration.</summary>
+        public void StartRegisteredServer(int port, int requestTimeoutSeconds = 30)
+        {
+            if (m_Running)
+                return;
             ValidateEndpoint(port, requestTimeoutSeconds);
-            Listen(new TrainingSession(environment), port, requestTimeoutSeconds);
+            // Batched request routing is introduced with the environment wire format.
+            // Until then, fail before binding a port rather than serving only entry zero.
+            if (m_RegisteredEnvironments.Count != 1)
+                throw new InvalidOperationException(
+                    "The current training wire supports one registered environment. "
+                        + "Multiple environments require batched request routing."
+                );
+            Listen(new TrainingSession(m_RegisteredEnvironments[0]), port, requestTimeoutSeconds);
         }
 
         static void ValidateEndpoint(int port, int requestTimeoutSeconds)

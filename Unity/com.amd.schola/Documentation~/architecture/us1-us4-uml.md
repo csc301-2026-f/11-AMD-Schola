@@ -7,7 +7,7 @@ US1 (observations), US2 (actions), US3 (episodes), US4 (train through Schola), a
 The Unity package has three cooperating layers:
 
 1. **Runtime agent and environment (US1–US3)** — Sensors collect observations, actuators apply actions, `ScholaAgent` aggregates them, and `ScholaEnvironment` runs episode step/reset with optional reward and status.
-2. **Training connection (US4)** — Python hosts Schola’s existing `GymService` gRPC API. A TCP/JSON bridge talks to Unity’s `TrainingServer` → `TrainingSession` → `TrainingWire` → `IMultiAgentEnvironment` (`ScholaMultiAgentEnvironment`, or `ScholaEnvironment` via `SingleAgentEnvironmentAdapter`). Unity does **not** host `GymService` on the shipped path.
+2. **Training connection (US4)** — Python hosts Schola’s existing `GymService` gRPC API. A TCP/JSON bridge talks to Unity’s `TrainingServer` → `TrainingSession` → `TrainingWire` → `IMultiAgentEnvironment` (`ScholaMultiAgentEnvironment`, or `ScholaEnvironment` via `SingleAgentEnvironmentAdapter`). `TrainingServer` can optionally launch the Python trainer on Play (**Run Script On Play**, Unreal gRPC Gym Connector parity). Unity does **not** host `GymService` on the shipped path.
 3. **Local inference (US5)** — `PolicyRunner` / `SentisPolicy` drive the same `IAgent.Observe` / `IAgent.Act` loop without rewards, episode flags, or Python.
 
 Both training and inference share the agent’s observation and action path. Only training uses the environment’s reward, terminated/truncated, reset, and wire protocol.
@@ -80,7 +80,11 @@ flowchart TB
     server["TrainingServer"]
     session["TrainingSession"]
     wire["TrainingWire"]
+    scriptSettings["TrainingScriptSettings"]
+    launchableScript["LaunchableScript"]
     server --> session --> wire
+    server -.-> scriptSettings
+    server -.-> launchableScript
   end
 
   subgraph unityRuntime ["Unity Runtime US1 to US3 — implemented"]
@@ -117,7 +121,7 @@ flowchart TB
   grpcClient --- proto
 ```
 
-Shipped training entry: `schola unity train` starts `UnityGymService` (default gRPC port 8000) and a TCP client to `TrainingServer` (default port 8001). States return in wire responses. `ITrainingStateSink` is unused by the training connector. Native Unity gRPC under `Training/Generated/` remains optional tooling.
+Shipped training entry: `schola unity train` starts `UnityGymService` (default gRPC port 8000) and a TCP client to `TrainingServer` (default port 8001). With **Run Script On Play**, entering Play Mode launches that trainer as a child process instead of using a terminal (skip with `-ScholaDisableScript`). States return in wire responses. `ITrainingStateSink` is unused by the training connector. Native Unity gRPC under `Training/Generated/` remains optional tooling.
 
 Sources: `Unity/com.amd.schola/Runtime/`, `Inference/`, `Training/`, `Training/README.md`, `Proto/GymConnector.proto`, `Resources/python/schola/unity/bridge.py`.
 
@@ -446,7 +450,7 @@ flowchart LR
 
 Roles:
 
-1. **`TrainingServer`** — MonoBehaviour; loopback TCP (default port 8001); one request per `Update` on the main thread. Serves either `ScholaEnvironment` or `ScholaMultiAgentEnvironment`.
+1. **`TrainingServer`** — MonoBehaviour; loopback TCP (default port 8001); one request per `Update` on the main thread. Serves either `ScholaEnvironment` or `ScholaMultiAgentEnvironment`. Optionally launches a training script on Play via `TrainingScriptSettings` → `LaunchableScript`, and kills it in `StopServer` (see [§4.2](#42-run-script-on-play)).
 2. **`TrainingSession`** — Commands `start`, `definition`, `reset`, `step`, `close` against `IMultiAgentEnvironment`. Autoreset: `0=SAME_STEP`, `1=NEXT_STEP`, `2=DISABLED`. The environment is done only when every agent is done.
 3. **`TrainingWire`** — Version 2 JSON encode/decode/validate, with per-agent definition, action and state lists. Kinds: `"dict"` | `"box"` | `"discrete"` | `"multi_binary"` (`shape: [n]`, point `boolValues`).
 4. **`schola.unity.bridge`** — Hosts `GymService` gRPC (default port 8000); maps proto ↔ TCP JSON using the agent ids Unity declared.
@@ -455,7 +459,125 @@ Python `UpdateState` still carries `Reset` or `Step`. The bridge maps those to U
 
 Proto RPCs still used by trainers: `StartGymConnector`, `RequestTrainingDefinition`, `UpdateState`.
 
-### 4.2 Protocol cardinality
+### 4.2 Run Script On Play
+
+**What to take away:** When **Run Script On Play** is ticked, `TrainingServer` starts the TCP listener first, then launches a configured child process. Training output appears in the Console as `[Schola script] …`. Stopping Play Mode calls `StopServer`, which kills the process tree. This matches Unreal’s **Run Script On Play** on the gRPC Gym Connector. Types mirror Unreal `EScriptType`, `EPythonEnvironmentType`, `EPythonScript`, `FCustomTrainingSettings`, and `FTrainingScriptSettings` (Unity has no Built-in Python env).
+
+```mermaid
+classDiagram
+  direction TB
+
+  class TrainingServer {
+    +RunScriptOnPlay bool
+    +ScriptSettings TrainingScriptSettings
+    +IsScriptRunning bool
+    +StartServer()
+    +StopServer()
+  }
+  class TrainingScriptSettings {
+    +ScriptType ScriptType
+    +EnvType PythonEnvironmentType
+    +PythonScriptType PythonScriptType
+    +BuiltinSettings BuiltinTrainingSettings
+    +CustomPythonScriptSettings CustomTrainingSettings
+    +CustomScriptSettings CustomTrainingSettings
+    +GetLaunchableScript(unityPort, timeoutSeconds) LaunchableScript
+  }
+  class BuiltinTrainingSettings {
+    +Timesteps int
+    +Seed int
+    +CheckpointPath string
+    +ExportFinalModelToOnnx bool
+    +OnnxPath string
+  }
+  class CustomTrainingSettings {
+    +LaunchScript string
+    +Args List~ScriptArgument~
+    +Flags List~string~
+  }
+  class ScriptArgument {
+    +Name string
+    +Value string
+  }
+  class ScriptArgBuilder {
+    +AddPositionalArgument(value)
+    +AddFlag(name)
+    +AddStringArg(name, value)
+    +AddIntArg(name, value)
+    +Build() string
+  }
+  class LaunchableScript {
+    +ScriptUrl string
+    +Args string
+    +IsRunning bool
+    +LaunchScript() bool
+    +KillScript()
+  }
+  class ScriptType {
+    <<enumeration>>
+    Python
+    Other
+  }
+  class PythonEnvironmentType {
+    <<enumeration>>
+    SystemPath
+    Conda
+    CustomPythonPath
+  }
+  class PythonScriptType {
+    <<enumeration>>
+    Builtin
+    Custom
+  }
+  class TrainingServerEditor {
+    <<Editor>>
+  }
+
+  TrainingServer *-- TrainingScriptSettings
+  TrainingServer o-- LaunchableScript : at Play
+  TrainingScriptSettings *-- BuiltinTrainingSettings
+  TrainingScriptSettings *-- CustomTrainingSettings
+  CustomTrainingSettings *-- ScriptArgument
+  TrainingScriptSettings ..> ScriptArgBuilder : builds args
+  TrainingScriptSettings ..> LaunchableScript : GetLaunchableScript
+  TrainingScriptSettings --> ScriptType
+  TrainingScriptSettings --> PythonEnvironmentType
+  TrainingScriptSettings --> PythonScriptType
+  TrainingServerEditor ..> TrainingServer : custom inspector
+```
+
+```mermaid
+sequenceDiagram
+  actor Play as PlayMode
+  participant Server as TrainingServer
+  participant Settings as TrainingScriptSettings
+  participant Script as LaunchableScript
+
+  Play->>Server: OnEnable StartServer
+  Server->>Server: Listen TCP BoundPort
+  alt RunScriptOnPlay and script not disabled
+    Server->>Settings: GetLaunchableScript BoundPort timeout
+    Settings->>Script: new LaunchableScript
+    Server->>Script: LaunchScript
+    Note over Script: stdout and stderr to Console with Schola script prefix
+  else toggle off or ScholaDisableScript
+    Note over Server: TCP still starts with no child process
+  end
+  Play->>Server: OnDisable StopServer
+  Server->>Script: KillScript
+```
+
+Behavior:
+
+- Builtin Python script runs `python -m schola.scripts.launch unity train …` (or conda / custom Python). Every script also receives `--unity-port` and `--timeout`.
+- **Python Env:** System PATH, Conda (env name), or Custom Python Path. **Script Type Other** launches any executable instead of Python.
+- **Custom Training Script** / Other use `Args` as `--Name Value` and `Flags` as `--Flag`.
+- `TrainingServerEditor` greys **Script Settings** until Run Script On Play is ticked and only shows fields for the chosen options. Pasted paths are trimmed of spaces and quotes.
+- Pass `-ScholaDisableScript` on the command line to skip the launch without changing the inspector setting.
+
+Sources: `Training/TrainingServer.cs`, `Training/TrainingScriptSettings.cs`, `Training/LaunchableScript.cs`, `Training/ScriptArgBuilder.cs`, `Training/Editor/TrainingServerEditor.cs`, `Documentation~/training.md`.
+
+### 4.3 Protocol cardinality
 
 **What to take away:** Proto and Unreal nest many envs and many agents. Unity’s shipped training stack is one env (index `0`) with one or many agents. `TrainingSession` drives `IMultiAgentEnvironment`. `ScholaMultiAgentEnvironment` returns `map<string, AgentState>` (and the matching definition and initial-state maps). `SingleAgentEnvironmentAdapter` injects the key `SingleAgent`, the same key Unreal's single-agent adapter uses, so a `ScholaEnvironment` stays one entry on that path. Python `GymEnv` still assumes 1 env, 1 agent. `GymVectorEnv` / SB3 flatten `(env, agent)` slots (shared spaces, finish together); `RayEnv` uses true multi-agent dicts.
 
@@ -546,11 +668,11 @@ flowchart LR
 
 No competitive/cooperative configs exist in Unity.
 
-### 4.3 Optional direct gRPC (`<<optional>>`)
+### 4.4 Optional direct gRPC (`<<optional>>`)
 
 `Training/README.md` documents generating C# from `Proto/` into `Training/Generated/` and a future `-ScholaPort=` player smoke contract that would host `GymService` inside Unity (matching Unreal). That path is **not required** by the shipped TCP-plus-adapter implementation and has no committed generated baseline.
 
-### 4.4 Historical notes
+### 4.5 Historical notes
 
 Current tree is the authority. Context only:
 
@@ -707,8 +829,12 @@ classDiagram
   }
   class URPCGymConnector {
     <<Unreal>>
+    +RunScriptOnPlay
   }
-  class TrainingServer
+  class TrainingServer {
+    +RunScriptOnPlay
+  }
+  class LaunchableScript
   class schola_unity_bridge {
     <<Python module>>
     +hosts GymService
@@ -719,6 +845,7 @@ classDiagram
   UnrealIMultiAgent ..|> UnrealIScholaEnvironment
   URPCGymConnector ..> UnrealIScholaEnvironment : TArray of envs
   TrainingServer ..> UnityIEnvironment : via SingleAgent adapter
+  TrainingServer --> LaunchableScript : Run Script On Play
   schola_unity_bridge ..> TrainingServer : bridge
   UnityIEnvironment ..> UnityIReward
   UnityIEnvironment ..> UnityIEpisodeStatus
@@ -730,6 +857,7 @@ Differences that matter for Unity training:
 - Unreal environments fill `FAgentState.Reward` / `bTerminated` / `bTruncated` inside `Step`. They have no `IReward` / `IEpisodeStatus`.
 - Unity `IMultiAgentEnvironment` matches Unreal `IMultiAgentScholaEnvironment`: maps keyed by agent id, with reward and episode flags filled per agent inside `Step`. `TrainingSession` drives that multi-agent interface; a single-agent environment is wrapped by `SingleAgentEnvironmentAdapter`.
 - Unreal hosts `GymService` via `URPCGymConnector` / `UCommunicationManager`. Unity hosts TCP JSON; Python `schola.unity.bridge` hosts `GymService`.
+- Unreal **Run Script On Play** on `URPCGymConnector` ↔ Unity on `TrainingServer`: both can launch the trainer on Play and stop it when the session ends. Unity still does not host `GymService` in-process.
 
 Sources: `Source/Schola/Public/Agent/AgentInterface.h`, `Source/ScholaTraining/Public/Environment/`, `Source/ScholaProtobuf/Public/GymConnectors/gRPC/gRPCGymConnector.h`.
 
@@ -756,7 +884,15 @@ Sources: `Source/Schola/Public/Agent/AgentInterface.h`, `Source/ScholaTraining/P
 | `AgentState` / `InitialAgentState` | US3 | implemented | Hand-written proto mirrors; no agent-id field |
 | `InteractionDefinition` | US3 | implemented | ObservationSpace + ActionSpace |
 | `ITrainingStateSink` | US4 | placeholder | Singular submit plus `SubmitStates` / `SubmitInitialStates` for agent-id maps; unused by the training connector |
-| `TrainingServer` | US4 | implemented | Loopback TCP; one request per `Update` |
+| `TrainingServer` | US4 | implemented | Loopback TCP; one request per `Update`; optional Run Script On Play |
+| `TrainingScriptSettings` | US4 | implemented | Script type, Python env, builtin/custom args; builds `LaunchableScript` |
+| `BuiltinTrainingSettings` | US4 | implemented | Timesteps, seed, checkpoint, ONNX export for builtin `schola … unity train` |
+| `CustomTrainingSettings` | US4 | implemented | Launch path plus `--Name Value` args and `--Flag` flags |
+| `ScriptArgument` | US4 | implemented | Name/value pair for custom scripts |
+| `LaunchableScript` | US4 | implemented | Hidden child process; Console output; kill process tree |
+| `ScriptArgBuilder` | US4 | implemented | Fluent `--name value` / flags; quotes paths with spaces |
+| `ScriptType` / `PythonEnvironmentType` / `PythonScriptType` | US4 | implemented | Enums mirroring Unreal script settings (no Built-in Python) |
+| `TrainingServerEditor` | US4 | implemented | Custom inspector; greys script settings until Run Script On Play |
 | `TrainingSession` | US4 | implemented | Speaks `IMultiAgentEnvironment`; autoreset when every agent is done |
 | `TrainingWire` | US4 | implemented | Version 2 per-agent lists; JSON encode/decode/validate including `multi_binary` |
 | Python `schola.unity.bridge` | US4 | implemented | Hosts `GymService`; forwards Unity agent ids; TCP JSON ↔ proto |

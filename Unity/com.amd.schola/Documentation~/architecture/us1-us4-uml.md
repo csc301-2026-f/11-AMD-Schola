@@ -7,7 +7,7 @@ US1 (observations), US2 (actions), US3 (episodes), US4 (train through Schola), a
 The Unity package has three cooperating layers:
 
 1. **Runtime agent and environment (US1–US3)** — Sensors collect observations, actuators apply actions, `ScholaAgent` aggregates them. `ScholaEnvironment` runs one agent; `ScholaMultiAgentEnvironment` runs many agents keyed by id. Both support optional reward and episode status.
-2. **Training connection (US4)** — Python hosts Schola’s existing `GymService` gRPC API. A TCP/JSON bridge talks to Unity’s `TrainingServer` → `TrainingSession` → `TrainingWire` → `IMultiAgentEnvironment` (`ScholaMultiAgentEnvironment`, or `ScholaEnvironment` via `SingleAgentEnvironmentAdapter`). `TrainingServer` can optionally launch the Python trainer on Play (**Run Script On Play**, Unreal gRPC Gym Connector parity). Unity does **not** host `GymService` on the shipped path. Python `GymEnv` / `schola unity train` remain one agent per env.
+2. **Training connection (US4)** — Python hosts Schola’s existing `GymService` gRPC API. A TCP/JSON bridge talks to Unity’s `TrainingServer` → `TrainingSession` → `TrainingWire` → `IMultiAgentEnvironment` (`ScholaMultiAgentEnvironment`, or `ScholaEnvironment` via `SingleAgentEnvironmentAdapter`). `TrainingServer` can optionally launch the Python trainer on Play (**Run Script On Play**, Unreal gRPC Gym Connector parity). Unity does **not** host `GymService` on the shipped path. Python `GymEnv` remains one agent per env; `schola unity train` uses SB3 `VecEnv` and can train a `ScholaMultiAgentEnvironment` (shared policy, agents finish together). Single-agent scenes still go through `SingleAgentEnvironmentAdapter` under `"SingleAgent"`.
 3. **Local inference (US5)** — `PolicyRunner` / `SentisPolicy` drive the same `IAgent.Observe` / `IAgent.Act` loop without rewards, episode flags, or Python.
 
 Both training and inference share the agent’s observation and action path. Only training uses the environment’s reward, terminated/truncated, reset, and wire protocol.
@@ -137,7 +137,7 @@ flowchart TB
   grpcClient --- proto
 ```
 
-Shipped training entry: `schola unity train` starts `UnityGymService` (default gRPC port 8000) and a TCP client to `TrainingServer` (default port 8001). With **Run Script On Play**, entering Play Mode launches that trainer as a child process instead of using a terminal (skip with `-ScholaDisableScript`). States return in wire responses. `ITrainingStateSink` is unused by the training connector. Native Unity gRPC under `Training/Generated/` remains optional tooling. Python `GymEnv` remains one agent per env.
+Shipped training entry: `schola unity train` starts `UnityGymService` (default gRPC port 8000) and a TCP client to `TrainingServer` (default port 8001). With **Run Script On Play**, entering Play Mode launches that trainer as a child process instead of using a terminal (skip with `-ScholaDisableScript`). States return in wire responses. `ITrainingStateSink` is unused by the training connector. Native Unity gRPC under `Training/Generated/` remains optional tooling. Python `GymEnv` remains one agent per env; `schola unity train` reaches one or many agents on env index `0` via SB3 `VecEnv`.
 
 Sources: `Unity/com.amd.schola/Runtime/`, `Inference/`, `Training/`, `Training/README.md`, `Proto/GymConnector.proto`, `Resources/python/schola/unity/bridge.py`.
 
@@ -801,7 +801,7 @@ No competitive/cooperative configs exist in Unity.
 Current tree is the authority. Context only:
 
 1. **`origin/US4`** — native gRPC spike: generated proto C# plus `GymStartupServer` implementing `StartGymConnector` only. Step/reset unimplemented.
-2. **PR #17 / revert PR #18** — early TCP + JSON bridge was reverted, then restored and completed as the shipped `TrainingServer` / `TrainingSession` / `TrainingWire` + `schola.unity.bridge` path. It calls `IEnvironment` directly and does not implement `ITrainingStateSink`.
+2. **PR #17 / revert PR #18** — early TCP + JSON bridge was reverted, then restored and completed as the shipped `TrainingServer` / `TrainingSession` / `TrainingWire` + `schola.unity.bridge` path. `TrainingSession` speaks `IMultiAgentEnvironment` (wrapping single-agent envs through `SingleAgentEnvironmentAdapter`) and does not implement `ITrainingStateSink`.
 
 Sources: `Proto/GymConnector.proto`, `Proto/State.proto`, `Proto/Definitions.proto`, `Proto/StateUpdates.proto`, `Training/README.md`, `Training/TrainingServer.cs`, `TrainingSession.cs`, `TrainingWire.cs`, `Resources/python/schola/unity/bridge.py`, `Resources/python/schola/gym/env.py`.
 

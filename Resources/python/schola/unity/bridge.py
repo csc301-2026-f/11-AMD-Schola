@@ -4,8 +4,8 @@
 
 The adapter owns a loopback-only, length-prefixed JSON connection to Unity. It
 uses the existing protobuf schema and gRPC clients without native Unity plugins.
-One adapter serves one environment, ID 0, with the agents that Unity declares. A
-single-agent Unity environment declares one agent, ``SingleAgent``.
+One adapter serves Unity's registered environments in index order and their declared
+agents. A single-agent Unity environment declares one agent, ``SingleAgent``.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -95,7 +95,9 @@ def _decode_tree(nodes: list[dict], *, space: bool):
                 value.multi_binary_space.shape = shape[0]
             else:
                 data = node.get("boolValues") or []
-                if not isinstance(data, list) or not all(type(flag) is bool for flag in data):
+                if not isinstance(data, list) or not all(
+                    type(flag) is bool for flag in data
+                ):
                     raise ValueError("MultiBinary values must be booleans")
                 value.multi_binary_point.values.extend(data)
         else:
@@ -247,7 +249,8 @@ class UnityGymService(services.GymServiceServicer):
     def __init__(self, connection: UnityConnection):
         self.connection = connection
         # Agent ids Unity declared for this session; fetched on first use.
-        self._agent_ids: frozenset[str] | None = None
+        self._agent_ids: list[frozenset[str]] | None = None
+        self._environment_count = 1
 
     def _request(self, context, command, **kwargs):
         try:
@@ -266,23 +269,100 @@ class UnityGymService(services.GymServiceServicer):
     def StartGymConnector(self, request, context):
         # A new session may be a different Unity scene with different agents.
         self._agent_ids = None
-        self._request(context, "start", autoreset=request.autoreset_type)
+        response = self._request(context, "start", autoreset=request.autoreset_type)
+        count = response.get("environmentCount", 1)
+        if type(count) is not int or count < 1:
+            context.abort(
+                grpc.StatusCode.FAILED_PRECONDITION, "Invalid Unity environment count"
+            )
+        self._environment_count = count
         return connector.GymConnectorStartResponse()
 
+    def _validate_environment_ids(self, environments, context):
+        if (
+            not isinstance(environments, list)
+            or len(environments) != self._environment_count
+            or any(
+                not isinstance(item, dict)
+                or type(item.get("id")) is not int
+                or item["id"] != i
+                for i, item in enumerate(environments)
+            )
+        ):
+            context.abort(
+                grpc.StatusCode.FAILED_PRECONDITION, "Invalid Unity environment ids"
+            )
+
+    @staticmethod
+    def _agent_names(entries, context):
+        if (
+            not isinstance(entries, list)
+            or not entries
+            or any(
+                not isinstance(item, dict)
+                or not isinstance(item.get("id"), str)
+                or not item["id"].strip()
+                for item in entries
+            )
+        ):
+            context.abort(
+                grpc.StatusCode.FAILED_PRECONDITION, "Invalid Unity agent ids"
+            )
+        names = frozenset(item["id"] for item in entries)
+        if len(names) != len(entries):
+            context.abort(
+                grpc.StatusCode.FAILED_PRECONDITION, "Duplicate Unity agent ids"
+            )
+        return names
+
     def _definition(self, context) -> list[dict]:
-        agents = self._request(context, "definition")["agents"]
-        self._agent_ids = frozenset(agent["id"] for agent in agents)
-        return agents
+        response = self._request(context, "definition")
+        environments = response.get("environments")
+        if environments is None:
+            environments = [dict(id=0, agents=response["agents"])]
+        self._validate_environment_ids(environments, context)
+        self._agent_ids = [
+            self._agent_names(item.get("agents"), context) for item in environments
+        ]
+        return environments
 
     def RequestTrainingDefinition(self, request, context):
         definition = definitions.TrainingDefinition()
-        environment = definition.environment_definitions.add()
         for item in self._definition(context):
-            agent = environment.agent_definitions[item["id"]]
-            agent.agent_type = "Unity"
-            agent.obs_space.CopyFrom(_decode_tree(item["observationSpace"], space=True))
-            agent.action_space.CopyFrom(_decode_tree(item["actionSpace"], space=True))
+            environment = definition.environment_definitions.add()
+            for entry in item["agents"]:
+                agent = environment.agent_definitions[entry["id"]]
+                agent.agent_type = "Unity"
+                agent.obs_space.CopyFrom(
+                    _decode_tree(entry["observationSpace"], space=True)
+                )
+                agent.action_space.CopyFrom(
+                    _decode_tree(entry["actionSpace"], space=True)
+                )
         return definition
+
+    def _environments(self, response, context):
+        environments = response.get("environments")
+        if environments is None and self._environment_count == 1:
+            environments = [dict(response, id=0)]
+        self._validate_environment_ids(environments, context)
+        if self._agent_ids is not None:
+            for i, environment in enumerate(environments):
+                fields = (
+                    ["states", "initialStates"]
+                    if environment.get("hasInitial")
+                    else ["states"]
+                )
+                for field in fields:
+                    if (
+                        self._agent_names(environment.get(field), context)
+                        != self._agent_ids[i]
+                    ):
+                        context.abort(
+                            grpc.StatusCode.FAILED_PRECONDITION,
+                            "Unity returned unexpected agent ids",
+                        )
+        return environments
 
     @staticmethod
     def _initial(target, agent_states):
@@ -302,62 +382,87 @@ class UnityGymService(services.GymServiceServicer):
         kind = request.WhichOneof("update")
         result = states.State()
         if kind == "reset":
-            if any(env_id != 0 for env_id in request.reset.environments):
+            if any(
+                env_id < 0 or env_id >= self._environment_count
+                for env_id in request.reset.environments
+            ):
                 context.abort(
-                    grpc.StatusCode.INVALID_ARGUMENT, "Unity exposes environment 0 only"
+                    grpc.StatusCode.INVALID_ARGUMENT, "Unknown Unity environment id"
                 )
-            settings = request.reset.environments.get(0)
-            kwargs: dict[str, Any] = {}
-            if settings is not None:
-                kwargs["hasSeed"] = settings.HasField("seed")
-                kwargs["seed"] = settings.seed
-                kwargs["options"] = [
-                    dict(key=key, value=value)
-                    for key, value in settings.options.items()
-                ]
+            entries = []
+            for env_id in range(self._environment_count):
+                entry = dict(id=env_id)
+                settings = request.reset.environments.get(env_id)
+                if settings is not None:
+                    entry.update(
+                        hasSeed=settings.HasField("seed"),
+                        seed=settings.seed,
+                        options=[
+                            dict(key=key, value=value)
+                            for key, value in settings.options.items()
+                        ],
+                    )
+                entries.append(entry)
+            if self._environment_count == 1:
+                kwargs = {
+                    key: value for key, value in entries[0].items() if key != "id"
+                }
+            else:
+                kwargs = dict(environments=entries)
             response = self._request(context, "reset", **kwargs)
-            self._initial(
-                result.initial_state.environment_states[0], response["states"]
-            )
-        elif kind == "step":
-            if len(request.step.environments) != 1:
-                context.abort(
-                    grpc.StatusCode.INVALID_ARGUMENT, "Unity exposes environment 0 only"
+            for env_id, entry in enumerate(self._environments(response, context)):
+                self._initial(
+                    result.initial_state.environment_states[env_id], entry["states"]
                 )
-            # Trainers such as RLlib send actions for live agents only, so a subset
-            # of the declared agents is valid. Unknown ids never reach Unity.
-            agent_updates = request.step.environments[0].updates
+        elif kind == "step":
             if self._agent_ids is None:
                 self._definition(context)
-            unknown = sorted(set(agent_updates) - self._agent_ids)
-            if unknown:
+            if len(request.step.environments) != self._environment_count:
                 context.abort(
                     grpc.StatusCode.INVALID_ARGUMENT,
-                    f"Unknown Unity agent id: {', '.join(unknown)}",
+                    "Expected one step per Unity environment",
                 )
-            try:
-                actions = [
-                    dict(id=agent_id, action=_encode_point(agent_updates[agent_id]))
-                    for agent_id in sorted(agent_updates)
-                ]
-            except ValueError as error:
-                context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(error))
-            response = self._request(context, "step", actions=actions)
-            environment = result.training_state.environment_states.add()
-            for item in response["states"]:
-                agent = environment.agent_states[item["id"]]
-                agent.observations.CopyFrom(
-                    _decode_tree(item["observations"], space=False)
-                )
-                agent.reward = item["reward"]
-                agent.terminated = item["terminated"]
-                agent.truncated = item["truncated"]
-                agent.info.update(_info(item.get("info")))
-            if response.get("hasInitial"):
-                self._initial(
-                    result.initial_state.environment_states[0],
-                    response["initialStates"],
-                )
+            entries = []
+            for env_id, environment in enumerate(request.step.environments):
+                unknown = sorted(set(environment.updates) - self._agent_ids[env_id])
+                if unknown:
+                    context.abort(
+                        grpc.StatusCode.INVALID_ARGUMENT,
+                        f"Unknown Unity agent id: {', '.join(unknown)}",
+                    )
+                try:
+                    actions = [
+                        dict(
+                            id=agent_id,
+                            action=_encode_point(environment.updates[agent_id]),
+                        )
+                        for agent_id in sorted(environment.updates)
+                    ]
+                except ValueError as error:
+                    context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(error))
+                entries.append(dict(id=env_id, actions=actions))
+            kwargs = (
+                dict(actions=entries[0]["actions"])
+                if self._environment_count == 1
+                else dict(environments=entries)
+            )
+            response = self._request(context, "step", **kwargs)
+            for env_id, entry in enumerate(self._environments(response, context)):
+                environment = result.training_state.environment_states.add()
+                for item in entry["states"]:
+                    agent = environment.agent_states[item["id"]]
+                    agent.observations.CopyFrom(
+                        _decode_tree(item["observations"], space=False)
+                    )
+                    agent.reward = item["reward"]
+                    agent.terminated = item["terminated"]
+                    agent.truncated = item["truncated"]
+                    agent.info.update(_info(item.get("info")))
+                if entry.get("hasInitial"):
+                    self._initial(
+                        result.initial_state.environment_states[env_id],
+                        entry["initialStates"],
+                    )
         else:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Expected reset or step")
         return result

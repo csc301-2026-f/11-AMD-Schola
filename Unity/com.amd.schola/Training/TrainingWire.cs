@@ -68,6 +68,26 @@ namespace AMD.Schola.Training
     }
 
     [Serializable]
+    public sealed class TrainingEnvironmentRequest
+    {
+        public int id;
+        public bool hasSeed;
+        public int seed;
+        public TrainingEntry[] options;
+        public TrainingAgentAction[] actions;
+    }
+
+    [Serializable]
+    public sealed class TrainingEnvironmentResponse
+    {
+        public int id;
+        public TrainingAgentDefinition[] agents;
+        public TrainingAgentState[] states;
+        public bool hasInitial;
+        public TrainingAgentState[] initialStates;
+    }
+
+    [Serializable]
     public sealed class TrainingRequest
     {
         public int version = TrainingWire.Version;
@@ -79,6 +99,7 @@ namespace AMD.Schola.Training
 
         // step: one action per live agent. Finished agents may be left out.
         public TrainingAgentAction[] actions;
+        public TrainingEnvironmentRequest[] environments;
     }
 
     [Serializable]
@@ -87,6 +108,8 @@ namespace AMD.Schola.Training
         public int version = TrainingWire.Version;
         public bool ok = true;
         public string error;
+        public int environmentCount;
+        public TrainingEnvironmentResponse[] environments;
 
         // definition: one entry per agent.
         public TrainingAgentDefinition[] agents;

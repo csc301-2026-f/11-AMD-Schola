@@ -145,6 +145,24 @@ namespace AMD.Schola.Tests.Training
             var child = new GameObject("SecondEnvironment");
             child.transform.SetParent(root.transform);
             var b = child.AddComponent<ScholaMultiAgentEnvironment>();
+            a.SetAgents(
+                new[]
+                {
+                    new KeyValuePair<string, ScholaAgent>(
+                        "cube",
+                        AddTranslateAgent(root, "A", "position")
+                    ),
+                }
+            );
+            b.SetAgents(
+                new[]
+                {
+                    new KeyValuePair<string, ScholaAgent>(
+                        "cube",
+                        AddTranslateAgent(child, "B", "position")
+                    ),
+                }
+            );
             var server = root.AddComponent<TrainingServer>();
             var assigned = new IMultiAgentEnvironment[] { a, b };
             try
@@ -166,10 +184,23 @@ namespace AMD.Schola.Tests.Training
                 );
                 Assert.Throws<ArgumentException>(() => server.RegisterEnvironments(assigned));
                 Assert.That(server.RegisteredEnvironments, Is.SameAs(snapshot));
-                // Registration is available before the batch transport is implemented.
-                Assert.Throws<InvalidOperationException>(() => server.StartRegisteredServer(0));
-                Assert.That(server.IsRunning, Is.False);
-                Assert.That(server.BoundPort, Is.Zero);
+                server.StartRegisteredServer(0);
+                Assert.That(server.IsRunning, Is.True);
+                var response = JsonUtility.FromJson<TrainingResponse>(
+                    Exchange(
+                        server,
+                        server.BoundPort,
+                        "{\"version\":" + TrainingWire.Version + ",\"command\":\"start\"}",
+                        "{\"version\":" + TrainingWire.Version + ",\"command\":\"definition\"}"
+                    )
+                );
+                Assert.That(response.ok, Is.True, response.error);
+                Assert.That(response.environments, Has.Length.EqualTo(2));
+                Assert.That(response.environments[0].id, Is.Zero);
+                Assert.That(response.environments[1].id, Is.EqualTo(1));
+                Assert.That(response.environments[0].agents[0].id, Is.EqualTo("cube"));
+                Assert.That(response.environments[1].agents[0].id, Is.EqualTo("cube"));
+                server.StopServer();
             }
             finally
             {
@@ -211,6 +242,87 @@ namespace AMD.Schola.Tests.Training
             finally
             {
                 UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void BatchRequest_InvalidSecondAction_DoesNotMoveEitherAgent()
+        {
+            var root = new GameObject("TrainingBatchValidation");
+            var first = new GameObject("FirstEnvironment");
+            var second = new GameObject("SecondEnvironment");
+            first.transform.SetParent(root.transform);
+            second.transform.SetParent(root.transform);
+            var a = AddTranslateAgent(first, "A", "position");
+            var b = AddTranslateAgent(second, "B", "position");
+            var firstEnvironment = first.AddComponent<ScholaEnvironment>();
+            var secondEnvironment = second.AddComponent<ScholaEnvironment>();
+            firstEnvironment.SetAgent(a);
+            secondEnvironment.SetAgent(b);
+            var server = root.AddComponent<TrainingServer>();
+            try
+            {
+                server.RegisterEnvironments(
+                    new IMultiAgentEnvironment[]
+                    {
+                        new SingleAgentEnvironmentAdapter(firstEnvironment),
+                        new SingleAgentEnvironmentAdapter(secondEnvironment),
+                    }
+                );
+                server.StartRegisteredServer(0);
+                var actions = new TrainingEnvironmentRequest[2];
+                for (var i = 0; i < 2; i++)
+                    actions[i] = new TrainingEnvironmentRequest
+                    {
+                        id = i,
+                        actions = new[]
+                        {
+                            new TrainingAgentAction
+                            {
+                                id = "SingleAgent",
+                                action = TrainingWire.EncodePoint(
+                                    new DictPoint
+                                    {
+                                        Points =
+                                        {
+                                            ["translate"] = new BoxPoint
+                                            {
+                                                Values = { i == 0 ? 0.5f : 2f, 0, 0 },
+                                            },
+                                        },
+                                    }
+                                ),
+                            },
+                        },
+                    };
+                var response = JsonUtility.FromJson<TrainingResponse>(
+                    Exchange(
+                        server,
+                        server.BoundPort,
+                        JsonUtility.ToJson(new TrainingRequest { command = "start" }),
+                        JsonUtility.ToJson(
+                            new TrainingRequest
+                            {
+                                command = "reset",
+                                environments = new[]
+                                {
+                                    new TrainingEnvironmentRequest { id = 0 },
+                                    new TrainingEnvironmentRequest { id = 1 },
+                                },
+                            }
+                        ),
+                        JsonUtility.ToJson(
+                            new TrainingRequest { command = "step", environments = actions }
+                        )
+                    )
+                );
+                Assert.That(response.ok, Is.False);
+                Assert.That(a.transform.position, Is.EqualTo(Vector3.zero));
+                Assert.That(b.transform.position, Is.EqualTo(Vector3.zero));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
             }
         }
 

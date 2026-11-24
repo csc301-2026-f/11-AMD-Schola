@@ -40,6 +40,24 @@ namespace AMD.Schola.Training
 
         bool AllAgentsFinished => m_Finished.Count == m_AgentIds.Count;
 
+        internal bool IsCompleted => m_Started && !m_NeedsReset && AllAgentsFinished;
+
+        /// <summary>Checks a step without applying actions or resetting the environment.</summary>
+        public void ValidateStep(TrainingAgentAction[] actions)
+        {
+            if (!m_Started)
+                throw new InvalidOperationException("Start a training session first.");
+            if (m_NeedsReset)
+                throw new InvalidOperationException("Reset the environment before stepping.");
+            if (AllAgentsFinished)
+            {
+                if (m_AutoReset == 1)
+                    return;
+                throw new InvalidOperationException("Episode ended; reset before stepping again.");
+            }
+            DecodeActions(actions);
+        }
+
         public TrainingResponse Handle(TrainingRequest request)
         {
             try

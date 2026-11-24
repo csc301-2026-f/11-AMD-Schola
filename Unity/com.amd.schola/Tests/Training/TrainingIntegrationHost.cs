@@ -12,6 +12,7 @@ namespace AMD.Schola.Tests.Training
     /// Batch-mode host for Test/unity/test_unity_live.py. Uses real US1/2/3 runtime
     /// components and Editor updates to pump the same transport used in Play Mode.
     /// Set <c>SCHOLA_TEST_UNITY_AGENTS=2</c> for a two-agent multi-agent environment.
+    /// Set <c>SCHOLA_TEST_UNITY_ENVS=2</c> for two independent single-agent environments.
     /// </summary>
     public static class TrainingIntegrationHost
     {
@@ -73,14 +74,23 @@ namespace AMD.Schola.Tests.Training
                 UnityEngine.Object.DestroyImmediate(previous);
             var root = new GameObject("US4 integration environment");
             var agentCount = AgentCount();
+            var environmentCount = int.Parse(
+                System.Environment.GetEnvironmentVariable("SCHOLA_TEST_UNITY_ENVS") ?? "1"
+            );
+            if (environmentCount < 1 || (environmentCount > 1 && agentCount > 1))
+                throw new InvalidOperationException(
+                    "Choose a single-agent, multi-agent, or vectorized test host."
+                );
             var port = int.Parse(
                 System.Environment.GetEnvironmentVariable("SCHOLA_TEST_UNITY_PORT") ?? "8001"
             );
             var server = root.AddComponent<TrainingServer>();
-            if (agentCount > 1)
+            if (environmentCount > 1)
+                StartVectorized(root, server, environmentCount, port);
+            else if (agentCount > 1)
                 StartMultiAgent(root, server, agentCount, port);
             else
-                StartSingleAgent(root, server, port);
+                server.StartServer(CreateSingleAgent(root), port);
             s_Server = server;
             EditorApplication.update += server.PumpRequests;
             // The test process owns and terminates this dedicated batch Editor.
@@ -95,10 +105,27 @@ namespace AMD.Schola.Tests.Training
             return Math.Max(1, int.Parse(raw));
         }
 
-        static void StartSingleAgent(GameObject root, TrainingServer server, int port)
+        static void StartVectorized(GameObject root, TrainingServer server, int count, int port)
+        {
+            var environments = new IMultiAgentEnvironment[count];
+            for (var i = 0; i < count; i++)
+            {
+                var environmentRoot = new GameObject($"Environment {i}");
+                environmentRoot.transform.SetParent(root.transform);
+                environmentRoot.transform.localPosition = new Vector3(0, 0, i);
+                environments[i] = new SingleAgentEnvironmentAdapter(
+                    CreateSingleAgent(environmentRoot)
+                );
+            }
+            server.RegisterEnvironments(environments);
+            server.StartRegisteredServer(port);
+        }
+
+        static ScholaEnvironment CreateSingleAgent(GameObject root)
         {
             var agentObject = new GameObject("Agent");
             agentObject.transform.SetParent(root.transform);
+            agentObject.transform.localPosition = Vector3.zero;
             var agent = BindTranslateAgent(agentObject);
             var episode = root.AddComponent<Episode>();
             episode.Agent = agentObject.transform;
@@ -107,7 +134,7 @@ namespace AMD.Schola.Tests.Training
             environment.SetAgent(agent);
             environment.SetReward(episode);
             environment.SetEpisodeStatus(episode);
-            server.StartServer(environment, port);
+            return environment;
         }
 
         static void StartMultiAgent(

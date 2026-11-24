@@ -24,6 +24,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 _MULTI_AGENT_HOST = os.environ.get("SCHOLA_TEST_UNITY_AGENTS") == "2"
+_VECTOR_HOST = int(os.environ.get("SCHOLA_TEST_UNITY_ENVS", "1")) > 1
 
 
 @pytest.fixture
@@ -32,7 +33,9 @@ def adapter():
         yield server
 
 
-@pytest.mark.skipif(_MULTI_AGENT_HOST, reason="Single-agent Unity host required")
+@pytest.mark.skipif(
+    _MULTI_AGENT_HOST or _VECTOR_HOST, reason="Single-agent Unity host required"
+)
 def test_real_unity_discovery_actions_terminal_observation_and_reset(adapter):
     env = VecMergeDictActionWrapper(
         VecEnv(ExternalSimulator(), GrpcProtocol("127.0.0.1", adapter.port))
@@ -59,7 +62,9 @@ def test_real_unity_discovery_actions_terminal_observation_and_reset(adapter):
         env.close()
 
 
-@pytest.mark.skipif(_MULTI_AGENT_HOST, reason="Single-agent Unity host required")
+@pytest.mark.skipif(
+    _MULTI_AGENT_HOST or _VECTOR_HOST, reason="Single-agent Unity host required"
+)
 @pytest.mark.parametrize("mode", [AutoResetType.NEXT_STEP, AutoResetType.DISABLED])
 def test_real_unity_other_reset_modes(adapter, mode):
     protocol = GrpcProtocol("127.0.0.1", adapter.port)
@@ -91,7 +96,9 @@ def test_real_unity_other_reset_modes(adapter, mode):
         protocol.close()
 
 
-@pytest.mark.skipif(_MULTI_AGENT_HOST, reason="Single-agent Unity host required")
+@pytest.mark.skipif(
+    _MULTI_AGENT_HOST or _VECTOR_HOST, reason="Single-agent Unity host required"
+)
 def test_real_unity_ppo_training_saves_reloadable_checkpoint(adapter, tmp_path):
     from stable_baselines3 import PPO
 
@@ -120,7 +127,9 @@ def test_real_unity_ppo_training_saves_reloadable_checkpoint(adapter, tmp_path):
         env.close()
 
 
-@pytest.mark.skipif(not _MULTI_AGENT_HOST, reason="Two-agent Unity host not requested")
+@pytest.mark.skipif(
+    not _MULTI_AGENT_HOST or _VECTOR_HOST, reason="Two-agent Unity host not requested"
+)
 def test_real_unity_multi_agent_shared_policy_slots(adapter):
     env = VecMergeDictActionWrapper(
         VecEnv(ExternalSimulator(), GrpcProtocol("127.0.0.1", adapter.port))
@@ -140,7 +149,9 @@ def test_real_unity_multi_agent_shared_policy_slots(adapter):
         env.close()
 
 
-@pytest.mark.skipif(not _MULTI_AGENT_HOST, reason="Two-agent Unity host not requested")
+@pytest.mark.skipif(
+    not _MULTI_AGENT_HOST or _VECTOR_HOST, reason="Two-agent Unity host not requested"
+)
 @pytest.mark.parametrize("mode", [AutoResetType.NEXT_STEP, AutoResetType.DISABLED])
 def test_real_unity_multi_agent_other_reset_modes(adapter, mode):
     protocol = GrpcProtocol("127.0.0.1", adapter.port)
@@ -163,12 +174,8 @@ def test_real_unity_multi_agent_other_reset_modes(adapter, mode):
         if mode == AutoResetType.NEXT_STEP:
             reset = protocol.send_action_msg(action, action_spaces)
             assert not reset[2][0]["agent_0"] and not reset[2][0]["agent_1"]
-            np.testing.assert_array_equal(
-                reset[0][0]["agent_0"]["position"], [0, 0, 0]
-            )
-            np.testing.assert_array_equal(
-                reset[0][0]["agent_1"]["position"], [0, 0, 1]
-            )
+            np.testing.assert_array_equal(reset[0][0]["agent_0"]["position"], [0, 0, 0])
+            np.testing.assert_array_equal(reset[0][0]["agent_1"]["position"], [0, 0, 1])
         else:
             import grpc
 

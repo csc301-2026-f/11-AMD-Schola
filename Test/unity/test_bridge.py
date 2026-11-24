@@ -71,7 +71,9 @@ def test_nested_point_roundtrip_preserves_keys_shape_and_values():
         [1, 2]
     )
     point.dict_point.values["choice"].discrete_point.value = 3
-    point.dict_point.values["flags"].multi_binary_point.values.extend([True, False, True])
+    point.dict_point.values["flags"].multi_binary_point.values.extend(
+        [True, False, True]
+    )
     assert _decode_tree(_encode_point(point), space=False) == point
 
 
@@ -308,7 +310,9 @@ def test_multi_agent_definition_reset_step_and_partial_actions(endpoint):
             assert set(agents) == {"agent_0", "agent_1"}
             assert agents["agent_1"].action_space.box_space.dimensions[0].high == 2
 
-            initial = stub.UpdateState(updates.StateUpdate(reset=updates.Reset()), timeout=5)
+            initial = stub.UpdateState(
+                updates.StateUpdate(reset=updates.Reset()), timeout=5
+            )
             assert set(initial.initial_state.environment_states[0].agent_states) == {
                 "agent_0",
                 "agent_1",
@@ -336,6 +340,173 @@ def test_multi_agent_definition_reset_step_and_partial_actions(endpoint):
     future.result(timeout=5)
     assert [entry["id"] for entry in commands[3]["actions"]] == ["agent_1"]
     assert commands[3]["actions"][0]["action"][0]["values"] == [1.5]
+
+
+def test_real_grpc_batch_routes_environment_ids_and_separate_initial_states(endpoint):
+    commands = []
+
+    def handler(request):
+        commands.append(request)
+        response = dict(version=VERSION, ok=True, environmentCount=2)
+        command = request["command"]
+        if command == "definition":
+            response["environments"] = [
+                dict(id=i, agents=[agent_definition("SingleAgent")]) for i in range(2)
+            ]
+        elif command == "reset":
+            response["environments"] = [
+                dict(id=i, states=[agent_state("SingleAgent", value=i)])
+                for i in range(2)
+            ]
+        elif command == "step":
+            response["environments"] = [
+                dict(
+                    id=0,
+                    states=[
+                        agent_state("SingleAgent", value=0.5, reward=2, terminated=True)
+                    ],
+                    hasInitial=True,
+                    initialStates=[agent_state("SingleAgent")],
+                ),
+                dict(id=1, states=[agent_state("SingleAgent", value=0.25, reward=3)]),
+            ]
+        return response
+
+    future, port = _serve(endpoint, handler)
+    with UnityBridgeServer(port, port=0) as adapter:
+        with grpc.secure_channel(
+            f"127.0.0.1:{adapter.port}", grpc.local_channel_credentials()
+        ) as channel:
+            stub = services.GymServiceStub(channel)
+            stub.StartGymConnector(connector.GymConnectorStartRequest(), timeout=5)
+            definition = stub.RequestTrainingDefinition(
+                connector.TrainingDefinitionRequest(), timeout=5
+            )
+            assert len(definition.environment_definitions) == 2
+            assert all(
+                set(env.agent_definitions) == {"SingleAgent"}
+                for env in definition.environment_definitions
+            )
+            reset = updates.StateUpdate(reset=updates.Reset())
+            reset.reset.environments[1].seed = 23
+            reset.reset.environments[1].options["difficulty"] = "easy"
+            initial = stub.UpdateState(reset, timeout=5)
+            assert set(initial.initial_state.environment_states) == {0, 1}
+            step = updates.StateUpdate(step=updates.Step())
+            for value in [0.5, 0.25]:
+                step.step.environments.add().updates[
+                    "SingleAgent"
+                ].box_point.values.append(value)
+            state = stub.UpdateState(step, timeout=5)
+            envs = state.training_state.environment_states
+            assert len(envs) == 2
+            assert envs[0].agent_states["SingleAgent"].reward == 2
+            assert (
+                envs[0].agent_states["SingleAgent"].observations.box_point.values[0]
+                == 0.5
+            )
+            assert envs[1].agent_states["SingleAgent"].reward == 3
+            assert set(state.initial_state.environment_states) == {0}
+            assert (
+                state.initial_state.environment_states[0]
+                .agent_states["SingleAgent"]
+                .observations.box_point.values[0]
+                == 0
+            )
+            # A pending NEXT_STEP reset may omit A's action while B still receives one.
+            step.step.environments[0].updates.clear()
+            stub.UpdateState(step, timeout=5)
+            forwarded = len(commands)
+            bad = updates.StateUpdate(step=updates.Step())
+            bad.step.environments.add()
+            with pytest.raises(grpc.RpcError) as error:
+                stub.UpdateState(bad, timeout=5)
+            assert error.value.code() == grpc.StatusCode.INVALID_ARGUMENT
+            bad.step.environments.add().updates["unknown"].box_point.values.append(0)
+            with pytest.raises(grpc.RpcError):
+                stub.UpdateState(bad, timeout=5)
+            reset.reset.environments[2].seed = 9
+            with pytest.raises(grpc.RpcError):
+                stub.UpdateState(reset, timeout=5)
+            assert len(commands) == forwarded
+            stub.UpdateState(updates.StateUpdate(status=updates.CLOSED), timeout=5)
+    future.result(timeout=5)
+    assert commands[2]["environments"][0] == dict(id=0)
+    assert commands[2]["environments"][1]["seed"] == 23
+    assert commands[2]["environments"][1]["options"] == [
+        dict(key="difficulty", value="easy")
+    ]
+    assert commands[3]["environments"][0]["actions"][0]["action"][0]["values"] == [0.5]
+    assert commands[3]["environments"][1]["actions"][0]["action"][0]["values"] == [0.25]
+    assert commands[4]["environments"][0]["actions"] == []
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "zero_count",
+        "bool_count",
+        "string_count",
+        "definition_count",
+        "duplicate_agent",
+        "duplicate_environment",
+        "null_environment",
+        "missing_state",
+        "unexpected_agent",
+        "missing_initial_state",
+    ],
+)
+def test_batch_rejects_inconsistent_unity_definitions_and_results(endpoint, failure):
+    def handler(request):
+        command = request["command"]
+        response = dict(version=VERSION, ok=True, environmentCount=2)
+        if command == "start":
+            if failure == "zero_count":
+                response["environmentCount"] = 0
+            elif failure == "bool_count":
+                response["environmentCount"] = True
+            elif failure == "string_count":
+                response["environmentCount"] = "2"
+        elif command == "definition":
+            response["environments"] = [
+                dict(id=i, agents=[agent_definition("SingleAgent")]) for i in range(2)
+            ]
+            if failure == "definition_count":
+                response["environments"].pop()
+            elif failure == "duplicate_agent":
+                response["environments"][1]["agents"] *= 2
+        elif command in ("reset", "step"):
+            response["environments"] = [
+                dict(id=i, states=[agent_state("SingleAgent")]) for i in range(2)
+            ]
+            second = response["environments"][1]
+            if failure == "duplicate_environment":
+                second["id"] = 0
+            elif failure == "null_environment":
+                response["environments"][1] = None
+            elif failure == "missing_state":
+                second["states"] = []
+            elif failure == "unexpected_agent":
+                second["states"][0]["id"] = "unknown"
+            elif failure == "missing_initial_state":
+                second["hasInitial"] = True
+        return response
+
+    future, port = _serve(endpoint, handler)
+    with UnityBridgeServer(port, port=0) as adapter:
+        with grpc.secure_channel(
+            f"127.0.0.1:{adapter.port}", grpc.local_channel_credentials()
+        ) as channel:
+            stub = services.GymServiceStub(channel)
+            with pytest.raises(grpc.RpcError) as error:
+                stub.StartGymConnector(connector.GymConnectorStartRequest(), timeout=5)
+                stub.RequestTrainingDefinition(
+                    connector.TrainingDefinitionRequest(), timeout=5
+                )
+                stub.UpdateState(updates.StateUpdate(reset=updates.Reset()), timeout=5)
+            assert error.value.code() == grpc.StatusCode.FAILED_PRECONDITION
+            stub.UpdateState(updates.StateUpdate(status=updates.CLOSED), timeout=5)
+    future.result(timeout=5)
 
 
 def test_multi_agent_vecenv_sees_one_slot_per_agent(endpoint):
@@ -366,9 +537,7 @@ def test_multi_agent_vecenv_sees_one_slot_per_agent(endpoint):
 
     future, port = _serve(endpoint, handler)
     with UnityBridgeServer(port, port=0) as adapter:
-        env = VecEnv(
-            ExternalSimulator(), GrpcProtocol("127.0.0.1", adapter.port)
-        )
+        env = VecEnv(ExternalSimulator(), GrpcProtocol("127.0.0.1", adapter.port))
         try:
             assert env.num_envs == 2
             obs = env.reset()

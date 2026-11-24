@@ -23,7 +23,7 @@ namespace AMD.Schola.Training
     /// Use the ordered Environments list for independent environments. Existing scenes
     /// may assign one single-agent or multi-agent field instead. With no assignments,
     /// a local ScholaMultiAgentEnvironment is used, then a ScholaEnvironment.
-    /// Registration supports several environments; the current wire serves one.
+    /// One request collects results from all registered environments on the main thread.
     /// </remarks>
     [DisallowMultipleComponent]
     [AddComponentMenu("Schola/Training Server")]
@@ -75,7 +75,7 @@ namespace AMD.Schola.Training
         Thread m_Thread;
         CancellationTokenSource m_Cancellation;
         volatile bool m_Running;
-        TrainingSession m_Session;
+        TrainingBatchSession m_Session;
         int m_TimeoutMilliseconds;
 
         public bool IsRunning => m_Running;
@@ -261,14 +261,7 @@ namespace AMD.Schola.Training
             if (m_Running)
                 return;
             ValidateEndpoint(port, requestTimeoutSeconds);
-            // Batched request routing is introduced with the environment wire format.
-            // Until then, fail before binding a port rather than serving only entry zero.
-            if (m_RegisteredEnvironments.Count != 1)
-                throw new InvalidOperationException(
-                    "The current training wire supports one registered environment. "
-                        + "Multiple environments require batched request routing."
-                );
-            Listen(new TrainingSession(m_RegisteredEnvironments[0]), port, requestTimeoutSeconds);
+            Listen(new TrainingBatchSession(m_RegisteredEnvironments), port, requestTimeoutSeconds);
         }
 
         static void ValidateEndpoint(int port, int requestTimeoutSeconds)
@@ -285,7 +278,7 @@ namespace AMD.Schola.Training
                 );
         }
 
-        void Listen(TrainingSession session, int port, int requestTimeoutSeconds)
+        void Listen(TrainingBatchSession session, int port, int requestTimeoutSeconds)
         {
             m_Session = session;
             m_TimeoutMilliseconds = requestTimeoutSeconds * 1000;

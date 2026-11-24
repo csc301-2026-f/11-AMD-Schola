@@ -114,11 +114,14 @@ not implement it.
 
 ## Scope and lifecycle
 
-- One environment, ID **0**, per endpoint. The environment may declare one or
-  many agents. A single-agent `ScholaEnvironment` is presented under the id
+- One endpoint serves an ordered list of environments with IDs **0**, **1**, and
+  so on. Assign their components to the Training Server's **Environments** list
+  and clear the individual Environment / Multi Agent Environment fields. Existing
+  single-environment assignments continue to use ID **0**. Each environment may
+  declare one or many agents. A single-agent `ScholaEnvironment` is presented under the id
   **SingleAgent**. A `ScholaMultiAgentEnvironment` uses the ids you assign.
-  Run independent Unity instances/ports for independent endpoints. In-process
-  vector environments are outside this implementation.
+  The server collects all environments' results in one exchange on Unity's main
+  thread. Each environment tracks its own episode and automatic resets.
 - Supported values/spaces: **Dict**, **Box** with FLOAT32, **Discrete**, and
   **MultiBinary** (boolean vector; wire kind `multi_binary` with `shape` /
   `boolValues`). Unsupported types, mismatched action keys/shapes/lengths,
@@ -127,6 +130,11 @@ not implement it.
 - Startup initializes sensors/actuators and snapshots reset poses once. A reset
   is required before the first step and after an operation fails. Disconnecting
   and reconnecting preserves the original snapshot while requiring a fresh reset.
+- Every environment's actions and reset settings are validated before applying
+  the batch. If an environment hook fails after another environment has already
+  advanced, the server discards the partial results and blocks further steps
+  until all environments are explicitly reset. A failed startup must first be
+  retried successfully before resetting.
 - The environment is complete only when **every** agent has reported terminated
   or truncated. Until then a finished agent may be omitted from the action map
   and keeps its terminal state. If an action is sent for that agent, it is
@@ -134,8 +142,14 @@ not implement it.
 - **SAME_STEP** (SB3 default): when every agent is done, return final states and
   separate reset observations for every agent in the same response.
   **NEXT_STEP**: the next step ignores its actions and returns the reset state
-  for every agent with zero reward and cleared flags. **DISABLED**: reject
-  further steps after episode end until explicit reset.
+  for every agent with zero reward and cleared flags. Each environment resets
+  independently; finishing one environment does not reset the others.
+- **DISABLED**, with multiple environments: completed environments keep returning
+  their terminal observations, reward, flags and info while the other environments
+  continue. Actions for a completed environment are ignored, matching Unreal's
+  connector. An explicit reset starts new episodes in all environments. The
+  existing single-environment connection reports an error if stepped after
+  completion until explicitly reset.
 - Reset seeds/options are forwarded to `Seed`/`SetOptions`. The current
   `ScholaEnvironment` and `ScholaMultiAgentEnvironment` implement those as
   no-ops; randomized seeded resets require environment support. The Python seed
@@ -169,6 +183,42 @@ not implement it.
    and train with RLlib's `RayEnv`, which keeps true multi-agent dicts and stops
    sending actions for finished agents.
 
+## Vectorized training with independent environments
+
+Use one Training Server to train the same policy across several independent
+environments in one Unity process:
+
+1. Create two separate environment roots, each with its own `ScholaEnvironment`,
+   agent, sensors, actuators, reward and episode-status components. A convenient
+   starting point is a copy of the Training Demo environment. Keep each
+   environment's references pointed at its own objects.
+2. Keep one enabled **Training Server**. Clear its individual **Environment** and
+   **Multi Agent Environment** assignments. Add both environment components to
+   its **Environments** list, in the desired ID order. Duplicate entries and
+   missing references are rejected.
+3. Give both agents identical observation and action spaces, including bounds
+   and dictionary keys. For example, use `TranslateActuator.MaxDisplacement = 0.1`
+   in both environments. Keep other controllers disabled and enable Run In
+   Background.
+4. Enter Play Mode and run the same trainer command; no extra Python process or
+   port is needed for the second environment:
+
+   ```powershell
+   schola unity train --unity-port 8001 --timesteps 512 --checkpoint ckpt/vectorized_ppo
+   ```
+
+SB3 discovers two slots automatically. With one agent per environment, its
+128-step rollout collects 256 agent transitions, so 512 timesteps runs two
+rollouts. The environments can finish on different steps and reset independently.
+If an environment contains multiple agents, those agents must finish together for
+the shared-policy SB3 path; this restriction does not synchronize separate
+environments.
+
+Batching collects several environments in one request. Environment steps still
+run sequentially on Unity's main thread; this does not add parallel physics
+simulation. More elaborate environment tasks and convergence measurements remain
+the environment author's responsibility.
+
 ## Verification
 
 Run Unity EditMode tests, including assembly `AMD.Schola.Tests.Training`, in Test
@@ -182,12 +232,31 @@ installed Editor with `-batchmode -nographics -projectPath <project>` and
 `-executeMethod AMD.Schola.Tests.Training.TrainingIntegrationHost.Run`. Set
 `SCHOLA_TEST_UNITY_PORT` to an unused port in both the Editor process and test
 terminal. Set `SCHOLA_TEST_UNITY_AGENTS=2` on the Editor process for the
-two-agent live tests (omit it for the single-agent suite). Once the Editor log
-contains `SCHOLA_US4_READY:<port>`, run:
+two-agent live tests (omit it for the single-agent suite). For two independent
+single-agent environments, instead set `SCHOLA_TEST_UNITY_ENVS=2` and
+`SCHOLA_TEST_UNITY_AGENTS=1` in both the Editor process and Python terminal. Do not
+combine the multi-agent and vectorized host configurations. Once the Editor log
+contains `SCHOLA_US4_READY:<port>`, run from the repository root:
 
 ```powershell
 python -m pytest Test/unity --confcutdir=Test/unity -n 0
 ```
+
+To run only the two-environment cases against an already running host:
+
+```powershell
+$env:SCHOLA_TEST_UNITY_PORT = "8001"
+$env:SCHOLA_TEST_UNITY_ENVS = "2"
+$env:SCHOLA_TEST_UNITY_AGENTS = "1"
+python -m pytest Test/unity/test_vectorized_unity_live.py --confcutdir=Test/unity -n 0
+```
+
+These cases cover staggered termination/truncation, all three reset modes,
+invalid-action recovery, SB3 terminal observations and a short PPO optimizer run
+with checkpoint save/reload. Restart the host with both counts set to `1` and run
+`test_unity_live.py` for the original single-environment checks. A two-agent host
+uses `SCHOLA_TEST_UNITY_AGENTS=2` and `SCHOLA_TEST_UNITY_ENVS=1`; set both values in
+the matching Python terminal as well. Tests for other host configurations skip.
 
 The integration host uses real agent, sensor, actuator, environment and training
 server components. It pumps requests through Editor updates rather than Play

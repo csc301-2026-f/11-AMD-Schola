@@ -1,6 +1,6 @@
 # US6 validation record
 
-The results below describe the original two-sample implementation. Setup Demo has since been removed from the Package Manager sample options. Training Demo supplies the current training and inference scenes. Historical test counts and Git revisions below apply to the earlier version.
+The original US6 results below cover an earlier revision that shipped two samples. Training Demo now supplies the training and inference scenes. The retired Setup Demo files have been removed.
 
 ## Environment and integration
 

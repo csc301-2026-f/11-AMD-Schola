@@ -5,7 +5,7 @@ Import **Training Demo** to use the training and ONNX inference scenes. Both sce
 ## Requirements
 
 - Unity **6000.3.24f1** (Unity 6.3); a new **3D Built-In Render Pipeline** project is the baseline. URP/HDRP users must supply compatible materials.
-- Git for cloning/Git installation. Python **3.10?3.12** for training/export only.
+- Git for cloning/Git installation. Python **3.10–3.12** for training/export only.
 - Package Manager resolves `com.unity.ai.inference` **2.6.1** and the declared test framework dependency. No Unreal installation or native Unity gRPC library is needed.
 - CPU inference is the default; no GPU is required. See [validation.md](validation.md) for tested results and remaining limits.
 
@@ -16,10 +16,10 @@ Clone the repository, then open **Window > Package Management > Package Manager 
 Alternatively, use **Install package from git URL**:
 
 ```text
-https://github.com/csc301-2026-f/11-AMD-Schola.git?path=/Unity/com.amd.schola#US6-setup-integration
+https://github.com/csc301-2026-f/11-AMD-Schola.git?path=/Unity/com.amd.schola
 ```
 
-For repeatable installations, replace the branch revision with a published commit containing the sample version you want. The `?path=` must precede `#revision`; the repository root is not a UPM package.
+For repeatable installations, append `#<commit-sha>` after the package path.
 
 Select **AMD Schola 0.1.0**, expand **Samples**, and import **Training Demo**. It appears under `Assets/Samples/AMD Schola/0.1.0/`. Wait for compilation. Imported samples are editable copies; back up customizations before reimporting.
 
@@ -37,7 +37,7 @@ py -3.12 -m venv .venv
 python -m pip install -e "./Resources/python[sb3]"
 ```
 
-Use your installed Python 3.10?3.12 executable if the Windows `py` launcher is unavailable. If activation is restricted, invoke `.venv/Scripts/python.exe` and `.venv/Scripts/schola.exe` directly.
+Use your installed Python 3.10–3.12 executable if the Windows `py` launcher is unavailable. If activation is restricted, invoke `.venv/Scripts/python.exe` and `.venv/Scripts/schola.exe` directly.
 
 Open `Training Demo/Scenes/ScholaTrainingDemo.unity`. Enable **Run In Background** in Player settings, wait for compilation to finish, then enter Play Mode. The scene waits for Python actions. Run:
 

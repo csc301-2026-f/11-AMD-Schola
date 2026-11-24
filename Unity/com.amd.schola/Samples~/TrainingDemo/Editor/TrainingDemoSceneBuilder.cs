@@ -88,14 +88,8 @@ namespace AMD.Schola.Samples.TrainingDemo.Editor
                 runner.SetAgents(new[] { agent });
                 if (model == null)
                 {
-                    var script = AssetDatabase.FindAssets("TrainingDemoSceneBuilder t:MonoScript")[
-                        0
-                    ];
-                    var sample = System.IO.Path.GetDirectoryName(
-                        System.IO.Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(script))
-                    );
                     model = AssetDatabase.LoadAssetAtPath<Unity.InferenceEngine.ModelAsset>(
-                        sample + "/Models/reach_target.onnx"
+                        SamplePath() + "/Models/reach_target.onnx"
                     );
                 }
                 runner.Model = model;
@@ -209,14 +203,19 @@ namespace AMD.Schola.Samples.TrainingDemo.Editor
             light.transform.rotation = Quaternion.Euler(45, -30, 0);
         }
 
-        static Material Material(string name, Color color)
+        static string SamplePath()
         {
             var script = AssetDatabase.FindAssets("TrainingDemoSceneBuilder t:MonoScript")[0];
-            var sample = System
+            return System
                 .IO.Path.GetDirectoryName(
                     System.IO.Path.GetDirectoryName(AssetDatabase.GUIDToAssetPath(script))
                 )
                 .Replace('\\', '/');
+        }
+
+        static Material Material(string name, Color color)
+        {
+            var sample = SamplePath();
             var folder = sample + "/Materials";
             if (!AssetDatabase.IsValidFolder(folder))
                 AssetDatabase.CreateFolder(sample, "Materials");

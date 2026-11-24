@@ -34,7 +34,8 @@ namespace AMD.Schola.Samples.TrainingDemo
             {
                 m_Arrived = true;
                 Debug.Log("Schola Inference Demo: target reached using ONNX; no Python required.");
-                m_Runner.StopRunning();
+                if (m_Runner != null)
+                    m_Runner.StopRunning();
             }
         }
 

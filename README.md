@@ -74,6 +74,12 @@ More detail, troubleshooting and a [video walkthrough](https://youtu.be/utxF_vXd
 ![Drones gathering at the base, and one has turned green.](deliverables/D2/demo/d2demo2.jpeg)
 ![All six drones are green and home.](deliverables/D2/demo/d2demo3.jpeg)
 
+## Unity setup and adaptation (US6)
+
+Follow the [complete setup guide](Unity/com.amd.schola/Documentation~/setup.md) to install the package, open the supplied scenes, train a policy, export ONNX, run inference without Python, and adapt the sample to your project. Import **Training Demo** from Package Manager.
+
+The [Danger Zone demo](Unity/com.amd.schola/Documentation~/danger-zone.md) adds randomized episodes, a red danger zone, episode statistics, and matching training/inference scenes to Training Demo.
+
 ## Train and run your own agent
 
 This is the full workflow added in D3. You train a cube to reach a ball, export what it learned, and then run it with Python closed. It takes about 15 minutes plus a short training run.
@@ -133,7 +139,7 @@ Everything is built around one loop that repeats while the game runs. Sensors **
 | 3 | **Control training episodes** (US3) | Use `ScholaEnvironment` to report rewards, episode endings (terminated or truncated) and resets, so that an agent can learn from repeated attempts. | Done, and reused by the training connection |
 | 4 | **Train through Schola** (US4) | Run `schola unity train` against a running scene, and add `--export-onnx` to save the result as an ONNX model. | New in D3, for one or many agents with Transform-based movement |
 | 5 | **Run a trained policy** (US5) | Add a `PolicyRunner` component, or use `SentisPolicy` with `SimpleStepper` and `StepperRunner` directly. A model whose names or sizes do not fit the agent is rejected with a clear message, and outputs past the action limits are clamped. | Working, both with the demo model and with a model you train |
-| 6 | **Set up and try the package** (US6) | Follow a guide and sample scene to install the package and use a trained model. | In progress, and the [demo guide](deliverables/D2/demo/README.md) is the first version |
+| 6 | **Set up and try the package** (US6) | Follow a guide and sample scene to install the package and use a trained model. | Available through [Training Demo and the Unity setup guide](Unity/com.amd.schola/Documentation~/setup.md) |
 
 A typical developer builds the agent (1 and 2), defines rewards and resets (3), trains in Python and exports an ONNX model (4), and then runs it in the game (5).
 
@@ -213,9 +219,9 @@ The step-by-step guide is in [Train and run your own agent](#train-and-run-your-
 | Available on `main` | Not finished yet |
 | --- | --- |
 | Agents, sensors, actuators, spaces and points | Training with physics between steps |
-| Episodes and environments (`ScholaEnvironment`) | A packaged setup sample and full setup guide (US6), since the demo files still live in [`deliverables/D2/demo/`](deliverables/D2/demo/) |
+| Episodes and environments (`ScholaEnvironment`) | |
 | ONNX inference (`SentisPolicy`, `PolicyRunner`) and steppers (`SimpleStepper`, `StepperRunner`) | A Unity player project for the CI smoke-test build and run jobs |
-| The Return to Base demo | Batched inference and the interface renames AMD asked for on 3 November |
+| The Return to Base demo and [Unity setup guide and sample scenes (US6)](Unity/com.amd.schola/Documentation~/setup.md) | Batched inference and the interface renames AMD asked for on 3 November |
 | The Unity training server, Python adapter, PPO command, ONNX export and Training Demo (US4 and US5) | Testing the training connection in a built player (IL2CPP) |
 | CI with tests, formatting, `.meta`-file and codegen checks, a release workflow and job time limits | Publishing the package automatically when `main` changes, since today it happens on version tags |
 
@@ -323,7 +329,3 @@ For questions about Schola, contact the team at [Schola@amd.com](mailto:Schola@a
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for issue and pull request guidelines, coding standards, and testing expectations.
-
-## AI Usage
-
-Claude Opus 5.5  was used to co-develop the Unity Sentis Policy

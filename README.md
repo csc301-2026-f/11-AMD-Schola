@@ -16,7 +16,7 @@
 
 ---
 
-Jump to [About](#about-this-project) · [What's new in D4](#whats-new-in-d4) · [Try the demo](#try-the-return-to-base-demo) · [Train and run your own agent](#train-and-run-your-own-agent) · [Key use cases](#key-use-cases) · [How it works](#how-it-works) · [Deployment](#deployment) · [Non-functional requirements](#non-functional-requirements) · [Unity package (developers)](#unity-package-developers) · [Maintaining the project](#maintaining-the-project) · [Git/GitHub workflow](#gitgithub-workflow) · [License](#license) · [Unreal setup](#getting-started-unreal)
+Jump to [About](#about-this-project) · [What's new in D4](#whats-new-in-d4) · [Try the demo](#try-the-return-to-base-demo) · [Ready-made scenes](#set-up-with-the-ready-made-scenes-us6) · [Train and run your own agent](#train-and-run-your-own-agent) · [Key use cases](#key-use-cases) · [How it works](#how-it-works) · [Deployment](#deployment) · [Non-functional requirements](#non-functional-requirements) · [Unity package (developers)](#unity-package-developers) · [Maintaining the project](#maintaining-the-project) · [Git/GitHub workflow](#gitgithub-workflow) · [License](#license) · [Unreal setup](#getting-started-unreal)
 
 ## About this project
 
@@ -42,9 +42,10 @@ At D3 (tag `D3`) training worked for one agent at a time and had to be started f
 - **Finished agents behave as they do in Unreal.** An agent that finishes early stops moving and keeps reporting its last state, the episode ends only when every agent is done, and an action sent to a finished agent brings it back. This holds in all three of Schola's reset modes ([#32](https://github.com/csc301-2026-f/11-AMD-Schola/pull/32)).
 - **Binary choices.** A new MultiBinary space carries on and off values as real booleans instead of zeros and ones in a Box ([#25](https://github.com/csc301-2026-f/11-AMD-Schola/pull/25)).
 - **Start training from Unity.** The Training Server can launch the Python trainer itself when you press Play, so no terminal is needed ([#31](https://github.com/csc301-2026-f/11-AMD-Schola/pull/31)).
-- **More tests.** CI now runs 136 Unity tests, up from 76 at D3.
+- **Setup guide and ready-made scenes (US6).** The Training Demo sample now ships training and inference scenes with trained models, including a harder Danger Zone task with randomized episodes, together with a full [setup guide](Unity/com.amd.schola/Documentation~/setup.md) ([#33](https://github.com/csc301-2026-f/11-AMD-Schola/pull/33)).
+- **More tests.** CI now runs 136 Unity tests, up from 76 at D3, and the Training Demo sample brings its own tests that run once it is imported.
 
-The US6 setup guide and sample scenes are in review in [#33](https://github.com/csc301-2026-f/11-AMD-Schola/pull/33) and are not on `main` yet. How the product changed between D2 and D3 is described in [`deliverables/D3/product-evolution.md`](deliverables/D3/product-evolution.md).
+How the product changed between D2 and D3 is described in [`deliverables/D3/product-evolution.md`](deliverables/D3/product-evolution.md).
 
 ### How we addressed feedback
 
@@ -83,6 +84,19 @@ More detail, troubleshooting and a [video walkthrough](https://youtu.be/utxF_vXd
 ![Drones gathering at the base, and one has turned green.](deliverables/D2/demo/d2demo2.jpeg)
 ![All six drones are green and home.](deliverables/D2/demo/d2demo3.jpeg)
 
+## Set up with the ready-made scenes (US6)
+
+The **Training Demo** sample ships finished scenes and trained models, so you can check an installation in a minute and then train without building anything by hand. Install the package as in steps 1 to 3 of the demo above, then in the **Package Manager** select **AMD Schola**, open **Samples** and import **Training Demo**. Its files appear under `Assets/Samples/AMD Schola/0.1.0/Training Demo/`.
+
+| Scene in `Scenes/` | What it shows |
+| --- | --- |
+| `ScholaInferenceDemo.unity` | The bundled `reach_target.onnx` model moves a blue cube to an orange ball with no Python running, and an overlay announces when it arrives. This is the quickest way to check that the install works. |
+| `ScholaTrainingDemo.unity` | The same task, waiting for `schola unity train`, as described in [Train and run your own agent](#train-and-run-your-own-agent). |
+| `ScholaDangerZoneTraining.unity` | A harder task, where the agent must reach a target while avoiding a red circle. Start and target positions change every episode, and an on-screen panel counts successes and failures. |
+| `ScholaDangerZoneInference.unity` | The bundled `danger_zone.onnx` model playing the Danger Zone task. On 100 random layouts drawn with a different seed from training, it reached the target 80 times. |
+
+The [setup guide](Unity/com.amd.schola/Documentation~/setup.md) covers requirements, installing from a Git URL, adapting the scenes to your own objects, and troubleshooting. The [Danger Zone guide](Unity/com.amd.schola/Documentation~/danger-zone.md) explains that task's rewards, randomized resets and scene wiring. The samples are tested with the Built-In render pipeline, so URP and HDRP projects need their own materials.
+
 ## Train and run your own agent
 
 This is the main workflow. You train a cube to reach a ball, export what it learned, and then run it with Python closed. It takes about 15 minutes plus a short training run.
@@ -99,7 +113,7 @@ python -m pip install -e "./Resources/python[sb3]"
 
 **Step 2. Train.**
 1. In Unity's **Package Manager**, select **AMD Schola** and import the **Training Demo** sample.
-2. Choose **Tools → Schola → Create Training Demo Scene** and save the scene. This builds a cube called `Agent`, a ball called `Target`, a camera, a light, and the training components.
+2. Open `Scenes/ScholaTrainingDemo.unity` from the imported sample. It holds a cube called `Agent`, a ball called `Target`, a camera, a light, and the training components. You can also rebuild it at any time with **Tools → Schola → Create Training Demo Scene**.
 3. In **Edit → Project Settings → Player**, turn on **Run In Background** so that Unity keeps working while the terminal has focus.
 4. Press **Play** in Unity. The cube now waits for Python.
 5. In your terminal, run the command below.
@@ -113,8 +127,8 @@ The terminal shows training progress while the cube moves. In our recorded run 2
 **Step 3. Run what it learned, with Python closed.**
 1. Stop Play Mode and close the terminal.
 2. Drag `ckpt/unity_ppo.onnx` into the Unity **Project** window.
-3. Select a GameObject and click **Add Component**. Search for **Policy Runner**, which also adds a Stepper Runner automatically. Add the `Agent` cube's `ScholaAgent` to its **Agents** list, and then drag the `.onnx` file into **Model**.
-4. Press **Play**. The model now controls the cube with no Python running. If the model does not fit the agent, for example because its input or output names or sizes differ, the Console explains why instead of failing silently.
+3. Open `Scenes/ScholaInferenceDemo.unity`, select `Schola Training Environment`, and drag your `.onnx` file into the **Model** field of its **Policy Runner**. In your own scene you would instead click **Add Component**, add a **Policy Runner** (which also adds a Stepper Runner), put the agent's `ScholaAgent` in its **Agents** list, and assign the model.
+4. Press **Play**. The model now controls the cube with no Python running. If the model does not fit the agent, for example because its input or output names or sizes differ, the Console explains why instead of failing silently. Use the `.onnx` file here, because the `.zip` checkpoint is only for Python.
 
 ### Start training from Unity instead of a terminal
 
@@ -158,12 +172,12 @@ Everything is built around one loop that repeats while the game runs. Sensors **
 | 2 | **Apply an agent's actions** (US2) | Add actuators such as `TranslateActuator`. Valid actions move the object, and invalid actions are rejected with a clear error. | Done |
 | 3 | **Control training episodes** (US3) | Use `ScholaEnvironment` for one agent, or `ScholaMultiAgentEnvironment` for several, to report rewards, episode endings (terminated or truncated) and resets, so that agents can learn from repeated attempts. | Done for one or many agents |
 | 4 | **Train through Schola** (US4) | Run `schola unity train` against a running scene, or tick **Run Script On Play**, and add `--export-onnx` to save the result as an ONNX model. | Done for one or many agents with Transform-based movement |
-| 5 | **Run a trained policy** (US5) | Add a `PolicyRunner` component, or use `SentisPolicy` with `SimpleStepper` and `StepperRunner` directly. A model whose names or sizes do not fit the agent is rejected with a clear message, and outputs past the action limits are clamped. | Done, both with the demo model and with a model you train |
-| 6 | **Set up and try the package** (US6) | Follow a guide and sample scene to install the package and use a trained model. | In review in [#33](https://github.com/csc301-2026-f/11-AMD-Schola/pull/33). Until it merges, this README and the [demo guide](deliverables/D2/demo/README.md) are the setup guide |
+| 5 | **Run a trained policy** (US5) | Add a `PolicyRunner` component, or use `SentisPolicy` with `SimpleStepper` and `StepperRunner` directly. A model whose names or sizes do not fit the agent is rejected with a clear message, and outputs past the action limits are clamped. | Done, both with the bundled models and with a model you train |
+| 6 | **Set up and try the package** (US6) | Follow the [setup guide](Unity/com.amd.schola/Documentation~/setup.md), open the ready-made scenes in the Training Demo sample, and adapt them to your own project. | Done, with reach-target and Danger Zone scenes for both training and inference |
 
 A typical developer builds the agent (1 and 2), defines rewards and resets (3), trains in Python and exports an ONNX model (4), and then runs it in the game (5).
 
-**If you are evaluating the project**, start with the [Return to Base demo](#try-the-return-to-base-demo) for a five-minute look at a finished result. Then follow [Train and run your own agent](#train-and-run-your-own-agent) for the full workflow, and finally [run the tests](#run-the-tests) to check engineering quality.
+**If you are evaluating the project**, start with the [Return to Base demo](#try-the-return-to-base-demo) or the [ready-made scenes](#set-up-with-the-ready-made-scenes-us6) for a quick look at a finished result. Then follow [Train and run your own agent](#train-and-run-your-own-agent) for the full workflow, and finally [run the tests](#run-the-tests) to check engineering quality.
 
 ## How it works
 
@@ -206,14 +220,14 @@ The interfaces (`IAgent`, `ISensor`, `IActuator`, `IEnvironment`, `IMultiAgentEn
 | Channel | Who it is for | How to install | When it changes |
 | --- | --- | --- | --- |
 | Local checkout | Contributors and evaluators | **Install package from disk** and select `Unity/com.amd.schola/package.json` | Whenever you pull |
-| Latest `main` | Anyone who wants the newest merged work | **Install package from git URL** with `https://github.com/csc301-2026-f/11-AMD-Schola.git?path=Unity/com.amd.schola` | On every merge to `main` |
+| Latest `main` | Anyone who wants the newest merged work | **Install package from git URL** with `https://github.com/csc301-2026-f/11-AMD-Schola.git?path=/Unity/com.amd.schola`, adding `#<commit-sha>` at the end to pin one exact commit | On every merge to `main` |
 | Versioned release | Users who want a fixed, tested version | The same Git URL ending in `#unity-v<version>`, or the `.tgz` file attached to the GitHub Release | When a maintainer pushes a `unity-v<version>` tag |
 
-A Git URL install downloads the whole repository the first time, which is about 170 MB because it includes the Unreal plugin. Pushing a `unity-v<version>` tag runs [`release.yml`](.github/workflows/release.yml), which checks that the tag matches the version in `package.json`, runs the Unity tests, and only then publishes a GitHub Release with the package file. The steps are in [Releasing a version](#releasing-a-version). No `unity-v` release has been published yet.
+The Git URL route was checked by installing a pinned commit into a test project, as recorded in [`validation.md`](Unity/com.amd.schola/Documentation~/validation.md). It downloads the whole repository the first time, which is about 170 MB because it includes the Unreal plugin. Pushing a `unity-v<version>` tag runs [`release.yml`](.github/workflows/release.yml), which checks that the tag matches the version in `package.json`, runs the Unity tests, and only then publishes a GitHub Release with the package file. The steps are in [Releasing a version](#releasing-a-version). No `unity-v` release has been published yet.
 
 <!-- TODO before D4: D4 asks for automatic deployment to two environments (dev and release). Update this section once that workflow exists. -->
 
-The demo model and the Training Demo scene builders act as seed data, so nothing has to be created by hand to try the package.
+The bundled models and the ready-made scenes in the Training Demo sample act as seed data, so nothing has to be created by hand to try the package.
 
 ## Non-functional requirements
 
@@ -227,7 +241,7 @@ Schola for Unity is a developer package rather than a web app, so we applied the
 | **Secrets** | The repository contains no keys or passwords, and CI reads the Unity license from GitHub secrets rather than from workflow files. | [Configuration](#configuration), `.github/workflows/` |
 | **Reliability** | Scene changes run only on Unity's main thread. When an exchange fails, the Python side closes the connection so that a late reply is never mistaken for the next answer. Stopping Play Mode releases all queued work and also stops a trainer started by **Run Script On Play**. | `Training/TrainingServer.cs`, `bridge.py`, `Tests/Training/TrainingServerTests.cs` |
 | **Production-readiness** | Every GitHub Actions job has a time limit, and CI runs formatting, `.meta`-file, manifest, Unity, Python and codegen checks on every pull request. There are 136 Unity tests, and 32 Python tests for the training adapter. | `.github/workflows/`, [Run the tests](#run-the-tests) |
-| **Accessibility** | There is no end-user UI to audit with Lighthouse. The demo overlay is the only on-screen UI, and it never relies on colour alone, because a text counter shows how many drones are home as well as the green colour. README images have alt text. We have not yet tested with assistive tools. | `deliverables/D2/demo/ReturnToBaseGame.cs` |
+| **Accessibility** | There is no end-user UI to audit with Lighthouse. The on-screen UI is limited to the demo overlays, and none of them relies on colour alone. The Return to Base counter shows how many drones are home as well as the green colour, and the sample overlays report arrival, success or failure in text. README images have alt text. We have not yet tested with assistive tools. | `deliverables/D2/demo/ReturnToBaseGame.cs`, and `InferenceDemoStatus.cs` and `DangerZoneTask.cs` in the Training Demo sample |
 
 There are still known limits. Training handles about one step per Unity frame, it does not advance physics between steps, and it has not been tested in a built player (IL2CPP). The full list is in [What is and is not included yet](#what-is-and-is-not-included-yet).
 
@@ -276,9 +290,10 @@ Both test suites also run automatically on every pull request (see [Git/GitHub w
 | --- | --- |
 | Agents with the built-in `PositionSensor` and `TranslateActuator`, and Box, Discrete, MultiBinary and Dict spaces | Custom `ISensor` and `IActuator` classes on a `ScholaAgent`, because the agent only accepts the built-in sensor and actuator today |
 | Single-agent and multi-agent environments, with Unreal-style handling of agents that finish early | Training with physics between steps |
-| Training through `schola unity train`, `schola unity bridge` or **Run Script On Play**, with ONNX export | The US6 setup guide and sample scenes, which are in review in [#33](https://github.com/csc301-2026-f/11-AMD-Schola/pull/33) |
-| ONNX inference with `SentisPolicy` and `PolicyRunner`, and the steppers `SimpleStepper` and `StepperRunner` | Batched inference, MultiBinary actions in `SentisPolicy`, and the interface renames AMD asked for on 3 November |
-| The Return to Base demo, the Training Demo and the two-agent Training Demo | Testing in a built player (IL2CPP), and a Unity player project for the CI smoke-test build and run jobs |
+| Training through `schola unity train`, `schola unity bridge` or **Run Script On Play**, with ONNX export | Batched inference, MultiBinary actions in `SentisPolicy`, and the interface renames AMD asked for on 3 November |
+| ONNX inference with `SentisPolicy` and `PolicyRunner`, and the steppers `SimpleStepper` and `StepperRunner` | Testing in a built player (IL2CPP), and sample materials for URP or HDRP projects, since the samples are tested with the Built-In render pipeline |
+| The [setup guide](Unity/com.amd.schola/Documentation~/setup.md) and the Training Demo sample, with ready-made reach-target and Danger Zone scenes, two bundled models and a two-agent scene builder | Running the sample tests in CI, because CI does not import samples |
+| The Return to Base demo | A Unity player project for the CI smoke-test build and run jobs |
 | CI with tests, formatting, `.meta`-file, manifest, codegen and PR-title checks, a release workflow and job time limits | Publishing the package automatically when `main` changes, since today it happens on version tags |
 
 ## Maintaining the project
@@ -293,8 +308,8 @@ This section is for whoever continues the project, whether that is AMD or a new 
 | `Unity/com.amd.schola/Inference/` | `AMD.Schola.Inference` | `SentisPolicy` and `PolicyRunner`, which use Unity Inference Engine |
 | `Unity/com.amd.schola/Training/` | `AMD.Schola.Training` | `TrainingServer`, `TrainingSession`, the message format in `TrainingWire.cs`, and the trainer launcher, whose Inspector lives in `Training/Editor/` |
 | `Unity/com.amd.schola/Tests/` | `AMD.Schola.Tests.EditMode` and `AMD.Schola.Tests.Training` | The Unity tests |
-| `Unity/com.amd.schola/Samples~/` | Sample assemblies | The Training Demo sample. Unity skips folders whose names end in `~` until a user imports the sample, so CI does not build or test this code. |
-| `Unity/com.amd.schola/Documentation~/` | None | The [training guide](Unity/com.amd.schola/Documentation~/training.md) |
+| `Unity/com.amd.schola/Samples~/TrainingDemo/` | Sample runtime, editor and test assemblies | The Training Demo sample, with its scripts, scene builders, `Scenes/`, `Materials/`, bundled `Models/` and tests. Unity skips folders whose names end in `~` until a user imports the sample, so CI does not build or test this code. |
+| `Unity/com.amd.schola/Documentation~/` | None | The [setup guide](Unity/com.amd.schola/Documentation~/setup.md), [training guide](Unity/com.amd.schola/Documentation~/training.md), [Danger Zone guide](Unity/com.amd.schola/Documentation~/danger-zone.md) and the [validation record](Unity/com.amd.schola/Documentation~/validation.md) |
 | `Resources/python/schola/unity/` and `Resources/python/schola/scripts/unity.py` | None | The Python adapter and the `schola unity` commands |
 | `Test/unity/` | None | Adapter, ONNX export and live Unity tests |
 | `.github/workflows/` and `.github/scripts/` | None | CI, the release workflow and the small check scripts they run |
@@ -326,6 +341,9 @@ Python code follows [Black](https://black.readthedocs.io/), and [CONTRIBUTING.md
 - **Change the messages between Unity and Python.** Raise `TrainingWire.Version` and `VERSION` in `bridge.py` together, because each side refuses messages that carry another version.
 - **Add a sensor or actuator.** Implement `ISensor` or `IActuator`. A `ScholaAgent` currently stores lists of `PositionSensor` and `TranslateActuator`, so a new type also needs the agent widened to accept the interfaces.
 - **Add any Unity file or folder.** Commit the `.meta` file that Unity creates next to it, because CI fails without it.
+- **Change a sample scene.** Never edit scene files by hand. Import the sample into a test project, rebuild the scene with its **Tools → Schola** menu item (or run `SetupSceneAssets.Generate` for the two reach-target scenes), save it into the sample's `Scenes/` folder, and copy the scene and material files back into `Samples~/TrainingDemo/` together with their `.meta` files so that references keep working.
+- **Replace a bundled model.** Overwrite the `.onnx` file but keep its `.meta` file, and update the training details and SHA-256 hash in the sample's `Models/README.md`. The repository ignores `.onnx` files in general, so a new model file also needs its own exception in `.gitignore`.
+- **Test sample changes.** Because CI never imports the sample, import it into a test project with `com.amd.schola` listed in `testables` and run its tests in Test Runner before opening the PR, as described in [`validation.md`](Unity/com.amd.schola/Documentation~/validation.md).
 
 ### CI and secrets
 
@@ -448,4 +466,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for issue and pull request guidelines, co
 
 ## AI Usage
 
-Claude Opus 5.5  was used to co-develop the Unity Sentis Policy
+Claude Opus 5.5 was used to co-develop the Unity Sentis Policy.

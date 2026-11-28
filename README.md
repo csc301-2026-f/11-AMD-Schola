@@ -49,8 +49,6 @@ How the product changed between D2 and D3 is described in [`deliverables/D3/prod
 
 ### How we addressed feedback
 
-<!-- TODO before D4: add one row to this table for each point in our D3 TA feedback. -->
-
 | Feedback | What we did |
 | --- | --- |
 | AMD (3 November) explained that a Box holding 0 and 1 does not mean the same thing to a trainer as a binary space. | MultiBinary spaces and points now exist on both the Unity and Python sides, and empty or malformed ones are rejected ([#25](https://github.com/csc301-2026-f/11-AMD-Schola/pull/25)). |
@@ -96,8 +94,6 @@ This takes about a minute and is the quickest way to check that the install work
 1. Open `Scenes/ScholaInferenceDemo.unity` and press **Play**. The bundled `reach_target.onnx` model moves the blue cube to the orange ball by itself, and the overlay changes to `Target reached` when it arrives. While it is still moving, you can drag the ball somewhere else and watch the cube follow.
 2. For a harder task, open `Scenes/ScholaDangerZoneInference.unity` and press **Play**. The agent heads for a target while steering around a red circle, a new layout starts after every attempt, and a panel counts successes and failures.
 
-<!-- SCREENSHOT: ![The blue cube resting on the orange ball, with the overlay reading Target reached.](deliverables/D4/images/cube-reaches-ball.png) -->
-
 | Scene in `Scenes/` | What it shows |
 | --- | --- |
 | `ScholaInferenceDemo.unity` | The bundled `reach_target.onnx` model moves a blue cube to an orange ball with no Python running, and an overlay announces when it arrives. This is the quickest way to check that the install works. |
@@ -120,8 +116,6 @@ This is the main workflow. You train a cube to reach a ball, save what it learne
 2. Under **Python Env Settings**, set **Env Type** to **Custom Python Path**, and paste the path you copied in step 5 of [Install](#install) into **Custom Python Path**.
 3. Leave **Python Script Type** on **Builtin Schola Unity Training Script** and **Timesteps** on 10000. Keep **Export Final Model To Onnx** ticked, and set **Onnx Path** to `Assets/Models/cube.onnx` so that the model is saved inside your project.
 4. Press **Play**. Unity starts the Python trainer by itself, the cube starts moving while it learns, and the Console shows the training output with a `[Schola script]` prefix. When training finishes, the Console shows `Saved Unity policy to ckpt/unity_ppo` and `Exported ONNX policy to Assets/Models/cube.onnx`. Both paths are relative to the Unity project folder, so the checkpoint lands in a `ckpt` folder next to `Assets`. Stopping Play Mode early also stops the trainer.
-
-<!-- SCREENSHOT: ![The Unity Console showing Schola script training output, ending with the saved and exported messages.](deliverables/D4/images/console-training-output.png) -->
 
 **Step 3. Run what it learned, with Python closed.**
 1. Stop Play Mode. `Assets/Models/cube.onnx` appears in the **Project** window, and if it does not, choose **Assets → Refresh**.
@@ -213,8 +207,6 @@ The interfaces (`IAgent`, `ISensor`, `IActuator`, `IEnvironment`, `IMultiAgentEn
 | Versioned release | Users who want a fixed, tested version | The same Git URL ending in `#unity-v<version>`, or the `.tgz` file attached to the GitHub Release | When a maintainer pushes a `unity-v<version>` tag |
 
 The Git URL route was checked by installing a pinned commit into a test project, as recorded in [`validation.md`](Unity/com.amd.schola/Documentation~/validation.md). It downloads the whole repository the first time, which is about 170 MB because it includes the Unreal plugin. Pushing a `unity-v<version>` tag runs [`release.yml`](.github/workflows/release.yml), which checks that the tag matches the version in `package.json`, runs the Unity tests, and only then publishes a GitHub Release with the package file. The steps are in [Releasing a version](#releasing-a-version). No `unity-v` release has been published yet.
-
-<!-- TODO before D4: D4 asks for automatic deployment to two environments (dev and release). Update this section once that workflow exists. -->
 
 The bundled models and the ready-made scenes in the Training Demo sample act as seed data, so nothing has to be created by hand to try the package.
 

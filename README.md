@@ -74,7 +74,10 @@ There is no website or hosted version, because Schola for Unity is a package tha
 
 ```bash
 python -m pip install -e "./Resources/python[sb3]"
+python -c "import sys; print(sys.executable)"
 ```
+
+The second command prints the full path of the Python you just installed into, such as `/Users/you/.venv/bin/python` or `C:\Python312\python.exe`. Copy it, because flow 2 needs it.
 
 Keep the downloaded folder where it is, because Unity reads a package installed from disk from that location. To install without cloning, use the Git URL in [Deployment](#deployment).
 
@@ -82,7 +85,9 @@ Keep the downloaded folder where it is, because Unity reads a package installed 
 
 There are three ways to use the package, from the quickest to the most involved. The first needs no Python, the second goes from training to a working model, and the third trains a group of agents. In the steps below, `Scenes/` means the `Scenes` folder of the imported Training Demo sample.
 
-**Video walkthrough.** <!-- TODO: replace this link with the D4 video once it is recorded. --> The [video walkthrough on YouTube](https://www.youtube.com/watch?v=TPu1wXgE_mE) shows a full training run, after which the trained cube reaches the ball with Python closed.
+**Video walkthrough.** The [D4 demo on YouTube](https://youtu.be/BenZPTinDUQ) walks through the package in Unity.
+
+![The Danger Zone training scene in Play Mode. The blue agent, orange target and red danger zone are in the Game view, the panel above them counts episodes, successes and failures, and the Inspector shows the Training Server with Run Script On Play ticked.](deliverables/D4/images/danger-zone-training.png)
 
 ### 1. Try a trained agent (no Python)
 
@@ -92,7 +97,6 @@ This takes about a minute and is the quickest way to check that the install work
 2. For a harder task, open `Scenes/ScholaDangerZoneInference.unity` and press **Play**. The agent heads for a target while steering around a red circle, a new layout starts after every attempt, and a panel counts successes and failures.
 
 <!-- SCREENSHOT: ![The blue cube resting on the orange ball, with the overlay reading Target reached.](deliverables/D4/images/cube-reaches-ball.png) -->
-<!-- SCREENSHOT: ![The Danger Zone scene, with the agent going around the red circle and the success and failure counts on screen.](deliverables/D4/images/danger-zone.png) -->
 
 | Scene in `Scenes/` | What it shows |
 | --- | --- |
@@ -111,22 +115,13 @@ This is the main workflow. You train a cube to reach a ball, save what it learne
 1. Open `Scenes/ScholaTrainingDemo.unity`. It holds a cube called `Agent`, a ball called `Target`, a camera, a light, and the training components. You can rebuild it at any time with **Tools → Schola → Create Training Demo Scene**.
 2. In **Edit → Project Settings → Player**, turn on **Run In Background** so that training keeps going when Unity is not the focused window.
 
-**Step 2. Train from the Inspector.**
-1. Select the `Schola Training Environment` object, which holds the **Training Server**, and tick **Run Script On Play**.
-2. Under **Python Env Settings**, pick the Python where you installed Schola. You can choose **System PATH Python Env**, **Conda Env** with the environment's name, or **Custom Python Path**.
-3. Leave **Python Script** on **Builtin Schola Unity Training Script** and **Timesteps** on 10000. Keep **Export Final Model To Onnx** ticked, and set **Onnx Path** to `Assets/Models/cube.onnx` so that the model is saved inside your project.
-4. Press **Play**. The cube starts moving while Python trains it, and the Console shows the training output with a `[Schola script]` prefix. When training finishes, the Console shows `Saved Unity policy to ckpt/unity_ppo` and `Exported ONNX policy to Assets/Models/cube.onnx`. Both paths are relative to the Unity project folder, so the checkpoint lands in a `ckpt` folder next to `Assets`. Stopping Play Mode early also stops the script.
+**Step 2. Train from the Training Server panel.** Everything is set in the Inspector, so no terminal is needed. The screenshot above shows the same panel on the Danger Zone scene.
+1. Select the `Schola Training Environment` object and find its **Training Server** component in the Inspector. Tick **Run Script On Play**.
+2. Under **Python Env Settings**, set **Env Type** to **Custom Python Path**, and paste the path you copied in step 5 of [Install](#install) into **Custom Python Path**.
+3. Leave **Python Script Type** on **Builtin Schola Unity Training Script** and **Timesteps** on 10000. Keep **Export Final Model To Onnx** ticked, and set **Onnx Path** to `Assets/Models/cube.onnx` so that the model is saved inside your project.
+4. Press **Play**. Unity starts the Python trainer by itself, the cube starts moving while it learns, and the Console shows the training output with a `[Schola script]` prefix. When training finishes, the Console shows `Saved Unity policy to ckpt/unity_ppo` and `Exported ONNX policy to Assets/Models/cube.onnx`. Both paths are relative to the Unity project folder, so the checkpoint lands in a `ckpt` folder next to `Assets`. Stopping Play Mode early also stops the trainer.
 
-<!-- SCREENSHOT: ![The Training Server in the Inspector, with Run Script On Play ticked and Onnx Path set to Assets/Models/cube.onnx.](deliverables/D4/images/inspector-training-server.png) -->
 <!-- SCREENSHOT: ![The Unity Console showing Schola script training output, ending with the saved and exported messages.](deliverables/D4/images/console-training-output.png) -->
-
-**Train from a terminal instead.** Leave **Run Script On Play** off and press **Play**, so that the cube waits for Python. Then open a terminal in your Unity project folder, which is the folder that contains `Assets`, and run the command below.
-
-```bash
-schola unity train --timesteps 10000 --checkpoint ckpt/unity_ppo --onnx-path Assets/Models/cube.onnx
-```
-
-The terminal shows training progress while the cube moves and prints the same two messages at the end. In our recorded run 2,000 steps were enough for the cube to learn to reach the ball, although results can vary between runs.
 
 **Step 3. Run what it learned, with Python closed.**
 1. Stop Play Mode. `Assets/Models/cube.onnx` appears in the **Project** window, and if it does not, choose **Assets → Refresh**.
@@ -136,7 +131,7 @@ The terminal shows training progress while the cube moves and prints the same tw
 ### 3. Train several agents at once
 
 1. Choose **Tools → Schola → Create Multi-Agent Training Demo Scene** and save the scene. It builds two cubes, each with its own ball, under one `ScholaMultiAgentEnvironment`.
-2. Turn on **Run In Background** and train as in flow 2, either by ticking **Run Script On Play** on the scene's Training Server or by pressing **Play** and running the `schola unity train` command.
+2. Turn on **Run In Background**, set up the scene's **Training Server** exactly as in step 2 of flow 2, and press **Play**.
 
 Both cubes share one policy while they train. This works because they see and act in the same way and their episodes end on the same step. When agents differ, or finish at different times, train them with RLlib through `schola unity bridge` as described in the [training guide](Unity/com.amd.schola/Documentation~/training.md#multi-agent-training).
 
@@ -151,9 +146,9 @@ There are no API keys or accounts to set up. The settings below are the only one
 | Unity training server port | `8001`, loopback only | **Port** on the **Training Server** component, and `--unity-port` on the command |
 | Python adapter port | `8000` for `schola unity bridge` (`schola unity train` picks a free port) | `--port` on `schola unity bridge` |
 | Request timeout | 30 seconds | **Request Timeout Seconds** on the Training Server, and `--timeout` on the command |
-| Training length and seed | `--timesteps 10000` and `--seed 0` | Command options |
-| Model files | `ckpt/unity_ppo.zip` and `ckpt/unity_ppo.onnx` | `--checkpoint` and `--onnx-path` |
 | Launch the trainer on Play | Off | **Run Script On Play** and **Python Env Settings** on the Training Server |
+| Training length and seed | 10000 timesteps and seed 0 | **Timesteps** and **Seed** on the Training Server, or `--timesteps` and `--seed` on the command |
+| Model files | `ckpt/unity_ppo.zip` and `ckpt/unity_ppo.onnx` | **Checkpoint Path** and **Onnx Path** on the Training Server, or `--checkpoint` and `--onnx-path` on the command |
 | CI secrets (maintainers only) | `UNITY_LICENSE`, `UNITY_EMAIL` and `UNITY_PASSWORD` | GitHub repository secrets, and their values are never committed |
 
 ## Key use cases
@@ -165,7 +160,7 @@ Everything is built around one loop that repeats while the game runs. Sensors **
 | 1 | **Define what an agent sees** (US1) | Add a `ScholaAgent` and sensors such as `PositionSensor`. Observations are read fresh from the scene each time and keep a consistent format. | Done |
 | 2 | **Apply an agent's actions** (US2) | Add actuators such as `TranslateActuator`. Valid actions move the object, and invalid actions are rejected with a clear error. | Done |
 | 3 | **Control training episodes** (US3) | Use `ScholaEnvironment` for one agent, or `ScholaMultiAgentEnvironment` for several, to report rewards, episode endings (terminated or truncated) and resets, so that agents can learn from repeated attempts. | Done for one or many agents |
-| 4 | **Train through Schola** (US4) | Run `schola unity train` against a running scene, or tick **Run Script On Play**, and add `--export-onnx` to save the result as an ONNX model. | Done for one or many agents with Transform-based movement |
+| 4 | **Train through Schola** (US4) | Tick **Run Script On Play** on the Training Server and press Play, and Unity starts Schola's Python trainer and saves the result as an ONNX model. Developers who prefer a terminal can run `schola unity train` instead. | Done for one or many agents with Transform-based movement |
 | 5 | **Run a trained policy** (US5) | Add a `PolicyRunner` component, or use `SentisPolicy` with `SimpleStepper` and `StepperRunner` directly. A model whose names or sizes do not fit the agent is rejected with a clear message, and outputs past the action limits are clamped. | Done, both with the bundled models and with a model you train |
 | 6 | **Set up and try the package** (US6) | Follow the [setup guide](Unity/com.amd.schola/Documentation~/setup.md), open the ready-made scenes in the Training Demo sample, and adapt them to your own project. | Done, with reach-target and Danger Zone scenes for both training and inference |
 
@@ -275,7 +270,7 @@ Both test suites also run automatically on every pull request (see [Git/GitHub w
 | --- | --- |
 | Agents with the built-in `PositionSensor` and `TranslateActuator`, and Box, Discrete, MultiBinary and Dict spaces | Custom `ISensor` and `IActuator` classes on a `ScholaAgent`, because the agent only accepts the built-in sensor and actuator today |
 | Single-agent and multi-agent environments, with Unreal-style handling of agents that finish early | Training with physics between steps |
-| Training through `schola unity train`, `schola unity bridge` or **Run Script On Play**, with ONNX export | Batched inference, MultiBinary actions in `SentisPolicy`, and the interface renames AMD asked for on 3 November |
+| Training from the Training Server panel with **Run Script On Play**, or through `schola unity train` and `schola unity bridge`, with ONNX export | Batched inference, MultiBinary actions in `SentisPolicy`, and the interface renames AMD asked for on 3 November |
 | ONNX inference with `SentisPolicy` and `PolicyRunner`, and the steppers `SimpleStepper` and `StepperRunner` | Testing in a built player (IL2CPP), and a Unity player project for the CI smoke-test build and run jobs |
 | The [setup guide](Unity/com.amd.schola/Documentation~/setup.md) and the Training Demo sample, with ready-made reach-target and Danger Zone scenes, two bundled models and a two-agent scene builder | Running the sample tests in CI, because CI does not import samples, and sample materials for URP or HDRP projects, since the samples are tested with the Built-In render pipeline |
 | CI with tests, formatting, `.meta`-file, manifest, codegen and PR-title checks, a release workflow and job time limits | Publishing the package automatically when `main` changes, since today it happens on version tags |
